@@ -1,0 +1,14 @@
+# List should link to .fastq files. Should be able to read .fastq.gz at a later stage. 
+fastq_list=/home/gerrit/projects/cbio-pipelines/qc/fastq.list
+out_dir=/scratch/gerrit/tests/cbio-pipelines/qc/fastqc
+log_dir=/scratch/gerrit/tests/cbio-pipelines/qc/logs
+
+# Tools / dependencies
+# Fastqc v0.10.1
+fastqc_DEBUG=0
+fastqc_base=/opt/exp_soft/FastQC
+fastqc_threads=4
+
+fastqc_combine_DEBUG=0
+fastqc_combine_base=/opt/exp_soft/qiime/packages/other/fastqc_combine/
+fastqc_combine_threads=1
