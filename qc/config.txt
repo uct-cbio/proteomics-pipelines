@@ -1,3 +1,8 @@
+pbs_status_mail_to=gerrit.botha@uct.ac.za
+pbs_status_mail_events=abe
+pbs_queue=UCTlong
+pbs_series=series600
+
 # List should link to .fastq files. Should be able to read .fastq.gz at a later stage. 
 fastq_list=/home/gerrit/projects/cbio-pipelines/qc/fastq.list
 out_dir=/scratch/gerrit/tests/cbio-pipelines/qc/fastqc
@@ -8,7 +13,9 @@ log_dir=/scratch/gerrit/tests/cbio-pipelines/qc/logs
 fastqc_DEBUG=0
 fastqc_base=/opt/exp_soft/FastQC
 fastqc_threads=4
+fastqc_walltime="2:00:00"
 
 fastqc_combine_DEBUG=0
 fastqc_combine_base=/opt/exp_soft/qiime/packages/other/fastqc_combine/
 fastqc_combine_threads=1
+fastqc_combine_walltime="1:00:00"
