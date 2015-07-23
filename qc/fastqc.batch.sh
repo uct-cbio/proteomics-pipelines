@@ -40,7 +40,8 @@ do
 
   if [ ! -f $fastqc_output_zip ]
   then
-    qsub="qsub -N fastqc.$filename.$count -M gerrit.botha@uct.ac.za -m abe  -o $log_dir/fastqc.$filename.$count.o -e $log_dir/fastqc.$filename.$count.e -d $out_dir -q UCTlong -S /bin/bash -l nodes=1:series600:ppn=$fastqc_threads -v config=$config,fastq=$fastq ./fastqc.single.sh"
+    cmds_log=$log_dir/fastqc.$filename.$count.cmds
+    qsub="qsub -N fastqc.$filename.$count -M gerrit.botha@uct.ac.za -m $pbs_status_mail_events  -o $log_dir/fastqc.$filename.$count.o -e $log_dir/fastqc.$filename.$count.e -d $out_dir -q $pbs_queue -S /bin/bash -l nodes=1:$pbs_series:ppn=$fastqc_threads -l walltime=$fastqc_walltime -v config=$config,fastq=$fastq,cmds_log=$cmds_log ./fastqc.single.sh"
 
     echo $qsub > $log_dir/fastqc.$filename.$count.qsub
     cat fastqc.single.sh > $log_dir/fastqc.$filename.$count.sh
