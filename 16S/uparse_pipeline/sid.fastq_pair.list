@@ -1,0 +1,15 @@
+Dog10	/scratch/DB/bio/test_data/16S/Dog10_R1.fastq	/scratch/DB/bio/test_data/16S/Dog10_R2.fastq
+Dog15	/scratch/DB/bio/test_data/16S/Dog15_R1.fastq	/scratch/DB/bio/test_data/16S/Dog15_R2.fastq
+Dog16	/scratch/DB/bio/test_data/16S/Dog16_R1.fastq	/scratch/DB/bio/test_data/16S/Dog16_R2.fastq
+Dog17	/scratch/DB/bio/test_data/16S/Dog17_R1.fastq	/scratch/DB/bio/test_data/16S/Dog17_R2.fastq
+Dog1	/scratch/DB/bio/test_data/16S/Dog1_R1.fastq	/scratch/DB/bio/test_data/16S/Dog1_R2.fastq
+Dog22	/scratch/DB/bio/test_data/16S/Dog22_R1.fastq	/scratch/DB/bio/test_data/16S/Dog22_R2.fastq
+Dog23	/scratch/DB/bio/test_data/16S/Dog23_R1.fastq	/scratch/DB/bio/test_data/16S/Dog23_R2.fastq
+Dog24	/scratch/DB/bio/test_data/16S/Dog24_R1.fastq	/scratch/DB/bio/test_data/16S/Dog24_R2.fastq
+Dog29	/scratch/DB/bio/test_data/16S/Dog29_R1.fastq	/scratch/DB/bio/test_data/16S/Dog29_R2.fastq
+Dog2	/scratch/DB/bio/test_data/16S/Dog2_R1.fastq	/scratch/DB/bio/test_data/16S/Dog2_R2.fastq
+Dog30	/scratch/DB/bio/test_data/16S/Dog30_R1.fastq	/scratch/DB/bio/test_data/16S/Dog30_R2.fastq
+Dog31	/scratch/DB/bio/test_data/16S/Dog31_R1.fastq	/scratch/DB/bio/test_data/16S/Dog31_R2.fastq
+Dog3	/scratch/DB/bio/test_data/16S/Dog3_R1.fastq	/scratch/DB/bio/test_data/16S/Dog3_R2.fastq
+Dog8	/scratch/DB/bio/test_data/16S/Dog8_R1.fastq	/scratch/DB/bio/test_data/16S/Dog8_R2.fastq
+Dog9	/scratch/DB/bio/test_data/16S/Dog9_R1.fastq	/scratch/DB/bio/test_data/16S/Dog9_R2.fastq
