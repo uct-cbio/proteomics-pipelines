@@ -1,0 +1,36 @@
+pbs_status_mail_to=gerrit.botha@uct.ac.za
+pbs_status_mail_events=abe
+pbs_queue=UCTlong
+pbs_series=series600
+
+qiime_activation_script=/home/gerrit/activate_qiime.sh
+
+uparse_base=/opt/exp_soft/qiime/bin/
+
+# uparse_merge_filter
+sid_fastq_pair_list=/home/gerrit/projects/cbio-pipelines/16S/uparse_pipeline/sid.fastq_pair.list
+uparse_merge_DEBUG=0
+uparse_merge_threads=1
+uparse_merge_walltime="1:00:00"
+uparse_merge_fastq_maxdiffs=3
+
+uparse_filter_DEBUG=0
+uparse_filter_threads=1
+uparse_filter_walltime="1:00:00"
+uparse_filter_fastq_trunclen=300
+uparse_filter_fastq_maxee=0.1
+
+out_dir=/scratch/gerrit/tests/cbio-pipelines/16S/uparse_pipeline
+log_dir=/scratch/gerrit/tests/cbio-pipelines/16S/uparse_pipeline/logs
+
+# Tools / dependencies
+# Fastqc v0.10.1
+fastqc_DEBUG=0
+fastqc_base=/opt/exp_soft/FastQC
+fastqc_threads=4
+fastqc_walltime="2:00:00"
+
+fastqc_combine_DEBUG=0
+fastqc_combine_base=/opt/exp_soft/qiime/packages/other/fastqc_combine/
+fastqc_combine_threads=1
+fastqc_combine_walltime="1:00:00"
