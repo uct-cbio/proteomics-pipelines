@@ -10,6 +10,9 @@ else
   . $config
 fi
 
+out_dir=$uparse_merge_out_dir
+log_dir=$uparse_merge_log_dir
+
 echo $out_dir
 echo $log_dir
 

@@ -7,21 +7,25 @@ qiime_activation_script=/home/gerrit/activate_qiime.sh
 
 uparse_base=/opt/exp_soft/qiime/bin/
 
-# uparse_merge_filter
 sid_fastq_pair_list=/home/gerrit/projects/cbio-pipelines/16S/uparse_pipeline/sid.fastq_pair.list
+
+# uparse_merge_filter
 uparse_merge_DEBUG=0
+uparse_merge_out_dir=/scratch/gerrit/tests/cbio-pipelines/16S/uparse_pipeline
+uparse_merge_log_dir=/scratch/gerrit/tests/cbio-pipelines/16S/uparse_pipeline/logs
 uparse_merge_threads=1
 uparse_merge_walltime="1:00:00"
 uparse_merge_fastq_maxdiffs=3
 
+# uparse_filter
 uparse_filter_DEBUG=0
+uparse_filter_in_dir=/scratch/gerrit/tests/cbio-pipelines/16S/uparse_pipeline
+uparse_filter_out_dir=/scratch/gerrit/tests/cbio-pipelines/16S/uparse_pipeline
+uparse_filter_log_dir=/scratch/gerrit/tests/cbio-pipelines/16S/uparse_pipeline/logs
 uparse_filter_threads=1
 uparse_filter_walltime="1:00:00"
 uparse_filter_fastq_trunclen=300
 uparse_filter_fastq_maxee=0.1
-
-out_dir=/scratch/gerrit/tests/cbio-pipelines/16S/uparse_pipeline
-log_dir=/scratch/gerrit/tests/cbio-pipelines/16S/uparse_pipeline/logs
 
 # Tools / dependencies
 # Fastqc v0.10.1
