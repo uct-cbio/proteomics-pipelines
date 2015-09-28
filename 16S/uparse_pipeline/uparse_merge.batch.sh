@@ -13,12 +13,22 @@ fi
 out_dir=$uparse_merge_out_dir
 log_dir=$uparse_merge_log_dir
 
-echo $out_dir
-echo $log_dir
+tmp_dir=$tmp_dir
+rename_dir=$uparse_merge_rename_dir
 
 if [ ! -d $out_dir ];
  then
    mkdir -p $out_dir
+fi
+
+if [ ! -d $tmp_dir ];
+ then
+   mkdir -p $tmp_dir
+fi
+
+if [ ! -d $rename_dir ];
+ then
+   mkdir -p $rename_dir
 fi
 
 log_dir=$log_dir"/uparse_merge."`date +"%y%m%d%H%M%S"`
@@ -35,22 +45,23 @@ do
   sid=`echo $sid_fastq_pair | awk -F ' ' '{print $1}'` # It is actually not reading it as a TAB. Maybe the read operation replaces the TABs with spaces.
   fastq_r1=`echo $sid_fastq_pair | awk -F ' ' '{print $2}'` # It is actually not reading it as a TAB. Maybe the read operation replaces the TABs with spaces.
   fastq_r2=`echo $sid_fastq_pair | awk -F ' ' '{print $3}'`
-  echo $sid
-  echo $fastq_r1 
-  echo $fastq_r2 
+  
+  fastq_r1_tmp=$tmp_dir"/"$(basename $fastq_r1)
+  fastq_r2_tmp=$tmp_dir"/"$(basename $fastq_r2)
+
+  fastq_r1_renamed=$uparse_merge_rename_dir"/"$(basename $fastq_r1)
+  fastq_r2_renamed=$uparse_merge_rename_dir"/"$(basename $fastq_r2)
 
   merged_fastq=$out_dir/$sid.merged.fastq
-
-  echo $merged_fastq
 
   if [ ! -f $merged_fastq ]
   then
 
     cmds_log=$log_dir/uparse_merge.$sid.$count.cmds
-    qsub="qsub -N uparse_merge.$sid.$count -M $pbs_status_mail_to -m $pbs_status_mail_events  -o $log_dir/uparse_merge.$sid.$count.o -e $log_dir/uparse_merge.$sid.$count.e -d $out_dir -q $pbs_queue -S /bin/bash -l nodes=1:$pbs_series:ppn=$uparse_merge_threads -l walltime=$uparse_merge_walltime -v config=$config,merged_fastq=$merged_fastq,fastq_r1=$fastq_r1,fastq_r2=$fastq_r2,fastq_maxdiffs=$uparse_merge_fastq_maxdiffs,cmds_log=$cmds_log ./uparse_merge.single.sh"
+    qsub="qsub -N uparse_merge.$sid.$count -M $pbs_status_mail_to -m $pbs_status_mail_events  -o $log_dir/uparse_merge.$sid.$count.o -e $log_dir/uparse_merge.$sid.$count.e -d $out_dir -q $pbs_queue -S /bin/bash -l nodes=1:$pbs_series:ppn=$uparse_merge_threads -l walltime=$uparse_merge_walltime -v config=$config,merged_fastq=$merged_fastq,fastq_r1=$fastq_r1,fastq_r2=$fastq_r2,fastq_r1_tmp=$fastq_r1_tmp,fastq_r2_tmp=$fastq_r2_tmp,fastq_r1_renamed=$fastq_r1_renamed,fastq_r2_renamed=$fastq_r2_renamed,sid=$sid,fastq_maxdiffs=$uparse_merge_fastq_maxdiffs,cmds_log=$cmds_log $scripts_dir/uparse_merge.single.sh"
 
     echo $qsub > $log_dir/uparse_merge.$sid.$count.qsub
-    cat uparse_merge.single.sh > $log_dir/uparse_merge.$sid.$count.sh
+    cat $scripts_dir/uparse_merge.single.sh > $log_dir/uparse_merge.$sid.$count.sh
 
    if [ $uparse_merge_DEBUG -eq 1 ]
     then
