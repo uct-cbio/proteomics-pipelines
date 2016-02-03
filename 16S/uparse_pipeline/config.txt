@@ -32,12 +32,3 @@ uparse_filter_threads=1
 uparse_filter_walltime="1:00:00"
 uparse_filter_fastq_trunclen=300
 uparse_filter_fastq_maxee=0.1
-
-# uparse downstream
-uparse_downstream_DEBUG=0
-uparse_downstream_in_dir=/scratch/DB/bio/test_data/16S/process/16S/uparse_pipeline/filtered_fastas
-uparse_downstrea,_out_dir=/scratch/DB/bio/test_data/16S/process/16S/uparse_pipeline/downstream
-uparse_downstream_log_dir=/scratch/DB/bio/test_data/16S/process/16S/uparse_pipeline/logs
-uparse_downstream_threads=1
-uparse_downstream_walltime="2:00:00"
-
