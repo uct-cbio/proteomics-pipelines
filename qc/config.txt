@@ -14,7 +14,7 @@ log_dir=/scratch/DB/bio/test_data/16S/process/qc/logs
 # Tools / dependencies
 # Fastqc v0.10.1
 fastqc_DEBUG=0
-fastqc_base=/opt/exp_soft/FastQC
+fastqc_base=/opt/exp_soft/qiime/packages/other/FastQC
 fastqc_threads=4
 fastqc_walltime="2:00:00"
 
