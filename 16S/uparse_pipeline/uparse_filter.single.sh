@@ -24,7 +24,7 @@ fi
 #Now do absolute length truncation
 if [ ! -f $filtered_3_fasta ]
 then
-  cmd="/opt/exp_soft/qiime/python-2.7.3/bin/python  /opt/exp_soft/qiime/packages/other/primer_stripping/truncate_seq_lens.py $filtered_2_fasta 250 260 250 $filtered_3_fasta"
+  cmd="/opt/exp_soft/qiime/python-2.7.3/bin/python  /opt/exp_soft/qiime/packages/other/primer_stripping/truncate_seq_lens.py $filtered_2_fasta $min_len $max_len $target_len $filtered_3_fasta"
   echo $cmd >> $cmds_log
   eval $cmd
 fi

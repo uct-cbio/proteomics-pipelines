@@ -41,33 +41,28 @@ do
   filtered_1_fasta=$out_dir/$sid.merged.filtered_1.fasta #this is for the first filtering step (max_e filtering) before primer stripping
   filtered_2_fasta=$out_dir/$sid.merged.filtered_2.fasta #this is for the second filtering step: primer stripping
   filtered_3_fasta=$out_dir/$sid.merged.filtered_3.fasta #this is for the third filtering step: length trunctation
-  
-  #if [ ! -f $filtered_fasta ]
-  #KL changed to:
-  if [ ! -f $filtered_3_fasta ]
-  then
+#  if [ ! -f $filtered_3_fasta ]
+#  then  
+  cmds_log=$log_dir/uparse_filter.$sid.$count.cmds
 
-    cmds_log=$log_dir/uparse_filter.$sid.$count.cmds
-   # qsub="qsub -N uparse_filter.$sid.$count -M $pbs_status_mail_to -m $pbs_status_mail_events  -o $log_dir/uparse_filter.$sid.$count.o -e $log_dir/uparse_filter.$sid.$count.e -d $out_dir -q $pbs_queue -S /bin/bash -l nodes=1:$pbs_series:ppn=$uparse_filter_threads -l walltime=$uparse_filter_walltime -v config=$config,merged_fastq=$merged_fastq,filtered_fasta=$filtered_fasta,fastq_trunclen=$uparse_filter_fastq_trunclen,fastq_maxee=$uparse_filter_fastq_maxee,cmds_log=$cmds_log $scripts_dir/uparse_filter.single.sh"
     #KL changed to:
-    qsub="qsub -N uparse_filter.$sid.$count -o $log_dir/uparse_filter.$sid.$count.o -e $log_dir/uparse_filter.$sid.$count.e -d $out_dir -q $pbs_queue -S /bin/bash -l nodes=1:$pbs_series:ppn=$uparse_filter_threads -l walltime=$uparse_filter_walltime -v config=$config,merged_fastq=$merged_fastq,filtered_1_fasta=$filtered_1_fasta,fastq_maxee=$uparse_filter_fastq_maxee,filtered_2_fasta=$filtered_2_fasta,mapping_file=$mapping_file,primer_strip_log=$log_dir/SP_log.$sid.$count.txt,filtered_3_fasta=$filtered_3_fasta,fastq_trunclen=$uparse_filter_fastq_trunclen,cmds_log=$cmds_log $scripts_dir/uparse_filter.single_KL_primer_strip.sh"
-    echo $qsub > $log_dir/uparse_filter.$sid.$count.qsub
-    cat $scripts_dir/uparse_filter.single_KL_primer_strip.sh > $log_dir/uparse_filter.$sid.$count.sh
+  qsub="qsub -N uparse_filter.$sid.$count -o $log_dir/uparse_filter.$sid.$count.o -e $log_dir/uparse_filter.$sid.$count.e -d $out_dir -q $pbs_queue -S /bin/bash -l nodes=1:$pbs_series:ppn=$uparse_filter_threads -l walltime=$uparse_filter_walltime -v config=$config,merged_fastq=$merged_fastq,filtered_1_fasta=$filtered_1_fasta,fastq_maxee=$uparse_filter_fastq_maxee,filtered_2_fasta=$filtered_2_fasta,mapping_file=$mapping_file,primer_strip_log=$log_dir/SP_log.$sid.$count.txt,filtered_3_fasta=$filtered_3_fasta,max_len=$max_len,min_len=$min_len,target_len=$target_len,cmds_log=$cmds_log $scripts_dir/uparse_filter.KLv2.single.sh"
+  echo $qsub > $log_dir/uparse_filter.$sid.$count.qsub
+  cat $scripts_dir/uparse_filter.KLv2.single.sh > $log_dir/uparse_filter.$sid.$count.sh
 
-   if [ $uparse_filter_DEBUG -eq 1 ]
-    then
-      echo $qsub
-    else
-      jobid=`$qsub`
-      echo $jobid
-      echo $jobid > $log_dir/uparse_filter.$sid.$count.jobid
-    fi
-
-    (( count+=1 ))
-
+  if [ $uparse_filter_DEBUG -eq 1 ]
+   then
+     echo $qsub
    else
-    echo "UPARSE filter ouput for "$sid" exists already. Skipping this sample." 
+     jobid=`$qsub`
+     echo $jobid
+     echo $jobid > $log_dir/uparse_filter.$sid.$count.jobid
    fi
+
+   (( count+=1 ))
+  # else
+  #  echo "UPARSE filter ouput for "$sid" exists already. Skipping this sample." 
+  # fi
 
 done < $sid_fastq_pair_list
 
