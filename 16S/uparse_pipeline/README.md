@@ -1,5 +1,5 @@
 ### How to run
-1. First create your config file (an example config and list file are included)
+1. First create your config file and mapping file with primer sequences (example config, mapping and list files are included)
 2. Then run the fastqc batch script:
 ```/home/gerrit/projects/cbio-pipelines/16S/uparse_pipeline/uparse_merge.batch.sh /home/gerrit/projects/cbio-pipelines/16S/uparse_pipeline/config.txt```
 3. Once 2 has completed the merge reads can be filtered: ```/home/gerrit/projects/cbio-pipelines/16S/uparse_pipeline/uparse_filter.batch.sh /home/gerrit/projects/cbio-pipelines/16S/uparse_pipeline/config.txt```
