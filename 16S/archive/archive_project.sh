@@ -11,7 +11,7 @@ else
 fi
 
 project_name=$project_folder
-projecti_dir=$project_dir
+project_dir=$project_dir
 department=$department
 user=$user
 sub_dirs=$sub_dirs
