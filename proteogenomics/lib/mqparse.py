@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 import drive
 import Bio; from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import sys; import Bio; from Bio import SeqIO
 import sequtils

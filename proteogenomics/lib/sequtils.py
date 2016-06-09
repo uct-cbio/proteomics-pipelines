@@ -1,4 +1,5 @@
-#!/home/ptgmat003/ve/bin/python
+#/usr/bin/env python
+
 import pandas as pd
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq, translate
@@ -265,25 +266,84 @@ class gff3:
         self.table = pd.read_csv(os.path.abspath(GFF3),sep='\t',comment='#')
         self.table.columns = self.gffcols
 
+    def entryCount(self):
+        return len(self.table)
+
 class vcf:
     '''Basic class for vcf data'''
-    expected_columns = ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
     def __init__(self, VCF):
-        self.table = pd.read_csv(os.path.abspath(VCF),sep='\t',comment='#')
+        path = os.path.abspath(VCF)
+        w = open(path).readlines()
+        headers = [line.strip() for line in w if line.startswith('#CHROM')][0].split('\t')
+        self.table = pd.read_csv(path,sep='\t',comment='#', header=None)
+        self.table.columns = headers
 
-class get_variant_genome:
-    def __init__(self, VCF, FASTA, GFF3, name=None):  # vcf file, name, genome,gff3
+    def entryCount(self):
+        return len(self.table)
+
+class genome:
+    '''Basic class of genome object'''
+    def __init__(self, FASTA):
+        self.reflist = list(SeqIO.parse(os.path.abspath(FASTA),'fasta'))    
+        self.refdict = {}
+        for seq in self.reflist:
+            self.refdict[seq.id] = seq
         
-        self.reflist = list(SeqIO.parse(os.path.abspath(FASTA),'fasta'))
+
+class variant:
+    def __init__(self, VCF, FASTA, GFF3, name=None):  # vcf file, name, genome,gff3
+        self.ref_genome = genome(FASTA)
         self.gff = gff3(GFF3)
         self.vcf = vcf(VCF)
 
         print(self.vcf.table.head())
 
         self.name = name
+    
+        self.var_genome = {} 
+        self.var_mapping = {}
 
-    def entryCount(self):
-        print(len(self.table))
+        for chrom in self.ref_genome.refdict:      
+            
+            start_pos = 0
+            step = 0
+            seen_pos = []
+            rec = self.ref_genome.refdict[chrom]  
+            rseq = str(rec.seq)
+
+            _ = self.vcf.table
+        
+            new_seq_list = []
+            new_seq_map  = {}
+            
+            subset = _[_['#CHROM']==chrom]  # get only vcf rows relevant to the fasta id
+            for row in subset.iterrows():
+                pos = row[1]['POS'] - 1
+                assert pos not in seen_pos
+                seen_pos.append(pos)
+                ref = row[1]['REF']
+                alt = row[1]['ALT']
+
+                for p in range(start_pos, pos):
+                    new_seq_map[p] = p + step
+                    new_seq_list.append(rseq[p])
+
+                new_seq_map[pos] = pos + step
+                new_seq_list.append(alt)
+                step += len(alt) - len(ref) 
+                start_pos = pos + len(ref) 
+            
+            for p in range(start_pos, len(rseq)):
+                new_seq_map[p] = p + step
+                new_seq_list.append(rseq[p])
+
+            vseq = ''.join(new_seq_list)
+            self.var_genome[chrom] = vseq
+            self.var_mapping[chrom]= new_seq_map
+
+        
+
+
 
 
 

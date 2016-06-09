@@ -1,4 +1,4 @@
-#!/home/ptgmat003/ve/bin/python
+#!/usr/bin/env python
 
 import sequtils
 import Bio; from Bio import SeqIO
