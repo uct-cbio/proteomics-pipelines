@@ -20,8 +20,7 @@ echo "Start..."
 for i in "${sub_dirs[@]}";
 do
   echo "Rsyncing $project_dir/$i /mnt/researchdata/$department space mounted on dev-igisoro.cbio.uct.ac.za ..."
- # cmd="rsync --size-only --append -Pavvvzh $project_dir/$i $user@dev-igisoro.cbio.uct.ac.za:/mnt/researchdata/$department/ProjectData/$project_name"
-  cmd="rsync --size-only --append -Pavvvzh $project_dir/$i $user@dev-igisoro.cbio.uct.ac.za:/mnt/researchdata/$department/ProjectData/gerrit"
+  cmd="rsync --size-only --append -Pavvvzh $project_dir/$i $user@dev-igisoro.cbio.uct.ac.za:/mnt/researchdata/$department/ProjectData/$project_name"
   echo $cmd
   eval $cmd
 done
