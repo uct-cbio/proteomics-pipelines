@@ -289,11 +289,10 @@ class genome:
         for seq in self.reflist:
             self.refdict[seq.id] = seq
         
-
-class variant:
-    def __init__(self, VCF, FASTA, GFF3, name=None):  # vcf file, name, genome,gff3
+class variant_genome:
+    def __init__(self, VCF, FASTA, GFF3 = None, name=None):  # vcf file, name, genome,gff3
         self.ref_genome = genome(FASTA)
-        self.gff = gff3(GFF3)
+
         self.vcf = vcf(VCF)
 
         print(self.vcf.table.head())
@@ -341,7 +340,9 @@ class variant:
             self.var_genome[chrom] = vseq
             self.var_mapping[chrom]= new_seq_map
 
-        
+
+    def var_feature_table(self, GFF3):
+        gff = gff3(os.path.abspath(GFF3))
 
 
 
