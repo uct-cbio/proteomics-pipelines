@@ -51,15 +51,18 @@ def codon_list(table):
     codons = CodonTable.unambiguous_dna_by_id[table].forward_table.keys()
     return codons
 
-def six_frame(Genome, table, peptide_length, codons = ['ATG','GTG','TTG'], translated = True):
+def six_frame(Genome, assembly_name, contig_name, table, peptide_length, codons = ['ATG','GTG','TTG'], translated = True, contig_id='sixframe', methionine_start=True): 
     Minimum_Peptide_Length = peptide_length
     Codon_Table = table
     Start_Codons = codons
 
     codon_table = CodonTable.unambiguous_dna_by_id[Codon_Table]
+    
     Stop_Codons = codon_table.stop_codons
-    #for i in Start_Codons:
-    #        assert i in codon_table.start_codons                       # make sure the selected start codons are found in the selected translation table
+    
+    if (translated==True) and (methionine_start==True):
+        for i in Start_Codons:
+            assert i in codon_table.start_codons                       # make sure the selected start codons are found in the selected translation table
 
     Six_Frame, Reverse_Complement_Genome = Six_Frames_and_Reverse_Complement(Genome)
 
@@ -124,42 +127,40 @@ def six_frame(Genome, table, peptide_length, codons = ['ATG','GTG','TTG'], trans
                     Start = x
                     ORF.append(i[x:y])
             index += 3
+    
     Six_Frame = []
-    if translated == True:
-        for i in ORFs_by_Frame:                          #lets check six frame ORF db
-            for j in ORFs_by_Frame[i]:                   #check by frame
-                if j[5][-3:] in Stop_Codons:             #check if strand ends in a stop codon
-                    Seq_len = (len(j[5])-3)/3                  #subtract 3 if above true, and divide by three to get length
-                elif j[5][-3:] not in Stop_Codons:       #if last codon is not a stop codon, then just divide by 3 to get petide length
-                    Seq_len = len(j[5])/3
-                if Seq_len >= Minimum_Peptide_Length:    #compare to minimum peptide length
-                    translated = str(translate(Seq(j[5])))           #translate into peptide
-                    if translated[-1] == '*':            #if end in a stop codon, then change first letter to M
-                        prot_seq = translated[0:len(translated)-1]    #checked
-                    elif translated[-1] != '*':
-                        prot_seq = translated
-                    if j[1] < 4:
-                        frame_direction = '+'
-                    elif j[1] > 3:
-                        frame_direction = '-'
-                    record = SeqRecord(Seq(prot_seq),id = "({}){}:{}".format(frame_direction,j[3],j[4]), description = "Six Frame Translated ORF")
-                    Six_Frame.append(record)
+    rec_count = 1
+    for i in ORFs_by_Frame:
+        for j in ORFs_by_Frame[i]:                   #check by frame
+            if j[5][-3:] in Stop_Codons:             #check if strand ends in a stop codon
+                Seq_len = (len(j[5])-3)/3                  #subtract 3 if above true, and divide by three to get length
+            elif j[5][-3:] not in Stop_Codons:       #if last codon is not a stop codon, then just divide by 3 to get petide length
+                Seq_len = len(j[5])/3
+            if Seq_len >= Minimum_Peptide_Length:    #compare to minimum peptide length
+                seq = str(Seq(j[5]))
+                if j[1] < 4:
+                    frame_direction = '+'
+                elif j[1] > 3:
+                    frame_direction = '-'
+                
+                seq = Seq(seq)
+                if translated == False:
+                    record = SeqRecord(seq = seq,id = "{}_{}|{}_{}_recno_{}|({}){}:{}".format(assembly_name, contig_name, assembly_name, contig_name,  float(rec_count), frame_direction,j[3],j[4]), description='Six_Frame_ORF')
 
-    elif translated == False:
-        for i in ORFs_by_Frame:
-            for j in ORFs_by_Frame[i]:                   #check by frame
-                if j[5][-3:] in Stop_Codons:             #check if strand ends in a stop codon
-                    Seq_len = (len(j[5])-3)/3                  #subtract 3 if above true, and divide by three to get length
-                elif j[5][-3:] not in Stop_Codons:       #if last codon is not a stop codon, then just divide by 3 to get petide length
-                    Seq_len = len(j[5])/3
-                if Seq_len >= Minimum_Peptide_Length:    #compare to minimum peptide length
-                    seq = str(Seq(j[5]))
-                    if j[1] < 4:
-                        frame_direction = '+'
-                    elif j[1] > 3:
-                        frame_direction = '-'
-                    record = SeqRecord(Seq(seq),id = "({}){}:{}".format(frame_direction,j[3],j[4]), description = "Six Frame ORF")
-                    Six_Frame.append(record)
+                elif translated == True: 
+                    prot_seq = str(translate(seq, table=table))
+                    if prot_seq[-1] == '*':            
+                        prot_seq = prot_seq[:-1]  
+
+                    if (methionine_start == True):
+                        seqstart =seq[:3]
+                        if seqstart in Start_Codons:
+                            prot_seq = 'M' + prot_seq[1:]
+                    
+                    prot_seq = Seq(prot_seq)
+                    record = SeqRecord(prot_seq,id = "{}_{}|{}_{}_recno_{}|({}){}:{}".format(assembly_name, contig_name, assembly_name, contig_name, float(rec_count), frame_direction,j[3],j[4]),description='Six_Frame_Translated_ORF')
+                Six_Frame.append(record)
+                rec_count += 1
     return Six_Frame
 
 def get_frame(seq, genome_seq, stops): #'''BUG'''translated seqrecord with coords, genomic seq record, possible stops eg ['TAA', 'TAG', 'TGA']
@@ -220,44 +221,92 @@ def m_start_list(proteins):     #inport a list of amino acid sequences, and retu
         m.append(record)
     return m
 
-def sf_contigs(contigs, table=11, peptide_length = 20, codons = 'All', translated = False): # contigs fasta file, output genomic six frame sequences
-    if codons == 'All':
-        codons = codon_list(table)
-    six_frame_seqs = []
-    seq_count = 1
-    for i in contigs:
-        cid = i.id    #get the contig id
-        six = six_frame(str(i.seq), table = table, peptide_length = peptide_length, codons = codons, translated=translated)
-        for j in six:
-            id = cid +'|' + j.id
-            sequence =  j.seq   #sequence seq
-            record = SeqRecord(seq=sequence, description ='Six_frame_sequence_{}'.format(str(float(seq_count))), id =id)
-            six_frame_seqs.append(record)
-            seq_count += 1
-
-    #sf_dct = defaultdict(list)       #the following lines combine repeating sequences in the database into one record mapped to different locations in the 					contigs
-    #for i in six_frame_seqs:
-    #	string = str(i.seq)
-    #	sf_dct[string].append(i.id)
+def sf_contigs(contigs, assembly_name, table=11, peptide_length = 20, codons = 'All', translated = False, methionine_start=False): # contigs fasta file, output genomic six frame sequences
     
-    #new_dct = defaultdict()
-    #for i in sf_dct:
-    #	new_id = '|'.join(sf_dct[i])
-	#seq = Seq(i)
-	#record = SeqRecord(seq=seq,id=new_id,description='')
-	#new_dct[new_id] =record
-    #keys = new_dct.keys()
-    #keys = natsort.natsorted(keys)
-    #combined_seqs = []
-    #count = 1
+    if (codons == 'All'):
+        codons = codon_list(table)
+        if translated ==True:
+            assert methionine_start==False # can only translate known start codons with methionine
+    six_frame_seqs = []
+    for i in contigs:
+        cid = '_'.join(i.id.split('|'))  #get the contig id
+        six = six_frame(str(i.seq),assembly_name= assembly_name, contig_name = cid, table = table, peptide_length = peptide_length, codons = codons, translated=translated)
 
-    #for key in keys:
-    #    record = new_dct[key]
-    #    record.description = 'Six_Frame_ORF_{}'.format(float(count))
-    #    count += 1
-    #    combined_seqs.append(record)
+        for j in six:
+            six_frame_seqs.append(j)
     return six_frame_seqs
 
+def translate_start(rec, table=11, starts = ['ATG','GTG','TTG']): # list of Met-initiatiator codons    
+    seq = rec.seq
+    id = rec.id
+    desc = rec.description
+
+    if seq[:3] in starts:
+        translated = 'M' + str(translate(seq, table = table))[1:]
+    else:
+        translated=str(translate(seq,table=table))
+
+    if translated.endswith('*'):
+        translated = translated[:-1]
+
+    newrec = SeqRecord(id = id, description = desc, seq = Seq(translated))
+    return newrec
+
+
+def alt_starts_recs(records, starts = ['ATG','GTG','TTG']):
+    all= []
+    for seq in records:
+        alt_seqs = alt_tss(seq, starts = starts)
+        all += alt_seqs
+    return all
+
+# returns a lists of records of all alternative start codons for an ORF (including the ORF given)
+def alt_tss(seq_record, table=11, starts = ['ATG', 'GTG', 'TTG'], translated=True):
+    alt_seqs = []
+    alt_seq_count = 1
+    id_   = seq_record.id
+    seq_  = str(seq_record.seq)
+    desc_ = seq_record.description.split()[1]
+    num_  =  int(id_.split('|')[1].split('recno_')[1].split('.')[0])
+
+    coords  =id_.split('|')[2].split('(')[1]
+    base_id = id_.split('recno_')[0]
+    strand = coords[0]
+    
+    coords = coords.split(')')[1].split(':')
+
+    start  = int(coords[0])
+    end    = int(coords[1])
+    orig_rec = SeqRecord(seq = Seq(seq_) , id = id_, description = desc_)
+    alt_seqs.append(orig_rec)
+    count = 3
+    while count <= len(seq_)-3:
+        codon = seq_[count:count +3]
+        if codon in starts:
+            alt_seq = Seq(seq_[count:])
+                
+            assert len(alt_seq) % 3.0 == 0
+            if strand == '+':
+                new_start = start + count
+                new_end   = end
+            elif strand == '-':
+                new_start = start
+                new_end = end - count
+            new_rec = SeqRecord(id = base_id + 'recno_{}.{}|({}){}:{}'.format(str(num_), str(alt_seq_count), strand, new_start, new_end),
+                                description = desc_,
+                                seq = alt_seq)
+
+            alt_seqs.append(new_rec)
+            alt_seq_count += 1
+        count += 3
+
+    if translated == True:
+        translated_recs = []
+        for rec in alt_seqs:
+            rec = translate_start(rec, table=table, starts=starts)
+            translated_recs.append(rec)
+        alt_seqs = translated_recs
+    return alt_seqs
 
 class gff3:
     '''Basic class to parse GFF3'''
@@ -265,6 +314,31 @@ class gff3:
     def __init__(self, GFF3):
         self.table = pd.read_csv(os.path.abspath(GFF3),sep='\t',comment='#')
         self.table.columns = self.gffcols
+        self.attributes_columns()
+
+    def attributes_columns(self):
+        pos_cols = ['ID', 'Name', 'Alias', 'Parent', 'Target', 'Gap', 'Derives_from','Note', 'Dbxref', 'Ontology_term', 'Is_circular']
+        for pos in pos_cols:
+            self.table['_attributes.{}'.format(pos)] = self.table['attributes'].apply(lambda x : x.split('{}='.format(pos))[1].split(';')[0] if '{}='.format(pos) in x else None)
+        self.table = self.table.dropna(how='all',axis=1)
+
+    def split_attributes(self):
+        for row in self.table.iterrows():
+            attr = row[1]['attributes']
+            fields = attr.split(';')
+            for f in fields:
+                f = f.split('=')
+                name = f[0]
+                field = f[1]
+                if (name =='Dbxref'):
+                    subfields = field.split(',')
+                    for sub in subfields:
+                        sub = sub.split(':')
+                        sname = sub[0]
+                        sfield = sub[1]
+                        self.table.loc[row[0], '_attributes.{}.{}'.format(name, sname)] = sfield
+                else:
+                    self.table.loc[row[0], '_attributes.{}'.format(name)] = field
 
     def entryCount(self):
         return len(self.table)
@@ -292,22 +366,18 @@ class genome:
 class variant_genome:
     def __init__(self, VCF, FASTA, GFF3 = None, name=None):  # vcf file, name, genome,gff3
         self.ref_genome = genome(FASTA)
-
         self.vcf = vcf(VCF)
-
-        print(self.vcf.table.head())
-
         self.name = name
-    
         self.var_genome = {} 
         self.var_mapping = {}
+        self.ref_genome = SeqIO.to_dict(SeqIO.parse(os.path.abspath(FASTA),'fasta'))
 
-        for chrom in self.ref_genome.refdict:      
-            
+        for chrom in self.ref_genome:      
+
             start_pos = 0
             step = 0
             seen_pos = []
-            rec = self.ref_genome.refdict[chrom]  
+            rec = self.ref_genome[chrom]  
             rseq = str(rec.seq)
 
             _ = self.vcf.table
@@ -337,12 +407,59 @@ class variant_genome:
                 new_seq_list.append(rseq[p])
 
             vseq = ''.join(new_seq_list)
-            self.var_genome[chrom] = vseq
+            vid  = 'variant_' + rec.id
+            vdescription  = 'variant_' + rec.description
+            vsrecord = SeqRecord(seq = Seq(vseq), id = vid, description = vdescription)
+
+            self.var_genome[chrom] = vsrecord
             self.var_mapping[chrom]= new_seq_map
 
 
     def var_feature_table(self, GFF3):
         gff = gff3(os.path.abspath(GFF3))
+        cds_table = gff.table[gff.table['type']=='CDS']
+        start_affected = 0
+        end_affected = 0
+
+        for row in cds_table.iterrows():
+            seqid = row[1]['seqid']
+            start = row[1]['start'] -1
+            end = row[1]['end']
+            strand = row[1]['strand']
+
+        
+            ref_genome = str(self.ref_genome[seqid].seq)
+            var_genome = str(self.var_genome[seqid].seq)
+            mapping = self.var_mapping[seqid]
+            
+            ref_cds = ref_genome[start : end]
+            
+            var_start = None
+            var_end = None
+            
+            if start in mapping:
+                var_start = mapping[start]
+            if end in mapping:
+                var_end   = mapping[end]
+
+            if (var_start != None) and (var_end != None):
+                var_region = var_genome[var_start:var_end]
+                if strand == '+':
+                    var_cds = Seq(var_region)
+                elif strand =='-':
+                    var_cds = Seq(var_region).reverse_complement()
+                
+                var_cds_len = len(str(var_cds))
+                if var_cds_len % 3 != 0:
+                    print(row[1]['_attributes.Name'])
+            
+            if var_start == None:
+                start_affected += 1
+            if var_end == None:
+                end_affected += 1
+        print('Start affected: {}'.format(start_affected))
+        print('End affected: {}'.format(end_affected))
+
 
 
 

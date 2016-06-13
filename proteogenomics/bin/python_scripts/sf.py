@@ -8,18 +8,11 @@ import sequtils
 
 if len(sys.argv)==3:
     infile  = sys.argv[1]
-    outfile = sys.argv[2]
-
-elif len(sys.argv) == 1:
-    infile = sys.stdin
+    assembly_name = sys.argv[2]
     outfile = sys.stdout
 
-elif len(sys.argv)==2:
-    infile = sys.argv[1]
-    outfile = sys.stdout
 
 seqs = list(SeqIO.parse(infile, 'fasta'))
-
-sf = sequtils.sf_contigs(seqs)
+sf = sequtils.sf_contigs(seqs, assembly_name = assembly_name, table=11, codons='All', peptide_length=20, translated=False)
 
 SeqIO.write(sf, outfile, 'fasta')
