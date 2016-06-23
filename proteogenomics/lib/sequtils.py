@@ -373,7 +373,6 @@ class variant_genome:
         self.ref_genome = SeqIO.to_dict(SeqIO.parse(os.path.abspath(FASTA),'fasta'))
 
         for chrom in self.ref_genome:      
-
             start_pos = 0
             step = 0
             seen_pos = []
@@ -389,9 +388,15 @@ class variant_genome:
             for row in subset.iterrows():
                 pos = row[1]['POS'] - 1
                 assert pos not in seen_pos
+                assert pos >=start_pos
                 seen_pos.append(pos)
                 ref = row[1]['REF']
                 alt = row[1]['ALT']
+                alt = alt.split(',')
+                assert not isinstance(alt, str)
+                alt = alt[0]
+                assert ',' not in ref
+                assert ',' not in alt
 
                 for p in range(start_pos, pos):
                     new_seq_map[p] = p + step
@@ -908,5 +913,26 @@ def ldict(seqs):
 	for i in seqs:
 		seqs_dict[str(i.seq)]
 '''
+def proteome2string(fasta):
+    proteome_strings = []
+    for rec in fasta:
+        proteome_strings.append(str(rec.seq))
+    combined_string = 'X'.join(proteome_strings)
+    return combined_string
+
+def genome2aa(fasta):
+    genome_list = []
+    for contig in fasta:
+        g = str(contig.seq)
+        frame1 = str(translate(Seq(g[:]),  cds = False, table = 11))
+        frame2 = str(translate(Seq(g[1:]), cds = False, table = 11))
+        frame3 = str(translate(Seq(g[2:]), cds = False, table = 11))
+        frame4 = str(translate(Seq(g[:]).reverse_complement(),  cds = False, table = 11))
+        frame5 = str(translate(Seq(g[:-1]).reverse_complement(),cds = False, table = 11))
+        frame6 = str(translate(Seq(g[:-2]).reverse_complement(),cds = False, table = 11))
+        frame_list = [frame1, frame2, frame3, frame4, frame5, frame6]
+        genome_list.append('X'.join(frame_list))
+    genome_str = 'X'.join(genome_list)
+    return genome_str
 
 
