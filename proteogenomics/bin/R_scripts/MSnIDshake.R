@@ -5,12 +5,19 @@ library("optparse")
 option_list = list(
  make_option(c("-i", "--indir"), type="character", default=NULL, 
               help="Directory of mzIdentML files for gloabal FDR control", metavar="character"),
-	make_option(c("-o", "--outdir"), type="character", default=NULL, 
-              help="Directory that will be created/overwritten with output files", metavar="character")
-);
+	make_option(c("--psm_fdr"), type="integer", default=1, 
+              help="Percentage value to control the FDR at the PSM level ", metavar="character"),
+	make_option(c("--peptide_fdr"), type="integer", default=1, 
+              help="Percentage value to control the FDR at the peptide level ", metavar="character"),
+	make_option(c("--protein_fdr"), type="integer", default=1, 
+              help="Percentage value to control the FDR at the protein accession level ", metavar="character"))
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
+
+psm_fdr = opt$psm/100.0
+pep_fdr = opt$pep/100.0
+prot_fdr = opt$prot/100.0
 
 if (is.null(opt$indir)){
   print_help(opt_parser)
@@ -43,7 +50,6 @@ pepCleav <- as.data.frame(table(pepCleav[,c("numMissCleavages", "isDecoy")]))
 library("ggplot2")
 ggplot(pepCleav, aes(x=numMissCleavages, y=Freq, fill=isDecoy)) + geom_bar(stat='identity', position='dodge')  + ggtitle("Number of Missed Cleavages")
 dev.off()
-
 
 jpeg(paste(outdir,'/peptide_lengths.jpeg',sep=''))
 msnid$PepLength <- nchar(msnid$peptide) - 4
@@ -107,31 +113,66 @@ show(filtObj)
 evaluate_filter(msnid, filtObj, level='PSM')
 cat('\n')
 
+#Protein level FDR filtering
+print(paste('Applying accession-level FDR control: ',prot_fdr,sep=''))
 print('Optimizing MSnIDFilter object with "Grid" method:')
-filtObj.grid <- optimize_filter(filtObj, msnid, fdr.max=0.01,method="Grid",level="accession", n.iter=1000) 
-show(filtObj.grid)
-evaluate_filter(msnid, filtObj.grid, level='PSM')
+filtObj.grid <- optimize_filter(filtObj, msnid, fdr.max= prot_fdr, method="Grid",level="accession", n.iter=1000) 
 cat('\n')
 
 print('Optimizing MSnIDFilter.Grid object with "Nelder-Mead" method:')
-filtObj.nm <- optimize_filter(filtObj.grid, msnid, fdr.max=0.01,method="Nelder-Mead",level="accession", n.iter=1000) 
-show(filtObj.nm)
-evaluate_filter(msnid, filtObj.nm, level='PSM')
+filtObj.nm <- optimize_filter(filtObj.grid, msnid, fdr.max=prot_fdr,method="Nelder-Mead",level="accession", n.iter=1000) 
 cat('\n')
 
 print('Optimizing MSnIDFilter.NM object with "Simulated-Annealing" method:')
-filtObj.sa <- optimize_filter(filtObj.nm, msnid, fdr.max=0.01,method="SANN",level="accession", n.iter=1000) 
-show(filtObj.sa)
-evaluate_filter(msnid, filtObj.sa, level='PSM')
+filtObj.sa <- optimize_filter(filtObj.nm, msnid, fdr.max=prot_fdr, method="SANN",level="accession", n.iter=1000) 
 cat('\n')
-
-#print(head(psms(msnid)))
-#names(msnid)
-#show(filtObj.sa)
 
 print('Filter msnid object using the MSnIDFilter.SANN:')
 msnid <- apply_filter(msnid, filtObj.sa)
 show(msnid)
+
+#Peptide level FDR filtering
+print(paste('Applying peptide-level FDR control: ',pep_fdr,sep=''))
+print('Optimizing MSnIDFilter object with "Grid" method:')
+filtObj.grid <- optimize_filter(filtObj, msnid, fdr.max= pep_fdr, method="Grid",level="peptide", n.iter=1000) 
+cat('\n')
+
+print('Optimizing MSnIDFilter.Grid object with "Nelder-Mead" method:')
+filtObj.nm <- optimize_filter(filtObj.grid, msnid, fdr.max=pep_fdr,method="Nelder-Mead",level="peptide", n.iter=1000) 
+cat('\n')
+
+print('Optimizing MSnIDFilter.NM object with "Simulated-Annealing" method:')
+filtObj.sa <- optimize_filter(filtObj.nm, msnid, fdr.max=pep_fdr, method="SANN",level="peptide", n.iter=1000) 
+cat('\n')
+
+print('Filter msnid object using the MSnIDFilter.SANN:')
+msnid <- apply_filter(msnid, filtObj.sa)
+show(msnid)
+
+# PSM level FDR filtering
+print(paste('Applying PSM-level FDR control: ',psm_fdr,sep=''))
+print('Optimizing MSnIDFilter object with "Grid" method:')
+filtObj.grid <- optimize_filter(filtObj, msnid, fdr.max= psm_fdr, method="Grid",level="psm", n.iter=1000) 
+cat('\n')
+print('Optimizing MSnIDFilter.Grid object with "Nelder-Mead" method:')
+filtObj.nm <- optimize_filter(filtObj.grid, msnid, fdr.max=psm_fdr,method="Nelder-Mead",level="psm", n.iter=1000) 
+cat('\n')
+print('Optimizing MSnIDFilter.NM object with "Simulated-Annealing" method:')
+filtObj.sa <- optimize_filter(filtObj.nm, msnid, fdr.max=psm_fdr, method="SANN",level="psm", n.iter=1000) 
+cat('\n')
+print('Filter msnid object using the MSnIDFilter.SANN:')
+msnid <- apply_filter(msnid, filtObj.sa)
+show(msnid)
+
+print('...DONE APPLYING FDR STRINGENCY CRITERIA...')
+
+# Done applying FDR filtering criteria
+
+jpeg(paste(outdir,'/filtered_PSM_PEP.jpeg',sep=''))
+params <- psms(msnid)[,c("PEP","isDecoy")]
+ggplot(params) + geom_density(aes(x = PEP, color = isDecoy, ..count..))
+dev.off()
+
 cat('\n')
 print('Remove Decoy PSMs:')
 msnid <- apply_filter(msnid, "isDecoy == FALSE")
