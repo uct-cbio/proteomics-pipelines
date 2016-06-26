@@ -27,36 +27,44 @@ cp -R ${ps_folder} ${temp_folder}/ps
 cp -R ${sg_folder} ${temp_folder}/sg
 
 # create target-decoy fasta in the output directory
-#cd ${HOME}/SearchGUI-2.9.0
 java -cp ${temp_folder}/sg/SearchGUI-*.jar \
 eu.isas.searchgui.cmd.FastaCLI \
 -in ${fasta} -decoy
 
-
-# create search parameters
-java -cp ${temp_folder}/ps/PeptideShaker-*.jar \
-eu.isas.peptideshaker.cmd.IdentificationParametersCLI \
--out                 "${output_folder}""/identification.par" \
--db                  "${fasta%.fasta}""_concatenated_target_decoy.fasta" \
--prec_tol            "${prec_tol}" \
--prec_ppm            "${prec_ppm}" \
--frag_tol            "${frag_tol}" \
--frag_ppm            "${frag_ppm}" \
--enzyme              "${enzyme}"   \
--fixed_mods          "${fixed_mods}" \
--variable_mods       "${variable_mods}" \
--min_charge          "${min_charge}" \
--max_charge          "${max_charge}" \
--fi                  "${fi}" \
--ri                  "${ri}"\
--mc		     "${mc}"	
+# Create search parameters
+java -cp ${temp_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI \
+-out ${output_folder}/identification.par \
+-db ${fasta%.fasta}_concatenated_target_decoy.fasta \
+-prec_tol ${prec_tol} \
+-prec_ppm ${prec_ppm} \
+-frag_tol ${frag_tol} \
+-frag_ppm ${frag_ppm} \
+-enzyme "${enzyme}" \
+-fixed_mods "${fixed_mods}" \
+-variable_mods "${variable_mods}" \
+-min_charge ${min_charge} \
+-max_charge ${max_charge} \
+-mc ${mc} \
+-fi ${fi} \
+-ri ${ri} \
+-psm_fdr ${psm_fdr} \
+-peptide_fdr ${peptide_fdr} \
+-protein_fdr ${protein_fdr} \
+-myrimatch_min_pep_length ${myrimatch_min_pep_length} \
+-myrimatch_max_pep_length ${myrimatch_max_pep_length} \
+-msgf_instrument ${msgf_instrument} \
+-msgf_min_pep_length ${msgf_min_pep_length} \
+-msgf_max_pep_length ${msgf_max_pep_length} \
+-tide_min_pep_length ${tide_min_pep_length} \
+-tide_max_pep_length ${tide_max_pep_length} \
+-import_peptide_length_min ${import_peptide_length_min} \
+-import_peptide_length_max ${import_peptide_length_max} 
 
 # database search function with three inputs:
 function shakemgf {
     spectrum_file=$1 #path to the spectrum
     experiment=$2    #name of the experiment
     replicate=$3     #replicate_number
-
     sample=$(basename $spectrum_file)
     sample_name=${sample%.mgf}
     sample_folder=${output_folder}"/"${sample_name}
@@ -98,10 +106,10 @@ function shakemgf {
     -contact_url           "${contact_url}" \
     -organization_url      "${organization_url}"
 
-    java -cp ${temp_foler}/ps/PeptideShaker-*.jar eu.isas.peptideshaker.cmd.FollowUpCLI \
+    java -cp ${temp_folder}/ps/PeptideShaker-*.jar eu.isas.peptideshaker.cmd.FollowUpCLI \
     -in                     ${sample_folder}"/"${sample_name}".cpsx" \
     -spectrum_folder        ${unvalidated_folder} \
-    -psm_type               "${psm_type}"
+    -psm_type               ${psm_type}
 }
 
 count=0
@@ -115,5 +123,5 @@ done
 
 cd ${output_folder} 
 
-MSnIDshake.R -i mzIdentMLs/ --psm_fdr ${psm_FDR} --peptide_fdr {$pep_FDR} --protein_fdr {$prot_FDR}
+MSnIDshake.R -i mzIdentMLs/ -v ${MSnID_FDR_value} -l ${MSnID_FDR_level}
 

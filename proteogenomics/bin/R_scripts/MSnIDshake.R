@@ -4,20 +4,17 @@ library("dplyr")
 library("optparse")
 option_list = list(
  make_option(c("-i", "--indir"), type="character", default=NULL, 
-              help="Directory of mzIdentML files for gloabal FDR control", metavar="character"),
-	make_option(c("--psm_fdr"), type="integer", default=1, 
-              help="Percentage value to control the FDR at the PSM level ", metavar="character"),
-	make_option(c("--peptide_fdr"), type="integer", default=1, 
-              help="Percentage value to control the FDR at the peptide level ", metavar="character"),
-	make_option(c("--protein_fdr"), type="integer", default=1, 
-              help="Percentage value to control the FDR at the protein accession level ", metavar="character"))
+              help="Directory of mzIdentML files for global FDR control", metavar="character"),
+	make_option(c("-v", "--fdr_value"), type="integer", default=1, 
+              help="Percentage value to control the FDR", metavar="character"),
+	make_option(c("-l","--fdr_level"), type="character", default='accession',
+              help="The level to control the FDR ('PSM', 'peptide' or 'accession')", metavar="character"))
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-psm_fdr = opt$psm/100.0
-pep_fdr = opt$pep/100.0
-prot_fdr = opt$prot/100.0
+fdr_value = opt$fdr_value/100.0   # convert percentage to ratio
+fdr_level = opt$fdr_level         
 
 if (is.null(opt$indir)){
   print_help(opt_parser)
@@ -102,64 +99,35 @@ params <- psms(msnid)[,c("absParentMassErrorPPM","isDecoy")]
 ggplot(params) + geom_density(aes(x = absParentMassErrorPPM, color = isDecoy, ..count..))
 dev.off()
 
+show(msnid)
+msnid$minPepLength <- msnid$PepLength
+
 print('Creating MSnIDFilter object:')
 filtObj <- MSnIDFilter(msnid)
 filtObj$absParentMassErrorPPM <- list(comparison="<", threshold=10.0)
 filtObj$PEP <- list(comparison="<", threshold=0.01)
-filtObj$PepLength <- list(comparison="<", threshold=30)
+filtObj$PepLength <- list(comparison="<", threshold=35)
+filtObj$minPepLength <- list(comparison=">", threshold=6)
 filtObj$numMissCleavages <- list(comparison="<", threshold=3)
 filtObj$numIrregCleavages <- list(comparison="<", threshold=1)
 show(filtObj)
-evaluate_filter(msnid, filtObj, level='PSM')
+evaluate_filter(msnid, filtObj, level=fdr_level)
 cat('\n')
 
 #Protein level FDR filtering
-print(paste('Applying accession-level FDR control: ',prot_fdr,sep=''))
+print(paste('Applying ',fdr_level,' level FDR control: ',fdr_value,sep=''))
 print('Optimizing MSnIDFilter object with "Grid" method:')
-filtObj.grid <- optimize_filter(filtObj, msnid, fdr.max= prot_fdr, method="Grid",level="accession", n.iter=1000) 
+filtObj.grid <- optimize_filter(filtObj, msnid, fdr.max= fdr_value, method="Grid",level=fdr_level, n.iter=1000) 
 cat('\n')
 
 print('Optimizing MSnIDFilter.Grid object with "Nelder-Mead" method:')
-filtObj.nm <- optimize_filter(filtObj.grid, msnid, fdr.max=prot_fdr,method="Nelder-Mead",level="accession", n.iter=1000) 
+filtObj.nm <- optimize_filter(filtObj.grid, msnid, fdr.max=fdr_value, method="Nelder-Mead",level=fdr_level, n.iter=1000) 
 cat('\n')
 
 print('Optimizing MSnIDFilter.NM object with "Simulated-Annealing" method:')
-filtObj.sa <- optimize_filter(filtObj.nm, msnid, fdr.max=prot_fdr, method="SANN",level="accession", n.iter=1000) 
+filtObj.sa <- optimize_filter(filtObj.nm, msnid, fdr.max=fdr_value, method="SANN",level=fdr_level, n.iter=1000) 
 cat('\n')
 
-print('Filter msnid object using the MSnIDFilter.SANN:')
-msnid <- apply_filter(msnid, filtObj.sa)
-show(msnid)
-
-#Peptide level FDR filtering
-print(paste('Applying peptide-level FDR control: ',pep_fdr,sep=''))
-print('Optimizing MSnIDFilter object with "Grid" method:')
-filtObj.grid <- optimize_filter(filtObj, msnid, fdr.max= pep_fdr, method="Grid",level="peptide", n.iter=1000) 
-cat('\n')
-
-print('Optimizing MSnIDFilter.Grid object with "Nelder-Mead" method:')
-filtObj.nm <- optimize_filter(filtObj.grid, msnid, fdr.max=pep_fdr,method="Nelder-Mead",level="peptide", n.iter=1000) 
-cat('\n')
-
-print('Optimizing MSnIDFilter.NM object with "Simulated-Annealing" method:')
-filtObj.sa <- optimize_filter(filtObj.nm, msnid, fdr.max=pep_fdr, method="SANN",level="peptide", n.iter=1000) 
-cat('\n')
-
-print('Filter msnid object using the MSnIDFilter.SANN:')
-msnid <- apply_filter(msnid, filtObj.sa)
-show(msnid)
-
-# PSM level FDR filtering
-print(paste('Applying PSM-level FDR control: ',psm_fdr,sep=''))
-print('Optimizing MSnIDFilter object with "Grid" method:')
-filtObj.grid <- optimize_filter(filtObj, msnid, fdr.max= psm_fdr, method="Grid",level="psm", n.iter=1000) 
-cat('\n')
-print('Optimizing MSnIDFilter.Grid object with "Nelder-Mead" method:')
-filtObj.nm <- optimize_filter(filtObj.grid, msnid, fdr.max=psm_fdr,method="Nelder-Mead",level="psm", n.iter=1000) 
-cat('\n')
-print('Optimizing MSnIDFilter.NM object with "Simulated-Annealing" method:')
-filtObj.sa <- optimize_filter(filtObj.nm, msnid, fdr.max=psm_fdr, method="SANN",level="psm", n.iter=1000) 
-cat('\n')
 print('Filter msnid object using the MSnIDFilter.SANN:')
 msnid <- apply_filter(msnid, filtObj.sa)
 show(msnid)
@@ -209,3 +177,4 @@ write.table(counts.df, paste(table_dir, '/spectral_counts.txt',sep=''),sep='\t',
 
 sink()
 print(head(psms(msnid)))
+show(msnid)
