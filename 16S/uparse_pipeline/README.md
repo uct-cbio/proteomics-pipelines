@@ -3,6 +3,7 @@
 2. Then run the fastqc batch script:
 ```/home/gerrit/projects/cbio-pipelines/16S/uparse_pipeline/uparse_merge.batch.sh /home/gerrit/projects/cbio-pipelines/16S/uparse_pipeline/config.txt```
 3. Once 2 has completed the merge reads can be filtered: ```/home/gerrit/projects/cbio-pipelines/16S/uparse_pipeline/uparse_filter.batch.sh /home/gerrit/projects/cbio-pipelines/16S/uparse_pipeline/config.txt```
+4. For the final UPARSE downstream steps run ```uparse_downstream.qsub```. This script is not written in the same fashion as the other scipts in this folder. It is up to you to change the parameter and database setting in the script it selve (it is not driven by a config file). There is also a qiime activation script that needs to be downloaded from here: http://hex.uct.ac.za/~gerrit/software/qiime/hex/activate_qiime.sh , replace the section ```source /home/gerrit/activate_qiime.sh``` with where you will be saving the file. The file just loads paths necessary for some of the QIIME steps (it actually needs to be revised if QIIME activation is needed in the UPARSE step).
 
 The sid.fastq.pairs.list file needs to have per line entries which contains the sample id and the full paths of the forward and reverse pairs. The pair entries needs to be seperated by a TAB. For example the file can be created like this:
 

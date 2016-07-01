@@ -1,0 +1,3 @@
+### How to run
+1.  The final downstream processing script (```qiime.qsub```) are not written in the same fashion it as those scripts part of the qc and uparse steps. The script is currenlty just invoked by running a ```qsub qiime.qsub```. It is up to you to change the parameter and database setting in the script it selve (it is not driven by a config file). There is also a qiime activation script that needs to be downloaded from here: http://hex.uct.ac.za/~gerrit/software/qiime/hex/activate_qiime.sh , reaplace the section ```source /home/gerrit/activate_qiime.sh``` with where you will be saving the file. The file just loads paths necessary for some of the QIIME steps.
+
