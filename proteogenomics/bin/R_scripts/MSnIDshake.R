@@ -2,6 +2,7 @@
 
 library("dplyr")
 library("optparse")
+
 option_list = list(
  make_option(c("-i", "--indir"), type="character", default=NULL, 
               help="Directory of mzIdentML files for global FDR control", metavar="character"),
@@ -29,6 +30,8 @@ if (is.null(opt$outdir)) {
 } else { outidr <- opt$outdir} 
 
 dir.create(outdir,showWarnings=TRUE,recursive=FALSE,mode='0777')
+
+
 sink(paste(outdir, '/log.txt',sep=''))
 
 print(dirfiles)
@@ -41,69 +44,104 @@ msnid <- assess_missed_cleavages(msnid, missedCleavagePattern="[KR](?=[^P$])")
 
 #all_descriptions <- msnid$description
 
-jpeg(paste(outdir,'/missed_cleavages.jpeg',sep=''))
+#############
+#Unfiltered #
+#############
+
+dir.create(paste(outdir,'/qc',sep=''),showWarnings=TRUE,recursive=FALSE,mode='0777')
+jpeg(paste(outdir,'/qc/missed_cleavages.jpeg',sep=''))
 pepCleav <- unique(psms(msnid)[,c("numMissCleavages", "isDecoy", "peptide")])
 pepCleav <- as.data.frame(table(pepCleav[,c("numMissCleavages", "isDecoy")]))
 library("ggplot2")
 ggplot(pepCleav, aes(x=numMissCleavages, y=Freq, fill=isDecoy)) + geom_bar(stat='identity', position='dodge')  + ggtitle("Number of Missed Cleavages")
 dev.off()
 
-jpeg(paste(outdir,'/peptide_lengths.jpeg',sep=''))
+jpeg(paste(outdir,'/qc/peptide_lengths.jpeg',sep=''))
 msnid$PepLength <- nchar(msnid$peptide) - 4
 pepLen <- unique(psms(msnid)[,c("PepLength", "isDecoy", "peptide")])
 ggplot(pepLen, aes(x=PepLength, fill=isDecoy)) + geom_histogram(position='dodge', binwidth=3) + ggtitle("Distribution of Peptide Lengths")
 dev.off()
 
 #parent ion mass measurement error (ppm)
-jpeg(paste(outdir,'/parent_ion_mass_measurement_error.jpeg',sep=''))
+jpeg(paste(outdir,'/qc/parent_ion_mass_measurement_error.jpeg',sep=''))
 ppm <- mass_measurement_error(msnid)
 ggplot(as.data.frame(ppm), aes(x=ppm))  + geom_histogram(binwidth=100)
 dev.off()
 
-
-jpeg(paste(outdir,'/parent_ion_mass_measurement_targetdecoy.jpeg',sep=''))
-dM <- with(psms(msnid),+ (experimentalMassToCharge-calculatedMassToCharge)*chargeState) 
-x <- data.frame(dM, isDecoy=msnid$isDecoy)
-ggplot(x, aes(x=dM, fill=isDecoy)) +geom_histogram(position='stack', binwidth=0.1)
-dev.off()
-
 # MSnID package provide a simple correct_peak_selection function that simply adds or subtracts the difference between 13C and 12C to make the error less then 1 Dalton.
-
-jpeg(paste(outdir,'/parent_ion_mass_measurement_corrected.jpeg',sep=''))
+jpeg(paste(outdir,'/qc/parent_ion_mass_measurement_error_corrected.jpeg',sep=''))
 msnid.fixed <- correct_peak_selection(msnid)
 ppm <- mass_measurement_error(msnid.fixed)
 ggplot(as.data.frame(ppm), aes(x=ppm)) + geom_histogram(binwidth=0.25)
 dev.off()
 
 # recalibrate
-jpeg(paste(outdir,'/parent_ion_mass_measurement_corrected_recalibrated.jpeg',sep=''))
+jpeg(paste(outdir,'/qc/parent_ion_mass_measurement_error_corrected_recalibrated.jpeg',sep=''))
 msnid <- recalibrate(msnid.fixed)
 ppm <- mass_measurement_error(msnid)
 ggplot(as.data.frame(ppm), aes(x=ppm)) +geom_histogram(binwidth=0.25)
 dev.off()
 
-# PSM condifence (converted to PEP scores) 
-msnid$PeptideShakerPSMConfidence <- as.numeric(msnid$`PeptideShaker PSM confidence`)
-msnid$PEP <- 1.0 - msnid$PeptideShakerPSMConfidence/100.0 
+# Shows how decoys distribute with error
+jpeg(paste(outdir,'/qc/parent_ion_mass_measurement_error_corrected_recalibrated_stacked.jpeg',sep=''))
+temp <- psms(msnid)
+temp$error <- ppm
+temp$ppm <- temp$error
+temp$isDecoy <- msnid$isDecoy
+ggplot(temp, aes(x=ppm, fill=isDecoy)) + geom_histogram(position='stack', binwidth=0.25)
+dev.off()
 
-jpeg(paste(outdir,'/psm_PEP.jpeg',sep=''))
+
+# Lets count the number of replicates per peptide
+msnid.psms <- psms(msnid)
+repcount <- count(msnid.psms, pepSeq, spectrumFile)
+repcount <- count(repcount, pepSeq)  # ie. how many replicates per peptide
+msnid.psms <- merge(msnid.psms, repcount) 
+msnid$unf.pepSeq.spectrumFile.count <- msnid.psms$n
+
+jpeg(paste(outdir,'/qc/peptides_replicate_counts.jpeg',sep=''))
+repCount <- unique(psms(msnid)[,c("pepSeq", "isDecoy", "unf.pepSeq.spectrumFile.count")])
+repCount <- as.data.frame(table(repCount[,c("unf.pepSeq.spectrumFile.count", "isDecoy")]))
+ggplot(repCount, aes(x=unf.pepSeq.spectrumFile.count, y=Freq, fill=isDecoy)) + geom_bar(stat='identity', position='dodge') + ggtitle("Distribution of peptide replicate counts")
+dev.off()
+
+
+# PSM condifence (converted to PEP scores) 
+msnid$`PeptideShaker PSM confidence` <- as.numeric(msnid$`PeptideShaker PSM confidence`)
+msnid$PEP <- 1.0 - msnid$`PeptideShaker PSM confidence`/100.0 
+
+jpeg(paste(outdir,'/qc/psm_PEP.jpeg',sep=''))
 params <- psms(msnid)[,c("PEP","isDecoy")]
 ggplot(params) + geom_density(aes(x = PEP, color = isDecoy, ..count..))
 dev.off()
 
-# PSM mass error
-
-jpeg(paste(outdir,'/psm_absParentMassErrorPPM.jpeg',sep=''))
+# PSM mass error - parent
+jpeg(paste(outdir,'/qc/corrected_recalibrated_absParentMassErrorPPM.jpeg',sep=''))
 msnid$absParentMassErrorPPM <- abs(mass_measurement_error(msnid))
 params <- psms(msnid)[,c("absParentMassErrorPPM","isDecoy")]
 ggplot(params) + geom_density(aes(x = absParentMassErrorPPM, color = isDecoy, ..count..))
 dev.off()
 
+# Parent
+jpeg(paste(outdir,'/qc/corr_recal_parent_ion_mass_measurement_targetdecoy.jpeg',sep=''))
+dM <- with(psms(msnid),+ (experimentalMassToCharge-calculatedMassToCharge)*chargeState) 
+x <- data.frame(dM, isDecoy=msnid$isDecoy)
+ggplot(x, aes(x=dM, fill=isDecoy)) +geom_histogram(position='stack', binwidth=0.1)
+dev.off()
+
+
+
+
+#temp <- transform(psms(msnid), PEPladj = PEP / PepLength)
+#msnid$PEPladj <- temp$PEPladj
+
 show(msnid)
 msnid$minPepLength <- msnid$PepLength
 
 print('Creating MSnIDFilter object:')
+
 filtObj <- MSnIDFilter(msnid)
+
 filtObj$absParentMassErrorPPM <- list(comparison="<", threshold=10.0)
 filtObj$PEP <- list(comparison="<", threshold=0.01)
 filtObj$PepLength <- list(comparison="<", threshold=35)
@@ -178,3 +216,4 @@ write.table(counts.df, paste(table_dir, '/spectral_counts.txt',sep=''),sep='\t',
 sink()
 print(head(psms(msnid)))
 show(msnid)
+
