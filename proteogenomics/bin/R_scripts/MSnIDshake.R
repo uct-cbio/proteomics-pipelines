@@ -32,7 +32,7 @@ if (is.null(opt$outdir)) {
 dir.create(outdir,showWarnings=TRUE,recursive=FALSE,mode='0777')
 
 
-sink(paste(outdir, '/log.txt',sep=''))
+#sink(paste(outdir, '/log.txt',sep=''))
 
 print(dirfiles)
 library("MSnID")
@@ -93,18 +93,20 @@ dev.off()
 
 
 # Lets count the number of replicates per peptide
+jpeg(paste(outdir,'/qc/peptides_replicate_counts.jpeg',sep=''))
 msnid.psms <- psms(msnid)
 repcount <- count(msnid.psms, pepSeq, spectrumFile)
 repcount <- count(repcount, pepSeq)  # ie. how many replicates per peptide
+colnames(repcount)[ncol(repcount)] <- "unf.pepSeq.repcount"
 msnid.psms <- merge(msnid.psms, repcount) 
-msnid$unf.pepSeq.spectrumFile.count <- msnid.psms$n
 
-jpeg(paste(outdir,'/qc/peptides_replicate_counts.jpeg',sep=''))
-repCount <- unique(psms(msnid)[,c("pepSeq", "isDecoy", "unf.pepSeq.spectrumFile.count")])
-repCount <- as.data.frame(table(repCount[,c("unf.pepSeq.spectrumFile.count", "isDecoy")]))
-ggplot(repCount, aes(x=unf.pepSeq.spectrumFile.count, y=Freq, fill=isDecoy)) + geom_bar(stat='identity', position='dodge') + ggtitle("Distribution of peptide replicate counts")
+msnid$unf.pepSeq.repcount <- msnid.psms$unf.pepSeq.repcount[match(msnid$pepSeq, msnid.psms$pepSeq)]
+
+
+repCount <- unique(psms(msnid)[,c("pepSeq", "isDecoy", "unf.pepSeq.repcount")])
+repCount <- as.data.frame(table(repCount[,c("unf.pepSeq.repcount", "isDecoy")]))
+ggplot(repCount, aes(x=unf.pepSeq.repcount, y=Freq, fill=isDecoy)) + geom_bar(stat='identity', position='dodge') + ggtitle("Distribution of peptide replicate counts")
 dev.off()
-
 
 # PSM condifence (converted to PEP scores) 
 msnid$`PeptideShaker PSM confidence` <- as.numeric(msnid$`PeptideShaker PSM confidence`)
@@ -144,10 +146,11 @@ filtObj <- MSnIDFilter(msnid)
 
 filtObj$absParentMassErrorPPM <- list(comparison="<", threshold=10.0)
 filtObj$PEP <- list(comparison="<", threshold=0.01)
-filtObj$PepLength <- list(comparison="<", threshold=35)
-filtObj$minPepLength <- list(comparison=">", threshold=6)
-filtObj$numMissCleavages <- list(comparison="<", threshold=3)
-filtObj$numIrregCleavages <- list(comparison="<", threshold=1)
+filtObj$PepLength <- list(comparison="<=", threshold=35)
+filtObj$minPepLength <- list(comparison=">=", threshold=6)
+filtObj$numMissCleavages <- list(comparison="<=", threshold=3)
+filtObj$numIrregCleavages <- list(comparison="<=", threshold=1)
+filtObj$unf.pepSeq.repcount <- list(comparison=">=", threshold=1)
 show(filtObj)
 evaluate_filter(msnid, filtObj, level=fdr_level)
 cat('\n')
@@ -168,6 +171,9 @@ cat('\n')
 
 print('Filter msnid object using the MSnIDFilter.SANN:')
 msnid <- apply_filter(msnid, filtObj.sa)
+
+
+show(filtObj.sa)
 show(msnid)
 
 print('...DONE APPLYING FDR STRINGENCY CRITERIA...')
@@ -185,7 +191,7 @@ msnid <- apply_filter(msnid, "isDecoy == FALSE")
 show(msnid)
 cat('\n')
 print('Remove contaminant PSMs:')
-msnid <- apply_filter(msnid, "!grepl('Contaminant',description)")
+msnid <- apply_filter(msnid, "!grepl('CONTAMINANT',description)")
 show(msnid)
 cat('\n')
 
@@ -213,7 +219,10 @@ counts.df <- data.frame(exprs(msnset))
 counts.df <- add_rownames(counts.df, "Row")
 write.table(counts.df, paste(table_dir, '/spectral_counts.txt',sep=''),sep='\t', row.names=FALSE)
 
-sink()
+#sink()
 print(head(psms(msnid)))
 show(msnid)
+
+
+
 

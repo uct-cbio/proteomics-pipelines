@@ -82,6 +82,6 @@ fi
 cd $dir/$base 
 echo $name
 if [ ! -d "$name" ]; then 
-    mkdir $name && cd $name && wget $url && tar -zxvf *.tar.gz && rm -rf *.tar.gz && mv ruby* tmp && cd tmp  && ./configure --prefix=$dir/$base/$name && make && make install && cd .. && rm -rf tmp  
+    mkdir $name && cd $name && wget $url && tar -zxvf *.tar.gz && rm -rf *.tar.gz && cd ruby* && ./configure --prefix=$dir/$base/$name && make && make install 
 fi 
 
