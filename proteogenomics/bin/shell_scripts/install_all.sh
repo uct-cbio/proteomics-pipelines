@@ -4,10 +4,13 @@ peptideshaker='http://genesis.ugent.be/maven2/eu/isas/peptideshaker/PeptideShake
 
 searchgui='http://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/3.0.2/SearchGUI-3.0.2-mac_and_linux.tar.gz'
 
-denovogui='http://genesis.ugent.be/maven2/com/compomics/denovogui/DeNovoGUI/1.12.0/DeNovoGUI-1.12.0-mac_and_linux.tar.gz'
+denovogui='http://genesis.ugent.be/maven2/com/compomics/denovogui/DeNovoGUI/1.12.1/DeNovoGUI-1.12.1-mac_and_linux.tar.gz'
 
 ruby='https://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.5.tar.gz'
 
+proteowizard='https://sourceforge.net/projects/proteowizard/files/latest/download'
+
+blast='ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.4.0+-x64-linux.tar.gz'
 #############################
 # Create the base directory #
 #############################
@@ -83,5 +86,22 @@ cd $dir/$base
 echo $name
 if [ ! -d "$name" ]; then 
     mkdir $name && cd $name && wget $url && tar -zxvf *.tar.gz && rm -rf *.tar.gz && cd ruby* && ./configure --prefix=$dir/$base/$name && make && make install 
+fi 
+
+########
+# BLAST
+########
+
+url=$blast
+file="${url##*/}"
+name="${file%.tar.gz}"
+base=$(echo $name | cut -f 1 -d '-')
+if [ ! -d "$dir/$base" ]; then 
+    mkdir $dir/$base
+fi 
+cd $dir/$base 
+echo $name
+if [ ! -d "$name" ]; then 
+    mkdir $name && cd $name && wget $url && tar -zxvf *.tar.gz && rm -rf *.tar.gz  
 fi 
 
