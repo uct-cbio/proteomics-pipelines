@@ -12,6 +12,10 @@ then
   eval $cmd
 fi
 
+
+# Both the following steps requires a specific python module avaible on the qiime specific python setup. So we need to point to that.
+export PYTHONPATH=/opt/exp_soft/qiime/lib/python2.7/site-packages/:$PYTHONPATH
+
 #Now strip primers
 if [ ! -f $filtered_2_fasta ]
 then
