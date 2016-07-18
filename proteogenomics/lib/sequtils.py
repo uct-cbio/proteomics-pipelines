@@ -1,5 +1,6 @@
 #/usr/bin/env python
 
+import multiprocessing
 import pandas as pd
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq, translate
@@ -14,6 +15,7 @@ import tempfile
 import collections; from collections import defaultdict
 from io import StringIO
 import re
+import concurrent.futures
 
 def alt_starts_recs(records, starts = ['ATG','GTG','TTG']):
     all= []
@@ -550,8 +552,9 @@ def sam_parse(sam):
 
 class gssp:
     '''Basic class for peptide to genome mapping - list of BioPython seqrecords for genome contigs'''
-    def __init__(self, genome, assembly_name, translation_table, peptides_list):
-
+    def __init__(self, genome, assembly_name, translation_table, peptides_list, threads=1):
+        self.threads=threads
+        self.translation_table = translation_table
         self.stop_codons = Stop_List(translation_table)
 
         orfs = sf_contigs(genome, assembly_name = assembly_name, table=translation_table, codons='All', peptide_length=1, translated=False )
@@ -569,14 +572,16 @@ class gssp:
         orf_series.index.name = 'ORF_sequence'
         
         orf_df = orf_series.reset_index()
-        orf_df['ORF_occurrence'] = orf_df['ORF_ids'].apply(lambda x : len(x.split(';')))
+        orf_df['ORF_genome_count'] = orf_df['ORF_ids'].apply(lambda x : len(x.split(';')))
         orf_df['ORF_translation'] = orf_df['ORF_sequence'].apply(lambda x : str(translate(Seq(x), table = translation_table, cds=False)))  # DEV change the way in-sequence stops are translated (eg. use selenocysteine)
         orf_df['ORF_preceding_codons'] = orf_df['ORF_ids'].apply(lambda x : self.preceding_codons(preceding_codon, x))
         orf_df['ORF_Cterm_fragment'] = orf_df['ORF_sequence'].apply(lambda x : self.cterm_fragment(x))
         orf_df['ORF_Nterm_fragment'] = orf_df['ORF_preceding_codons'].apply(lambda x : self.nterm_fragment(x))
         orf_df['Assembly'] = assembly_name
         self.orf_df = orf_df
-        self.peptides = self.peptide_df(peptides_list)
+        self.orf_trans_list = orf_df['ORF_translation'].tolist()
+
+        self.peptides = self.process_peptides(peptides_list)
 
     def ORF_set_count(self):
         print(self.orf_df[self.orf_df['ORF_Cterm_fragment']=='True'].head())
@@ -651,25 +656,114 @@ class gssp:
         tryptic = ';'.join(tryptic)
         return tryptic
     
+    def first_codon_peptide(self, df):
+
+        starts = df['Peptide_starts']
+        starts = [int(i) for i in starts.split(';') if i != '']
+        orf = df['ORF_sequence']
+        starts = [(i-1)*3 for i in starts]
+        codons=[]
+        for s in starts:
+            codon = orf[s:s+3]
+            codons.append(codon)
+        codons = ';'.join(codons)
+        return codons
+
+    def previous_codon_peptide(self, df):
+        starts = df['Peptide_starts']
+        starts = [int(i) for i in starts.split(';') if i != '']
+        orf = df['ORF_sequence']
+        starts = [(i-1)*3 for i in starts]
+        codons=[]
+        for s in starts:
+            codon = orf[s-3:s]
+            codons.append(codon)
+        codons = ';'.join(codons)
+        return codons
+
+
     def strfind(self, translated, peptide):
         if peptide in translated:
             return True
         else:
             return False
+
+    def amino_after(self, df):
+        peptide = df['Peptide_sequence']
+        starts = df['Peptide_starts']
+        starts = [int(i) -1 + len(peptide) for i in starts.split(';') if i != '']
+        translated = df['ORF_translation']
+        aminos=[]
+        for s in starts:
+            amino = translated[s:s+1]
+            if amino == '':
+                amino = 'None'
+            aminos.append(amino)
+        aminos = ';'.join(aminos)
+        return aminos
+
+
+    def amino_before(self, df):
+        peptide = df['Peptide_sequence']
+        starts = df['Peptide_starts']
+        starts = [int(i) -1 for i in starts.split(';') if i != '']
+        translated = df['ORF_translation']
+        aminos=[]
+        for s in starts:
+            amino = translated[s-1:s]
+            if amino == '':
+                amino = 'None'
+            aminos.append(amino)
+        aminos = ';'.join(aminos)
+        return aminos
     
-    def peptide_df(self, peptides_list):
-        for peptide in peptides_list:
-            df = self.orf_df.copy()
-            
-            df = df[df['ORF_translation'].apply(lambda x : self.strfind(x, peptide) == True)]
-            
+
+    def process_peptides(self, peptides_list):       
+        #executor = concurrent.futures.ProcessPoolExecutor(self.threads)
+        #futures = [executor.submit(self.peptide_df, p) for p in peptides_list]
+        #concurrent.futures.wait(futures)
+        
+        #peptides = pd.concat([future.result() for future in futures])
+        
+        pool = multiprocessing.Pool(self.threads)
+        peptides = pd.concat(pool.map(self.peptide_df, peptides_list))
+        peptides = peptides.reset_index()
+        del peptides['index']
+        return peptides
+
+    def peptide_df(self, peptide):
+        df = self.orf_df.copy() 
+        if peptide.startswith('M'):
+            temp_pep = peptide[1:]
+        else:
+            temp_pep = peptide
+        
+        #df = df[df['ORF_translation'].str.contains(temp_pep, regex=False, case=True)]
+        
+        #peplist= df['ORF_translation'].tolist()
+        
+        df = df[[temp_pep in _ for _ in self.orf_trans_list]]
+        
+        #df = df[df['Found'] ==True]
+        #del df['Found']
+
+        #df = df[df['ORF_translation'].apply(lambda x : self.strfind(x, temp_pep) == True)]
+        if len(df) != 0:
             df['Peptide_sequence'] = peptide
-            
             df['Peptide_starts'] = df['ORF_translation'].apply(lambda x : self.locate_peptide(x, peptide))
             df['Peptide_tryptic_nterm'] = df.apply(self.tryptic_nterm_peptide, axis=1)
             df['Peptide_tryptic_cterm'] = df.apply(self.tryptic_cterm_peptide, axis=1)
+            df['Peptide_previous_codon'] = df.apply(self.previous_codon_peptide,axis=1)
+            df['Peptide_first_codon'] = df.apply(self.first_codon_peptide,axis=1)
             
-            print(df.stack())
+            df['Peptide_amino_acid_before'] =  df.apply(self.amino_before,axis=1)
+            df['Peptide_amino_acid_first'] =  df['Peptide_sequence'].apply(lambda x : x[:1])
+            df['Peptide_amino_acid_last'] =  df['Peptide_sequence'].apply(lambda x : x[-1:])
+            
+            df['Peptide_amino_acid_after'] =  df.apply(self.amino_after,axis=1)
+            df['Peptide_genome_count'] = len(df)
+     
+            return df
 
 
 

@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+# Threads for concurrency
+
+threads=50
+
 # Proteogenomics
 translation_table=11
 
