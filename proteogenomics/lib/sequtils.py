@@ -13,6 +13,7 @@ import subprocess
 import tempfile
 import collections; from collections import defaultdict
 from io import StringIO
+import re
 
 def alt_starts_recs(records, starts = ['ATG','GTG','TTG']):
     all= []
@@ -51,7 +52,7 @@ def codon_list(table):
     codons = CodonTable.unambiguous_dna_by_id[table].forward_table.keys()
     return codons
 
-def six_frame(Genome, assembly_name, contig_name, table, peptide_length, codons = ['ATG','GTG','TTG'], translated = True, contig_id='sixframe', methionine_start=True): 
+def six_frame(Genome, assembly_name, contig_name, table, peptide_length, codons = ['ATG','GTG','TTG'], translated = True, contig_id='sixframe', methionine_start=True, translate_stop=False): 
     Minimum_Peptide_Length = peptide_length
     Codon_Table = table
     Start_Codons = codons
@@ -149,7 +150,7 @@ def six_frame(Genome, assembly_name, contig_name, table, peptide_length, codons 
 
                 elif translated == True: 
                     prot_seq = str(translate(seq, table=table))
-                    if prot_seq[-1] == '*':            
+                    if (prot_seq[-1] == '*') and (translate_stop == False):            
                         prot_seq = prot_seq[:-1]  
 
                     if (methionine_start == True):
@@ -159,6 +160,17 @@ def six_frame(Genome, assembly_name, contig_name, table, peptide_length, codons 
                     
                     prot_seq = Seq(prot_seq)
                     record = SeqRecord(prot_seq,id = "{}_{}|{}_{}_recno_{}|({}){}:{}".format(assembly_name, contig_name, assembly_name, contig_name, float(rec_count), frame_direction,j[3],j[4]),description='Six_Frame_Translated_ORF')
+                
+                if frame_direction == '+':
+                    preceding = Genome[j[3]-4:j[3]-1]
+                if frame_direction == '-':
+                    preceding = str(Seq(Genome[j[4]: j[4]+3]).reverse_complement())
+                
+                if len(preceding) == 0:
+                    preceding="None"
+
+                record.description = record.description + ' Preceding_codon={}.'.format(preceding)
+
                 Six_Frame.append(record)
                 rec_count += 1
     return Six_Frame
@@ -230,7 +242,7 @@ def sf_contigs(contigs, assembly_name, table=11, peptide_length = 20, codons = '
     six_frame_seqs = []
     for i in contigs:
         cid = '_'.join(i.id.split('|'))  #get the contig id
-        six = six_frame(str(i.seq),assembly_name= assembly_name, contig_name = cid, table = table, peptide_length = peptide_length, codons = codons, translated=translated)
+        six = six_frame(str(i.seq),assembly_name= assembly_name, contig_name = cid, table = table, peptide_length = peptide_length, codons = codons, translated=translated, methionine_start = methionine_start)
 
         for j in six:
             six_frame_seqs.append(j)
@@ -465,11 +477,6 @@ class variant_genome:
         print('Start affected: {}'.format(start_affected))
         print('End affected: {}'.format(end_affected))
 
-
-
-
-
-
 def get_end(cigar,start): # subtract 1 from start
     flags={'D':1,'I':0,'M':1,'S':0}
     end = start 
@@ -539,6 +546,132 @@ def sam_parse(sam):
     #    record = SeqRecord(seq=seq, description=' '.join(description),id=id)
     #   sequences.append(record)
     return sequences
+
+
+class gssp:
+    '''Basic class for peptide to genome mapping - list of BioPython seqrecords for genome contigs'''
+    def __init__(self, genome, assembly_name, translation_table, peptides_list):
+
+        self.stop_codons = Stop_List(translation_table)
+
+        orfs = sf_contigs(genome, assembly_name = assembly_name, table=translation_table, codons='All', peptide_length=1, translated=False )
+        
+        orf_counts = defaultdict(list)  # This baby is to hold the values of the id's of ORFs that occur one or more times in the genome
+        preceding_codon = defaultdict()  # This baby is to hold the values of the id's of ORFs that occur one or more times in the genome
+
+        for rec in orfs:
+            _ = str(rec.seq)
+            assert ';' not in rec.id
+            orf_counts[_].append(rec.id)
+            preceding_codon[rec.id] = rec.description.split('Preceding_codon=')[1].split('.')[0]
+
+        orf_series = pd.Series(orf_counts, name='ORF_ids').apply(lambda x : ';'.join(x))
+        orf_series.index.name = 'ORF_sequence'
+        
+        orf_df = orf_series.reset_index()
+        orf_df['ORF_occurrence'] = orf_df['ORF_ids'].apply(lambda x : len(x.split(';')))
+        orf_df['ORF_translation'] = orf_df['ORF_sequence'].apply(lambda x : str(translate(Seq(x), table = translation_table, cds=False)))  # DEV change the way in-sequence stops are translated (eg. use selenocysteine)
+        orf_df['ORF_preceding_codons'] = orf_df['ORF_ids'].apply(lambda x : self.preceding_codons(preceding_codon, x))
+        orf_df['ORF_Cterm_fragment'] = orf_df['ORF_sequence'].apply(lambda x : self.cterm_fragment(x))
+        orf_df['ORF_Nterm_fragment'] = orf_df['ORF_preceding_codons'].apply(lambda x : self.nterm_fragment(x))
+        orf_df['Assembly'] = assembly_name
+        self.orf_df = orf_df
+        self.peptides = self.peptide_df(peptides_list)
+
+    def ORF_set_count(self):
+        print(self.orf_df[self.orf_df['ORF_Cterm_fragment']=='True'].head())
+        return len(self.orf_df)
+    
+    def cterm_fragment(self,orf_nucs):
+        last_codon = orf_nucs[-3:]
+        if last_codon in self.stop_codons:
+            return 'False'
+        else:
+            return 'True'
+
+    def preceding_codons(self, codon_dict, val):
+        preceding = []
+        for v in val.split(';'):
+            preceding.append(codon_dict[v])
+        return ';'.join(preceding)
+
+    def nterm_fragment(self, val): #supply a list of preceding codons/fragments of codons.
+        for v in val.split(';'):
+            if v in self.stop_codons:
+                return 'False'
+            else:
+                return 'True'
+    
+    def locate_peptide(self, prot, peptide):
+        shift = 0
+        if peptide.startswith('M'):
+            temp_pep = peptide[1:]   # because of non-standard start codons, disregard 'M'
+            shift -= 1 # position adjustment for disregarding 'M'
+        else:
+            temp_pep = peptide
+        starts  = [k.start() for k in re.finditer('(?={})'.format(temp_pep), prot)]
+        starts = [i + 1 + shift for i in starts] # 1 based numbering
+        starts = ';'.join([str(_) for _ in starts])
+        return starts
+    
+    def tryptic_nterm_peptide(self, df):
+        starts = df['Peptide_starts']
+        starts = [int(i) for i in starts.split(';') if i != '']
+        prot  = df['ORF_translation']
+
+        cleavages = ['R', 'K']
+        tryptic = []
+        starts = [i-1 for i in starts ]
+    
+        for s in starts:
+            before = prot[s-1:s]
+            if before in cleavages:
+                tryptic.append('True')
+            else:
+                tryptic.append('False')
+        tryptic = ';'.join(tryptic)
+        return tryptic
+
+    def tryptic_cterm_peptide(self, df):
+
+        starts = df['Peptide_starts']
+        starts = [int(i) for i in starts.split(';') if i != '']
+        prot  = df['ORF_translation']
+        peptide = df['Peptide_sequence']
+        
+        cleavages = ['R', 'K']
+        tryptic = []
+        starts = [i-1 + len(peptide) for i in starts]
+        for s in starts:
+            before = prot[s-1:s]
+            if before in cleavages:
+                tryptic.append('True')
+            else:
+                tryptic.append('False')
+        tryptic = ';'.join(tryptic)
+        return tryptic
+    
+    def strfind(self, translated, peptide):
+        if peptide in translated:
+            return True
+        else:
+            return False
+    
+    def peptide_df(self, peptides_list):
+        for peptide in peptides_list:
+            df = self.orf_df.copy()
+            
+            df = df[df['ORF_translation'].apply(lambda x : self.strfind(x, peptide) == True)]
+            
+            df['Peptide_sequence'] = peptide
+            
+            df['Peptide_starts'] = df['ORF_translation'].apply(lambda x : self.locate_peptide(x, peptide))
+            df['Peptide_tryptic_nterm'] = df.apply(self.tryptic_nterm_peptide, axis=1)
+            df['Peptide_tryptic_cterm'] = df.apply(self.tryptic_cterm_peptide, axis=1)
+            
+            print(df.stack())
+
+
 
 
 '''

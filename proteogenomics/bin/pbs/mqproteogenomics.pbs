@@ -1,0 +1,40 @@
+#PBS -N MyJob
+#PBS -q UCTlong
+#PBS -l nodes=1:ppn=10:series600
+#PBS -M matthys.potgieter@gmail.com
+#PBS -m ae
+
+# NB, PLEASE READ THIS!
+# There is a 2:1 correspondence between RAM and cores on the 600 series.
+# You need to know how much RAM your job will consume before submitting it.
+# Please set the ppn value above to be 1/2 the GB of RAM required.  For
+# example a job needing 10GB of RAM should have ppn=5
+
+# Please leave the hostname command here for troubleshooting purposes.
+hostname
+
+# Your science stuff goes here:
+# This script is based on the txt output of maxquant
+# The output directory gets deleted per run
+config='/home/ptgmat003/cbio-pipelines/proteogenomics/bin/config/mq_proteogeomics_example_config.py'
+outpath=/researchdata/fhgfs/ptgmat003/hexout/hypohyper/mq
+
+# The rest is generic
+
+# Create the output directory
+rm -rf $outpath
+mkdir $outpath
+
+# Check the config script for any errors
+#mq_proteogenomics_validate_config.py $config $outpath
+
+# For each straint in the config script, analyze the peptides into groups based on genomic data
+mq_genome_to_peptide.py $config $outpath
+
+
+
+
+
+
+
+
