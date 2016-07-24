@@ -2,7 +2,7 @@
 
 # Threads for concurrency
 
-threads=50
+threads=10
 
 # Proteogenomics
 translation_table=11
@@ -18,8 +18,8 @@ reference_proteome='/researchdata/fhgfs/ptgmat003/HYPOHYPER/proteomes/UP00000158
 
 # UniProt mapping table (required fields: 'Organism ID','Sequence Length'), for functional and othr annotation of BLAST results (select appropiate taxa level eg. taxonomy:"Mycobacterium [1763]")
 # The accompanying fasta is used to create the BLAST db (the two files need to correspond, and are selected by changing the uniprot download format. Gene set enrichment analysis info using here.
-mapping_databaase='/home/ptgmat003/hypohyper/S507_S5527_hexdata/tax_1763_export_16_07_2016.tab'
-mapping_fasta='/home/ptgmat003/hypohyper/S507_S5527_hexdata/tax_1763_export_16_07_2016_can_iso.fasta'
+mapping_database='/researchdata/fhgfs/ptgmat003/blackburn/hypohyper/S507_S5527_hexdata/tax_1763_export_16_07_2016.tab'
+mapping_fasta='/researchdata/fhgfs/ptgmat003/blackburn/hypohyper/S507_S5527_hexdata/tax_1763_export_16_07_2016_can_iso.fasta'
 
 # The combined fasta database from SF_Pipeline (protein database, translated six frame db with alternative start sites included 
 six_frame_translated ='/researchdata/fhgfs/ptgmat003/OUTPUT/S507_S5527_proteogenomics/six_frame_databases/S507_S5527_combined_allstarts_proteins.fasta'
