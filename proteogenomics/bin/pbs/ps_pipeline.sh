@@ -36,6 +36,7 @@ function dependencies {
 ############################################
 
 newruns=()
+oldruns=()
 if [ ! -d $output_folder ]; then
     ps_prepare=$(echo "PS_prepare.sh $config" | qsub -N $N.PS_prepare.sh -q $q -l $l -M $M -m $m)
     echo $ps_prepare >> $config.joblist
@@ -49,24 +50,19 @@ fi
 # SEARCH SAMPLES WITH PEPTIDESHAKER
 ############################################
 
-oldruns=$newruns
+oldruns+=$newruns
 newruns=()
 for spectrum_file in ${spectrum_files}/*.mgf; do
     sample=$(basename $spectrum_file)
-    sample_name=${sample%.mgf}
-
     if [ $recalibrate -eq 1 ]; then
-        sample_name=${sample%.mgf}_recalibrated.mgf
+        sample=${sample%.mgf}_recalibrated.mgf
     fi
-    
-    if [ ! -f $output_folder/mzIdentMLs/$sample_name.mzid ]; then
-	
+    if [ ! -f $output_folder/mzIdentMLs/$sample.mzid ]; then	
 	if [ -z $oldruns ]; then
  	    ps_sample=$(echo "PS_sample.sh '$output_folder' '$spectrum_file'" | qsub -N $N -q $q -l $l -M $M -m $m)
     	else
 	    ps_sample=$(echo "PS_sample.sh '$output_folder' '$spectrum_file'" | qsub -N $N -q $q -l $l -M $M -m $m -W depend=afterok:$(dependencies $oldruns))
         fi
-        
 	echo $ps_sample
         echo $ps_sample >> $config.joblist
         newruns+=($ps_sample)
@@ -75,6 +71,22 @@ done
 
 ############################################
 ############################################
-oldruns=$newruns
+
+oldruns+=$newruns
+newruns=()
+if [ ! -d $output_folder/mzIdentMLS/analysis ]; then
+    cmd="cd ${output_folder} && MSnIDshake.R -i mzIdentMLs/ -v ${MSnID_FDR_value} -l ${MSnID_FDR_level}"
+    if [ -z $oldruns ]; then 
+        msnid_shake=$(echo "${cmd}" | qsub -N $N -q $q -l $l -M $M -m $m )
+    else
+	msnid_shake=$(echo "${cmd}" | qsub -N $N -q $q -l $l -M $M -m $m -W depend=afterok:$(dependencies $oldruns))
+    fi
+    echo $msnid_shake
+    newruns+=($msnid_shake)
+fi
+
+############################################
+############################################
+oldruns+=$newruns
 newruns=()
 

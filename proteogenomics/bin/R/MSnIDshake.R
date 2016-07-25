@@ -133,7 +133,7 @@ dev.off()
 
 
 
-
+#msnid <- apply_filter(msnid, "unf.pepSeq.repcount >= 1")
 #temp <- transform(psms(msnid), PEPladj = PEP / PepLength)
 #msnid$PEPladj <- temp$PEPladj
 
@@ -148,9 +148,10 @@ filtObj$absParentMassErrorPPM <- list(comparison="<", threshold=10.0)
 filtObj$PEP <- list(comparison="<", threshold=0.01)
 filtObj$PepLength <- list(comparison="<=", threshold=35)
 filtObj$minPepLength <- list(comparison=">=", threshold=6)
-filtObj$numMissCleavages <- list(comparison="<=", threshold=3)
-filtObj$numIrregCleavages <- list(comparison="<=", threshold=1)
-filtObj$unf.pepSeq.repcount <- list(comparison=">=", threshold=1)
+filtObj$numMissCleavages <- list(comparison="<=", threshold=2)
+filtObj$numIrregCleavages <- list(comparison="<=", threshold=2)
+
+#filtObj$unf.pepSeq.repcount <- list(comparison=">=", threshold=1)
 show(filtObj)
 evaluate_filter(msnid, filtObj, level=fdr_level)
 cat('\n')
@@ -185,15 +186,18 @@ params <- psms(msnid)[,c("PEP","isDecoy")]
 ggplot(params) + geom_density(aes(x = PEP, color = isDecoy, ..count..))
 dev.off()
 
-cat('\n')
-print('Remove Decoy PSMs:')
+
+decoy <- apply_filter(msnid, "isDecoy == TRUE")
+contaminants <- apply_filter(msnid, "grepl('CONTAMINANT',description)")
+
 msnid <- apply_filter(msnid, "isDecoy == FALSE")
-show(msnid)
-cat('\n')
-print('Remove contaminant PSMs:')
-msnid <- apply_filter(msnid, "!grepl('CONTAMINANT',description)")
-show(msnid)
-cat('\n')
+#msnid <- apply_filter(msnid, "!grepl('CONTAMINANT',description)")
+
+contaminant.df <- psms(contaminants)
+contaminant.df <- add_rownames(contaminant.df, "Row")
+
+decoy.df <- psms(decoy)
+decoy.df <- add_rownames(decoy.df, "Row")
 
 psm.df <- psms(msnid)
 psm.df <- add_rownames(psm.df, "Row")
@@ -211,6 +215,10 @@ write.table(psm.df, paste(table_dir, '/psms.txt',sep=''),sep='\t', row.names=FAL
 write.table(peptide.df, paste(table_dir, '/peptides.txt',sep=''),sep='\t',row.names=FALSE)
 write.table(accession.df, paste(table_dir, '/accessions.txt',sep=''),sep='\t', row.names=FALSE)
 
+write.table(contaminant.df, paste(table_dir, '/contaminants.txt',sep=''),sep='\t', row.names=FALSE)
+write.table(decoy.df, paste(table_dir, '/decoys.txt',sep=''),sep='\t', row.names=FALSE)
+
+
 msnset <- as(msnid, "MSnSet")
 library("MSnbase")
 
@@ -219,9 +227,6 @@ counts.df <- data.frame(exprs(msnset))
 counts.df <- add_rownames(counts.df, "Row")
 write.table(counts.df, paste(table_dir, '/spectral_counts.txt',sep=''),sep='\t', row.names=FALSE)
 
-#sink()
-print(head(psms(msnid)))
-show(msnid)
 
 
 

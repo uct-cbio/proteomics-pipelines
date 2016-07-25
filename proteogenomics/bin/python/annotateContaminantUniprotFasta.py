@@ -10,6 +10,13 @@ if len(sys.argv) ==2:
 else:
     out = sys.argv[2]
 
+
+
 for seq in fasta:
-   seq.description = "CONTAMINANT " + seq.description 
+    id_ = seq.id.split('|')
+    new_ids = []
+    for id in id_[1:]:
+        new_ids.append(id+'_CONTAMINANT')
+    seq.id = id_[0] + '|' + '|'.join(new_ids)
+    seq.description = "CONTAMINANT " + seq.description 
 SeqIO.write(fasta, out, 'fasta')
