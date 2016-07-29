@@ -2,6 +2,7 @@
 
 tax_id=$1
 output_file=$2
+format=$3
 
 # Names and taxononmy
 entry_name="entry name"
@@ -266,7 +267,12 @@ query_list=("${entry_name}" \
 "${zinc_finger}" )
 
 query_string=$( echo $( IFS=$','; echo "${query_list[*]}" ) )
-url="http://www.uniprot.org/uniprot/?query=organism:${tax_id}&sort=score&columns=${query_string}&format=tab"
+
+if [ ${format} -eq fasta ]; then
+    query_sting=$sequence;
+fi
+
+url="http://www.uniprot.org/uniprot/?query=organism:${tax_id}&sort=score&columns=${query_string}&format=${format}"
 
 wget -O $output_file "$url" 
 
