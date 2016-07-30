@@ -8,7 +8,7 @@ threads=10
 translation_table=11
 
 # Specify the full path to the maxquant output 'txt' file
-mq_txt='/researchdata/fhgfs/ptgmat003/BLACKBURNLAB/HH_PROTEOGENOMICS/17_SIX_FRAME_3_missed/combined/txt/'
+mq_txt='/researchdata/fhgfs/ptgmat003/blackburn/hypohyper/mq/HH_PROTEOGENOMICS/17_SIX_FRAME_3_missed/combined/txt/'
 
 # Specify the reference genome to be used to identify possible new annotations (corresponding to the Reference proteome)
 reference_genome='/researchdata/fhgfs/ptgmat003/HYPOHYPER/NCBI_2_6_2016/GCF_000195955.2_ASM19595v2/GCF_000195955.2_ASM19595v2_genomic.fna'

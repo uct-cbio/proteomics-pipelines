@@ -29,7 +29,8 @@ outpath=/researchdata/fhgfs/ptgmat003/hexout/hypohyper/mq
 
 # For each straint in the config script, analyze the peptides into groups based on genomic data
 #mq_genome_to_peptide.py $config $outpath
-uniprot_peptide2db.py $config $outpath
+#uniprot_peptide2db.py $config $outpath
+mq_peptide_to_protein.py $config $outpath
 
 
 
