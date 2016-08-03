@@ -11,6 +11,9 @@ ruby='https://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.5.tar.gz'
 proteowizard='https://sourceforge.net/projects/proteowizard/files/latest/download'
 
 blast='ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.4.0+-x64-linux.tar.gz'
+
+clustalw='http://www.clustal.org/download/current/clustalw-2.1-linux-x86_64-libcppstatic.tar.gz'
+
 #############################
 # Create the base directory #
 #############################
@@ -104,4 +107,23 @@ echo $name
 if [ ! -d "$name" ]; then 
     mkdir $name && cd $name && wget $url && tar -zxvf *.tar.gz && rm -rf *.tar.gz  
 fi 
+
+#########
+## CLUSTALW
+########
+
+
+url=$clustalw
+file="${url##*/}"
+name="${file%.tar.gz}"
+base=$(echo $name | cut -f 1 -d '-')
+if [ ! -d "$dir/$base" ]; then 
+    mkdir $dir/$base
+fi 
+cd $dir/$base 
+echo $name
+if [ ! -d "$name" ]; then 
+    mkdir $name && cd $name && wget $url && tar -zxvf *.tar.gz && rm -rf *.tar.gz  
+fi 
+
 

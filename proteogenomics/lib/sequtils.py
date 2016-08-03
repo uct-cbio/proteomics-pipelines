@@ -761,12 +761,43 @@ class gssp:
             df['Peptide_amino_acid_last'] =  df['Peptide_sequence'].apply(lambda x : x[-1:])
             
             df['Peptide_amino_acid_after'] =  df.apply(self.amino_after,axis=1)
-            df['Peptide_genome_count'] = len(df)
-     
+            df['Peptide_distinct_translated_ORF_count'] = len(df)
+
+            if len(df) > 1:
+                df['Peptide_distinct_translated_ORF_specfic']='-'
+            elif len(df) ==1:
+                df['Peptide_distinct_translated_ORF_specfic']='+'
             return df
 
 
+class pep2db:
+    '''Basic class for peptide to genome mapping - list of BioPython seqrecords for genome contigs'''
+    def __init__(self, proteome, peptides_list, threads=1):
+        self.threads=threads
+        self.peptides_list=peptides_list  # list of peptides
+        self.proteome=proteome            # Bio.SeqIO list of fasta records
+        self.pepdict = self.process_peptides()           # map peptides
+    def process_peptides(self):       
+        peptides_list =list(set(self.peptides_list))
+        pool = multiprocessing.Pool(self.threads)
+        temps = pool.map(self.peptide_search, peptides_list)
+        new_dict = {}
+        for t in temps:
+            for key in t:
+                new_dict[key] = t[key]
+        return new_dict
+        
 
+    def peptide_search(self, peptide):
+        print('Searching {} in fasta'.format(peptide))
+        temp =defaultdict(list)
+        for rec in self.proteome:
+            if peptide in str(rec.seq):
+                temp[peptide].append(rec.id)
+        return temp
+
+
+        
 
 '''
 def alignment_code(query, query_start, alignment, ref_prot):
