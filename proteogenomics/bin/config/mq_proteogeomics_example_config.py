@@ -15,8 +15,8 @@ reference_genome='/researchdata/fhgfs/ptgmat003/HYPOHYPER/NCBI_2_6_2016/GCF_0001
 # UniProt reference proteome to use for sequence mapping (Reference proteome or pan proteome - should not contain redundant sequences - this is for functional analysis of sequences across strains)
 reference_proteome='/researchdata/fhgfs/ptgmat003/HYPOHYPER/proteomes/UP000001584_14_03_2016.fasta'
 reference_proteome_id='UP000001584'
-reference_taxid=1773
-
+reference_taxid=83332
+reference_taxonomic_lineage=[131567, 2, 1783272, 201174, 1760, 85007, 1762, 1763, 77643, 1773, 83332]
 
 # UniProt mapping table (required fields: 'Organism ID','Sequence Length'), for functional and othr annotation of BLAST results (select appropiate taxa level eg. taxonomy:"Mycobacterium [1763]")
 # The accompanying fasta is used to create the BLAST db (the two files need to correspond, and are selected by changing the uniprot download format. Gene set enrichment analysis info using here.

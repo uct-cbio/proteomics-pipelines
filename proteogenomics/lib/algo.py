@@ -40,13 +40,13 @@ class Vertex:
         
     def __str__(self):
         return str(self.id) + ' connectedTo: '+ str([x.id for x in self.connectedTo])
-    
+
     def getConnections(self):
         return self.connectedTo.keys()
-    
+
     def getId(self):
         return self.id
-    
+
     def getEdge(self,nbr):
         return self.connectedTo[nbr]
 
@@ -84,7 +84,7 @@ class Graph:
         return iter(self.vertList.values())
 
 def trie_graph(lst):
-    assert not isinstance(lst, basestring)    # make sure that the items you are making a trie_graph from are in list format
+    assert not isinstance(lst, str)    # make sure that the items you are making a trie_graph from are in list format
     trie = Graph()
     nodes = 0
     trie.addVertex(nodes)
@@ -119,7 +119,7 @@ def prefix_trie_match(trie, string, start):
         found = False 
         if len(trie.getVertex(v).getConnections()) == 0:
             return start, i
-	if i == len(string) + 1:
+        if i == len(string) + 1:
             return
         elif i <len(string):
             symbol = string[i]
@@ -134,12 +134,9 @@ def prefix_trie_match(trie, string, start):
                     pep.append(edge)
                     found = True
                     break
-
         if found == False:
-            
             for child in trie.getVertex(v).getConnections():
-                edge = Vertex.getEdge(trie.getVertex(v), child)
-            
+                edge = Vertex.getEdge(trie.getVertex(v), child) 
                 if edge == '#':
                     last_edge = start, i
             return last_edge
@@ -150,8 +147,7 @@ def trie_upper(Trie, Text):
     str = []
     pos_dct = {}
     while start < len(Text):
-        val = prefix_trie_match(Trie, Text, start)
-        
+        val = prefix_trie_match(Trie, Text, start) 
         if val != None:
             for i in range(val[0], val[1]):
                 pos_dct[i] = Text[i].upper()

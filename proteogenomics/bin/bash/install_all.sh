@@ -14,6 +14,9 @@ blast='ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.4
 
 clustalw='http://www.clustal.org/download/current/clustalw-2.1-linux-x86_64-libcppstatic.tar.gz'
 
+
+muscle='http://www.drive5.com/muscle/downloads3.8.31/muscle3.8.31_i86linux64.tar.gz'
+
 #############################
 # Create the base directory #
 #############################
@@ -112,7 +115,6 @@ fi
 ## CLUSTALW
 ########
 
-
 url=$clustalw
 file="${url##*/}"
 name="${file%.tar.gz}"
@@ -124,6 +126,23 @@ cd $dir/$base
 echo $name
 if [ ! -d "$name" ]; then 
     mkdir $name && cd $name && wget $url && tar -zxvf *.tar.gz && rm -rf *.tar.gz  
+fi 
+
+#########
+## MUSCLE
+########
+
+url=$muscle
+file="${url##*/}"
+name="${file%.tar.gz}"
+base=muscle
+if [ ! -d "$dir/$base" ]; then 
+    mkdir $dir/$base
+fi 
+cd $dir/$base 
+echo $name
+if [ ! -d "$name" ]; then 
+    mkdir $name && cd $name && wget $url && tar -zxvf *.tar.gz && rm -rf *.tar.gz && cp * muscle 
 fi 
 
 
