@@ -156,7 +156,13 @@ def trie_upper(Trie, Text):
             if start not in pos_dct:
                 pos_dct[start] = Text[start].lower()
             start += 1
-    return ''.join(pos_dct.values())
+    newText = ''.join(pos_dct.values())
+    
+    if len(Text) != len(newText):
+        assert newText == ''
+        print(newText)
+        newText = Text.lower()
+    return newText
 
 def trie_matching(Trie, Text):
     positions = []

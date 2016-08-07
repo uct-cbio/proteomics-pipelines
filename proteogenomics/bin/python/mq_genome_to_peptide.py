@@ -21,23 +21,11 @@ peptides = peptides[(peptides['Potential contaminant'] != '+') & (peptides['Reve
 peptide_sequences = peptides['Sequence'].tolist()
 
 
-# Specific peptides of Reference
-genome = list(SeqIO.parse(config.reference_genome,'fasta'))
-g2p = sequtils.gssp(genome, assembly_name = str(config.reference_taxid), translation_table=config.translation_table, peptides_list=peptide_sequences, threads=config.threads)
-speps = g2p.peptides
-strainpath=output +'/reference'
-try:
-    shutil.rmtree(strainpath)
-    os.mkdir(strainpath)
-except:
-    os.mkdir(strainpath)
-speps.to_csv(strainpath + '/' + '{}_mapped_peptides.csv'.format(str(config.reference_taxid)))
-
 # Specific peptides for each strain
 for strain in config.strains:
     paths = config.strains[strain]
     genome = list(SeqIO.parse(paths['sf_genome'],'fasta'))
-    g2p = sequtils.gssp(genome, assembly_name = str(strain), translation_table=config.translation_table, peptides_list=peptide_sequences, threads=config.threads)
+    g2p = sequtils.peptides2genome(genome, assembly_name = str(strain), translation_table=config.translation_table, peptides_list=peptide_sequences, threads=config.threads)
     speps = g2p.peptides
     strainpath=output +'/' + strain
     try:

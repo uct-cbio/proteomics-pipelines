@@ -14,8 +14,12 @@ blast='ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.4
 
 clustalw='http://www.clustal.org/download/current/clustalw-2.1-linux-x86_64-libcppstatic.tar.gz'
 
-
 muscle='http://www.drive5.com/muscle/downloads3.8.31/muscle3.8.31_i86linux64.tar.gz'
+
+kibana='https://download.elastic.co/kibana/kibana/kibana-4.5.4-linux-x64.tar.gz'
+
+elasticsearch='https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.3.5/elasticsearch-2.3.5.tar.gz'
+
 
 #############################
 # Create the base directory #
@@ -94,9 +98,9 @@ if [ ! -d "$name" ]; then
     mkdir $name && cd $name && wget $url && tar -zxvf *.tar.gz && rm -rf *.tar.gz && cd ruby* && ./configure --prefix=$dir/$base/$name && make && make install 
 fi 
 
-########
-# BLAST
-########
+##########
+## BLAST #
+##########
 
 url=$blast
 file="${url##*/}"
@@ -111,9 +115,9 @@ if [ ! -d "$name" ]; then
     mkdir $name && cd $name && wget $url && tar -zxvf *.tar.gz && rm -rf *.tar.gz  
 fi 
 
-#########
-## CLUSTALW
-########
+#############
+## CLUSTALW # 
+#############
 
 url=$clustalw
 file="${url##*/}"
@@ -128,10 +132,9 @@ if [ ! -d "$name" ]; then
     mkdir $name && cd $name && wget $url && tar -zxvf *.tar.gz && rm -rf *.tar.gz  
 fi 
 
-#########
-## MUSCLE
-########
-
+#############
+## MUSCLE   #
+#############
 url=$muscle
 file="${url##*/}"
 name="${file%.tar.gz}"
@@ -144,5 +147,39 @@ echo $name
 if [ ! -d "$name" ]; then 
     mkdir $name && cd $name && wget $url && tar -zxvf *.tar.gz && rm -rf *.tar.gz && cp * muscle 
 fi 
+
+##################
+## Elasticsearch #
+##################
+url=$elasticsearch
+file="${url##*/}"
+name="${file%.tar.gz}"
+base=elasticsearch
+if [ ! -d "$dir/$base" ]; then 
+    mkdir $dir/$base
+fi 
+cd $dir/$base 
+echo $name
+if [ ! -d "$name" ]; then 
+    mkdir $name && cd $name && wget $url && tar -zxvf *.tar.gz && rm -rf *.tar.gz  
+fi 
+
+
+#################
+## Kibana       #
+#################
+url=$kibana
+file="${url##*/}"
+name="${file%.tar.gz}"
+base=kibana
+if [ ! -d "$dir/$base" ]; then 
+    mkdir $dir/$base
+fi 
+cd $dir/$base 
+echo $name
+if [ ! -d "$name" ]; then 
+    mkdir $name && cd $name && wget $url && tar -zxvf *.tar.gz && rm -rf *.tar.gz  
+fi 
+
 
 

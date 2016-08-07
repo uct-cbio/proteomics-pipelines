@@ -20,7 +20,7 @@ map_dfs = []
 
 for strain in config.strains:
     gssp_df = pd.read_csv(output +'/' + strain +'/{}_mapped_peptides.csv'.format(strain))
-    ns = gssp_df[gssp_df['Peptide_genome_count'] > 1]['Peptide_sequence'].tolist()
+    ns = gssp_df[gssp_df['Peptide_distinct_translated_ORF_specfic'] != '+']['Peptide_sequence'].tolist()
     nonspec_pep += ns    
     map_dfs.append(gssp_df)
 
@@ -28,7 +28,6 @@ map_df = pd.concat(map_dfs)
 spec_df = map_df[~map_df['Peptide_sequence'].isin(set(nonspec_pep))]
 
 spec_peps = list(set(spec_df['Peptide_sequence'].tolist()))
-
 
 pep2entry = defaultdict(list)
 

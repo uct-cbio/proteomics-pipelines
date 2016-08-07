@@ -1,5 +1,6 @@
 #/usr/bin/env python
-
+import collections
+from collections import Counter
 import multiprocessing
 import pandas as pd
 from Bio.SeqRecord import SeqRecord
@@ -15,7 +16,16 @@ import tempfile
 import collections; from collections import defaultdict
 from io import StringIO
 import re
+from Bio.Blast.Applications import NcbiblastpCommandline
+from Bio.Blast import NCBIXML
+from Bio.Align.Applications import ClustalwCommandline
+from Bio.Align.Applications import MuscleCommandline
+from Bio import AlignIO
+from Bio import Phylo
+import contextlib
 import concurrent.futures
+import sys
+import algo
 
 def alt_starts_recs(records, starts = ['ATG','GTG','TTG']):
     all= []
@@ -327,6 +337,7 @@ class gff3:
     gffcols = ['seqid','source','type','start','end','score','strand','phase','attributes']
     def __init__(self, GFF3):
         self.table = pd.read_csv(os.path.abspath(GFF3),sep='\t',comment='#')
+        self.table = self.table.iloc[:,:9]
         self.table.columns = self.gffcols
         self.attributes_columns()
 
@@ -550,8 +561,8 @@ def sam_parse(sam):
     return sequences
 
 
-class gssp:
-    '''Basic class for peptide to genome mapping - list of BioPython seqrecords for genome contigs'''
+class peptides2genome:
+    '''Basic class for peptides to genome mapping - list of BioPython seqrecords for genome contigs'''
     def __init__(self, genome, assembly_name, translation_table, peptides_list, threads=1):
         self.threads=threads
         self.translation_table = translation_table
@@ -560,8 +571,7 @@ class gssp:
         orfs = sf_contigs(genome, assembly_name = assembly_name, table=translation_table, codons='All', peptide_length=1, translated=False )
         
         orf_counts = defaultdict(list)  # This baby is to hold the values of the id's of ORFs that occur one or more times in the genome
-        preceding_codon = defaultdict()  # This baby is to hold the values of the id's of ORFs that occur one or more times in the genome
-
+        preceding_codon = defaultdict() 
         for rec in orfs:
             _ = str(rec.seq)
             assert ';' not in rec.id
@@ -638,7 +648,6 @@ class gssp:
         return tryptic
 
     def tryptic_cterm_peptide(self, df):
-
         starts = df['Peptide_starts']
         starts = [int(i) for i in starts.split(';') if i != '']
         prot  = df['ORF_translation']
@@ -657,7 +666,6 @@ class gssp:
         return tryptic
     
     def first_codon_peptide(self, df):
-
         starts = df['Peptide_starts']
         starts = [int(i) for i in starts.split(';') if i != '']
         orf = df['ORF_sequence']
@@ -681,7 +689,6 @@ class gssp:
         codons = ';'.join(codons)
         return codons
 
-
     def strfind(self, translated, peptide):
         if peptide in translated:
             return True
@@ -702,7 +709,6 @@ class gssp:
         aminos = ';'.join(aminos)
         return aminos
 
-
     def amino_before(self, df):
         peptide = df['Peptide_sequence']
         starts = df['Peptide_starts']
@@ -716,15 +722,8 @@ class gssp:
             aminos.append(amino)
         aminos = ';'.join(aminos)
         return aminos
-    
 
     def process_peptides(self, peptides_list):       
-        #executor = concurrent.futures.ProcessPoolExecutor(self.threads)
-        #futures = [executor.submit(self.peptide_df, p) for p in peptides_list]
-        #concurrent.futures.wait(futures)
-        
-        #peptides = pd.concat([future.result() for future in futures])
-        
         pool = multiprocessing.Pool(self.threads)
         peptides = pd.concat(pool.map(self.peptide_df, peptides_list))
         peptides = peptides.reset_index()
@@ -737,17 +736,7 @@ class gssp:
             temp_pep = peptide[1:]
         else:
             temp_pep = peptide
-        
-        #df = df[df['ORF_translation'].str.contains(temp_pep, regex=False, case=True)]
-        
-        #peplist= df['ORF_translation'].tolist()
-        
         df = df[[temp_pep in _ for _ in self.orf_trans_list]]
-        
-        #df = df[df['Found'] ==True]
-        #del df['Found']
-
-        #df = df[df['ORF_translation'].apply(lambda x : self.strfind(x, temp_pep) == True)]
         if len(df) != 0:
             df['Peptide_sequence'] = peptide
             df['Peptide_starts'] = df['ORF_translation'].apply(lambda x : self.locate_peptide(x, peptide))
@@ -755,28 +744,26 @@ class gssp:
             df['Peptide_tryptic_cterm'] = df.apply(self.tryptic_cterm_peptide, axis=1)
             df['Peptide_previous_codon'] = df.apply(self.previous_codon_peptide,axis=1)
             df['Peptide_first_codon'] = df.apply(self.first_codon_peptide,axis=1)
-            
             df['Peptide_amino_acid_before'] =  df.apply(self.amino_before,axis=1)
             df['Peptide_amino_acid_first'] =  df['Peptide_sequence'].apply(lambda x : x[:1])
             df['Peptide_amino_acid_last'] =  df['Peptide_sequence'].apply(lambda x : x[-1:])
-            
             df['Peptide_amino_acid_after'] =  df.apply(self.amino_after,axis=1)
-            df['Peptide_distinct_translated_ORF_count'] = len(df)
-
-            if len(df) > 1:
-                df['Peptide_distinct_translated_ORF_specfic']='-'
-            elif len(df) ==1:
+            distinct_translated_ORF_count = len(set(df['ORF_translation'].values.tolist()))
+            df['Peptide_distinct_translated_ORF_count'] = distinct_translated_ORF_count
+            if distinct_translated_ORF_count  == 1:
                 df['Peptide_distinct_translated_ORF_specfic']='+'
+            elif distinct_translated_ORF_count > 1:
+                df['Peptide_distinct_translated_ORF_specfic']='-'
             return df
 
-
-class pep2db:
-    '''Basic class for peptide to genome mapping - list of BioPython seqrecords for genome contigs'''
+class peptides2proteome:
+    '''Basic class for peptide to proteome mapping - list of BioPython seqrecords for genome contigs'''
     def __init__(self, proteome, peptides_list, threads=1):
         self.threads=threads
         self.peptides_list=peptides_list  # list of peptides
         self.proteome=proteome            # Bio.SeqIO list of fasta records
         self.pepdict = self.process_peptides()           # map peptides
+    
     def process_peptides(self):       
         peptides_list =list(set(self.peptides_list))
         pool = multiprocessing.Pool(self.threads)
@@ -787,7 +774,6 @@ class pep2db:
                 new_dict[key] = t[key]
         return new_dict
         
-
     def peptide_search(self, peptide):
         print('Searching {} in fasta'.format(peptide))
         temp =defaultdict(list)
@@ -796,8 +782,242 @@ class pep2db:
                 temp[peptide].append(rec.id)
         return temp
 
+class mapping2peptides:
+    '''Basic class to export classes of peptides from peptide2genome mapping table'''
+    
+    def __init__(self, mapping, translation_table):
+        self.mapping=mapping
+        self.translation_table = translation_table
+    def non_specific(self):
+        map = self.mapping 
+        ns =map[map['Peptide_distinct_translated_ORF_specfic'] =='-']['Peptide_sequence'].tolist()
+        ns = set(ns)
+        return ns
+    
+    def specific(self):
+        map = self.mapping
+        s =map[map['Peptide_distinct_translated_ORF_specfic'] =='+']['Peptide_sequence'].tolist()
+        s = set(s)
+        return s
+    
+    def check_for_met(self, codons):
+        met = False
+        for codon in codons.split(';'):
+            t = translate(Seq(codon), table = self.translation_table, cds=False)
+            if t == 'M':
+                met = True
+        return met
 
+    def non_atg_m(self):
+        map = self.mapping
+        mstarts = map[map['Peptide_amino_acid_first'] =='M']
+        mstarts['MetCodon'] = mstarts['Peptide_first_codon'].apply(self.check_for_met)
+        nonatgm = mstarts[mstarts['MetCodon'] == False]
+        return set(nonatgm['Peptide_sequence'].tolist())
+
+    def return_fasta(self, peptides):
+        map = self.mapping
+        orfs_fasta=[]
+        prots_fasta=[]
+        identical_translated= False
+        specific_map=map[map['Peptide_sequence'].isin(peptides)].copy()
+        specific_map = specific_map.drop_duplicates(['ORF_ids'])
+        orf_id_list =specific_map['ORF_ids'].tolist()
+        orf_nucs_list =specific_map['ORF_sequence'].tolist()
+        orf_trans_list =specific_map['ORF_translation'].tolist()
         
+        if len(set(orf_trans_list)) == 1:
+            identical_translated=True
+        
+        for item in range(len(orf_id_list)):
+            orf_id = orf_id_list[item]
+            orf_nucs = orf_nucs_list[item]
+            orf_trans = orf_trans_list[item]
+            nucs=SeqRecord(id='|'.join(orf_id.split('|')[1:]),seq=Seq(orf_nucs))
+            trans=SeqRecord(id='|'.join(orf_id.split('|')[1:]),seq=Seq(orf_trans))
+            orfs_fasta.append(nucs)
+            prots_fasta.append(trans)
+        
+        if identical_translated == True: # In case the translated ORF sequence is identical
+            prot_ids = []
+            for rec in prots_fasta:
+                prot_ids.append(rec.id)
+            prots_fasta = [SeqRecord(id = ';'.join(prot_ids), seq=rec.seq)]
+        return orfs_fasta, prots_fasta
+
+class pairwise_blast:
+    def __init__(self, query, target, temp_folder, max_evalue=0.0001):
+        
+        
+        assert not isinstance(query, list)
+        assert not isinstance(target, list)
+        
+        SeqIO.write(query,  temp_folder +"/query.fasta", "fasta")
+        SeqIO.write(target, temp_folder +"/target.fasta", "fasta")
+        
+        output = NcbiblastpCommandline(query=temp_folder +"/query.fasta", subject=temp_folder +"/target.fasta", outfmt=5)()[0] 
+        blast_result_record = NCBIXML.read(StringIO(output)) 
+        
+        results = [] 
+        hsps = []
+        positions = []
+        self.query = query
+        self.target = target
+
+        for alignment in blast_result_record.alignments:
+            for hsp in alignment.hsps:
+                if hsp.expect < max_evalue:
+                    hsps.append(hsp)
+                    h = []
+                    h.append('****Alignment****')
+                    h.append('sequence:         ' + str(alignment.title))
+                    h.append('length:           ' + str(alignment.length))
+                    h.append('e value:          ' + str(hsp.expect))
+                    h.append('align_length:     ' + str(hsp.align_length))
+                    h.append('frame:            ' + str(hsp.frame))
+                    h.append('gaps:             ' + str(hsp.gaps))
+                    h.append('identities:       ' + str(hsp.identities))
+                    h.append('num alignments:   ' + str(hsp.num_alignments))
+                    h.append('positives:        ' + str(hsp.positives))
+                    h.append('hsp query start:  ' + str(hsp.query_start))
+                    h.append('hsp query end:    ' + str(hsp.query_end))
+                    h.append('hsp query:        ' + str(hsp.query))
+                    h.append('hsp match:        ' + str(hsp.match))
+                    h.append('hsp subject:      ' + str(hsp.sbjct))
+                    h.append('hsp align_length: ' + str(hsp.align_length))
+                    h.append('hsp gaps:         ' + str(hsp.gaps))
+                    h.append('hsp sbjct_start:  ' + str(hsp.sbjct_start))
+                    h.append('hsp sbjct_end:    ' + str(hsp.sbjct_end))
+                    h.append('hsp score:        ' + str(hsp.score))
+                    h.append('hsp strand:       ' + str(hsp.strand))
+                    
+                    h = '\n'.join(h)
+                    match = str(hsp.match)
+                    start = int(hsp.sbjct_start)
+                    
+                    positions += [i + start for i, letter in enumerate(match) if letter == '+']
+                    
+                    results.append(h)
+        os.remove(temp_folder +'/query.fasta')
+        os.remove(temp_folder +'/target.fasta')
+        
+        self.results = '\n'.join(results)
+        self.hsps = hsps
+        self.differences = list(set(positions))
+
+    def feature_overlap(self, gff3):  # sequtils gff3 object (must be from UniProt! Target must be a UniProt fasta record with id sp|P9WQP5|P9WQP5_MYCTU etc..
+        if len(self.differences) > 0:
+            features = gff3.table[gff3.table['seqid'] == self.target.id.split('|')[1]]
+            overlap  = features[(features['start'] < max(self.differences))  & (features['end'] > min(self.differences))]
+            
+            res = []
+            for row in overlap.iterrows():
+                fields = []
+                for ind in row[1].index:
+                    if not ind.startswith('_'):
+                        datum = '{} : {}'.format(ind, row[1][ind])
+                        fields.append(datum)
+                fields = '\n'.join(fields)     
+                res.append(fields)
+            res = '\n\n'.join(res)
+            return res
+        else:
+            return None
+
+def icds_blast(fasta, temp_folder, max_evalue=0.0001):
+    non_alligned = []
+    for qrec in fasta:
+        qid = qrec.id
+        for trec in fasta:
+            tid = trec.id
+            if tid != qid:
+                datum = pairwise_blast(qrec, trec, temp_folder, max_evalue=max_evalue)
+                if len(datum.hsps) == 0:
+                    non_alligned.append('{}, {} (evalue cutoff {})'.format(qid, tid, str(max_evalue)))
+    return non_alligned
+
+class annotate:
+    def __init__(self, reference_protein, orf_sequence, specific_peptides, translation_table):
+        self.reference_protein = reference_protein
+        self.orf_sequence = orf
+        self.peptides = specific_peptides
+        self.reference_length = len(str(reference_protein.seq))
+        self.translation_table = translation_table
+        self.translated = translate(orf.seq, cds=False, table=self.translation_table)
+    
+    def annotation_type(self): 
+        pass
+
+
+
+@contextlib.contextmanager
+def stdout_redirect(where):
+    sys.stdout = where
+    try:
+         yield where
+    finally:
+        sys.stdout = sys.__stdout__
+        
+def clustalw(output_file, fasta):
+     new_fasta = fasta.copy()
+     for rec in new_fasta:
+         new_ids = []
+         ids = rec.id.split(';')
+         for id in ids:
+             new_ids.append(id.split('|')[0])
+         new_ids = ';'.join(new_ids)
+         rec.id = new_ids
+     SeqIO.write(new_fasta, output_file, 'fasta')
+     cline = ClustalwCommandline("clustalw2", infile=output_file)
+     stdout, stderr = cline()
+     aln = output_file.split('.fasta')[0]
+     align = AlignIO.read(aln +'.aln', "clustal")
+     tree = Phylo.read(aln +".dnd", "newick")
+     with stdout_redirect(StringIO()) as new_stdout:
+         Phylo.draw_ascii(tree)
+     new_stdout.seek(0)
+     tree = new_stdout.read()
+     return align, tree
+
+def muscle(fasta):
+    new_fasta = fasta.copy()
+    for rec in new_fasta:
+        new_ids = []
+        ids = rec.id.split(';')
+        for id in ids:
+            new_ids.append(id.split('|')[0])
+        new_ids = ';'.join(new_ids)
+        rec.id = new_ids
+    cline = MuscleCommandline(clwstrict=True)
+    child = subprocess.Popen(str(cline),
+    stdin=subprocess.PIPE,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE,
+    universal_newlines=True,
+    shell=(sys.platform!="win32"))
+    SeqIO.write(new_fasta, child.stdin, "fasta")
+    child.stdin.close()
+    lines=[]
+    align = AlignIO.read(child.stdout, "clustal")
+    return align
+
+def list_trie_upper(fasta, peptide_list):
+     new_fasta = fasta.copy()
+     peptide_list = list(peptide_list)
+     upper = []
+     pep_trie = algo.trie_graph(peptide_list)
+     for rec in new_fasta:
+         id = rec.id
+         temp_seq = str(rec.seq)
+         description= rec.description
+         temp_seq = algo.trie_upper(pep_trie, temp_seq)
+         assert(len(temp_seq)) == len(str(rec.seq))
+         newrec = SeqRecord(seq = Seq(temp_seq), id = id, description = description)
+         upper.append(newrec.format('fasta'))
+     return upper
+
+
+
 
 '''
 def alignment_code(query, query_start, alignment, ref_prot):
@@ -891,7 +1111,6 @@ def sf_map(six_frame, genome,ref_prot, starts=['ATG','GTG','TTG'], table=11):
                                     prot_header = '{}|{}:{}'.format(prot_id,
                                             start+ prot_start +1, 
                                             orf_end)
-                                    print prot_header.split('|')[-1]
                                     count += 1
                                 elif strand=='-':
                                         pass
@@ -964,7 +1183,6 @@ def annotate_gm(gm, sf):#not used, but can be used to annotate a gm prediction
         annotations = description+' '+'|'.join(annos)
         record = SeqRecord(i.seq, id = i.id, description = annotations)
         annotated.append(record)
-        print count
 return annotated
 '''
 
@@ -1087,7 +1305,6 @@ def annotate_gm(gm, sf):#not used, but can be used to annotate a gm prediction
         annotations = description+' '+'|'.join(annos)
         record = SeqRecord(i.seq, id = i.id, description = annotations)
         annotated.append(record)
-        print count
 return annotated
 '''
 

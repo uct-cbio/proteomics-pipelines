@@ -16,6 +16,7 @@ hostname
 # Your science stuff goes here:
 # This script is based on the txt output of maxquant
 # The output directory gets deleted per run
+set -e
 config='/home/ptgmat003/cbio-pipelines/proteogenomics/bin/config/mq_proteogeomics_example_config.py'
 outpath=/researchdata/fhgfs/ptgmat003/hexout/hypohyper/mq
 
@@ -27,12 +28,23 @@ outpath=/researchdata/fhgfs/ptgmat003/hexout/hypohyper/mq
 # Check the config script for any errors
 #mq_proteogenomics_validate_config.py $config $outpath
 
-# For each straint in the config script, analyze the peptides into groups based on genomic data
+
+
+
+# Proteogenomics analysis
+#mq_uniprot.py $config $outpath
+
 #mq_genome_to_peptide.py $config $outpath
 #uniprot_peptide2db.py $config $outpath
 #mq_peptide_to_referencedb.py $config $outpath
+
 mq_peptide_to_protein.py $config $outpath
 
+#mq_export_tables.py $config $outpath
+
+# Differential abundance analysis
+#mq_experimental_design.py $config $outpath
+#mq_differential_abundance.R -d ${outpath}/experimental_design.R -p ${outpath}/combined.csv -o ${outpath}/diff
 
 
 

@@ -19,7 +19,7 @@ proteome = list(SeqIO.parse(config.reference_proteome,'fasta'))
 peptides = pd.read_csv(config.mq_txt +'/peptides.txt',sep='\t')
 peptides = peptides[(peptides['Reverse']!='+') & (peptides['Potential contaminant'] !='+')]
 
-mapped = sequtils.pep2db(proteome,peptides['Sequence'].tolist(), threads=config.threads)
+mapped = sequtils.peptides2proteome(proteome,peptides['Sequence'].tolist(), threads=config.threads)
 
 jstr =json.dumps(mapped.pepdict)
 
