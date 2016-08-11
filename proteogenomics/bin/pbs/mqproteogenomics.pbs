@@ -19,6 +19,7 @@ hostname
 set -e
 config='/home/ptgmat003/cbio-pipelines/proteogenomics/bin/config/mq_proteogeomics_example_config.py'
 outpath=/researchdata/fhgfs/ptgmat003/hexout/hypohyper/mq
+python2ve=$HOME/ve273   # interproscan needs python 2 (Create one with virtualenv)
 
 # The rest is generic
 
@@ -28,18 +29,16 @@ outpath=/researchdata/fhgfs/ptgmat003/hexout/hypohyper/mq
 # Check the config script for any errors
 #mq_proteogenomics_validate_config.py $config $outpath
 
-
-
-
 # Proteogenomics analysis
 #mq_uniprot.py $config $outpath
-
 #mq_genome_to_peptide.py $config $outpath
 #uniprot_peptide2db.py $config $outpath
 #mq_peptide_to_referencedb.py $config $outpath
 
-mq_peptide_to_protein.py $config $outpath
+mq_export_proteinGroup_fasta.py $config $outpath
+ips.sh $outpath/fasta/nr_translated_pg_orfs.fasta $outpath/fasta $python2ve
 
+#mq_peptide_to_protein.py $config $outpath
 #mq_export_tables.py $config $outpath
 
 # Differential abundance analysis
