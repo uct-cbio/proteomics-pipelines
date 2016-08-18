@@ -122,7 +122,7 @@ for i in $(seq 1 $bp_python_chunknumber) ; do
     outfile=$output_folder/blast/tables/${file}.part.${i}.fasta.csv
 
     if [ ! -f ${outfile} ]; then
-        cmd="blast_XML_to_csv.py $infile > $outfile"
+        cmd="blast_XML_to_csv.py $infile $bp_input_fasta $outfile"
         job=$(submit "$cmd"  $jobs) ; 
         echo $job >> $bp_log_file
     fi
@@ -165,17 +165,27 @@ for i in $(seq 1 $bp_python_chunknumber) ; do
 done
 
 
-#if [ ! -f "${output_folder}/blast/combined_blast.tsv" ] ; then
-#    cmd="bp_blast_sum.py '${output_folder}/blast' '${bp_sum_aln_cutoff}'"
-#    job=$(submit "$cmd"  $jobs) ; 
-#    echo $job >> $bp_log_file
-#fi
+if [ ! -f "${output_folder}/blast/combined_blast.tsv" ] ; then
+    cmd="csvcat.py '${output_folder}/blast/filtered' > '${output_folder}/blast/combined_blast.tsv'"
+    job=$(submit "$cmd"  $jobs) ; 
+    echo $job >> $bp_log_file
+fi
+
 
 # Unipept LCA analysis
-#if [ "$bp_sum_pept2lca" -eq 1 ] ; then
-#    if [ ! -d $output_folder/blast/unipept ] ; then
-#        mkdir $output_folder/unipept
-#    fi
-#fi
+if [ "$bp_sum_pept2lca" -eq 1 ] ; then
+    if [ ! -d $output_folder/unipept ] ; then
+        mkdir $output_folder/unipept
+    fi
+
+    if [ ! -f $output_folder/unipept/merged_blast_unipept.csv ] ; then
+        
+    cmd="csv2unipeptlca.py '${output_folder}/blast/combined_blast.tsv' 'hsp.sbjct' '${output_folder}/unipept/'"
+    job=$(submit "$cmd"  $jobs) ; 
+    echo $job >> $bp_log_file
+    fi
+fi
+
+
 
 echo 'DONE'
