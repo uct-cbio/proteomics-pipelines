@@ -111,7 +111,7 @@ q=$bp_xml_pbs_q
 l=$bp_xml_pbs_l
 jobs=()
 
-if [ ! -d $output_folder/blast/export ] ; then
+if [ ! -d $output_folder/blast/tables ] ; then
     mkdir $output_folder/blast/tables
 fi
 
@@ -122,7 +122,7 @@ for i in $(seq 1 $bp_python_chunknumber) ; do
     outfile=$output_folder/blast/tables/${file}.part.${i}.fasta.csv
 
     if [ ! -f ${outfile} ]; then
-        cmd="blast_XML_to_csv.py $infile $outfile"
+        cmd="blast_XML_to_csv.py $infile > $outfile"
         job=$(submit "$cmd"  $jobs) ; 
         echo $job >> $bp_log_file
     fi
@@ -130,7 +130,7 @@ done
 
 
 
-# Make sure everythin has processed correctly
+# Make sure everything has processed correctly
 
 echo 'Waiting for BLAST export to complete'
 completed='FALSE'
@@ -143,5 +143,39 @@ do
       completed='TRUE' 
   fi
 done
+
+# Create summary table from blast output 'tables' folder
+q=$bp_sum_pbs_q
+l=$bp_sum_pbs_l
+jobs=()
+echo "Starting filtering alignments"
+
+if [ ! -d "${output_folder}/blast/filtered" ] ; then
+    mkdir "${output_folder}/blast/filtered"
+fi
+
+for i in $(seq 1 $bp_python_chunknumber) ; do
+    infile=$output_folder/blast/tables/${file}.part.${i}.fasta.csv
+    outfile=$output_folder/blast/filtered/${file}.part.${i}.fasta.csv
+    if [ ! -f ${outfile} ]; then
+        cmd="bp_blast_filter.py $infile $bp_sum_aln_cutoff $outfile"
+        job=$(submit "$cmd"  $jobs) ; 
+        echo $job >> $bp_log_file
+    fi
+done
+
+
+#if [ ! -f "${output_folder}/blast/combined_blast.tsv" ] ; then
+#    cmd="bp_blast_sum.py '${output_folder}/blast' '${bp_sum_aln_cutoff}'"
+#    job=$(submit "$cmd"  $jobs) ; 
+#    echo $job >> $bp_log_file
+#fi
+
+# Unipept LCA analysis
+#if [ "$bp_sum_pept2lca" -eq 1 ] ; then
+#    if [ ! -d $output_folder/blast/unipept ] ; then
+#        mkdir $output_folder/unipept
+#    fi
+#fi
 
 echo 'DONE'
