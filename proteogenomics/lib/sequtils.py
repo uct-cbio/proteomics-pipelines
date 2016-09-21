@@ -3,6 +3,8 @@ import collections
 from collections import Counter
 import multiprocessing
 import pandas as pd
+import numpy as np
+
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq, translate
 from Bio.Data import CodonTable
@@ -833,8 +835,13 @@ class mapping2peptides:
             orf_id = orf_id_list[item]
             orf_nucs = orf_nucs_list[item]
             orf_trans = orf_trans_list[item]
-            nucs=SeqRecord(id='|'.join(orf_id.split('|')[1:]),seq=Seq(orf_nucs))
-            trans=SeqRecord(id='|'.join(orf_id.split('|')[1:]),seq=Seq(orf_trans))
+            
+            nucs=SeqRecord(id=orf.id, seq=Seq(orf_nucs))
+            trans=SeqRecord(id=orf.id, seq=Seq(orf_trans))
+            
+            #nucs=SeqRecord(id='|'.join(orf_id.split('|')[1:]),seq=Seq(orf_nucs))
+            #trans=SeqRecord(id='|'.join(orf_id.split('|')[1:]),seq=Seq(orf_trans))
+            
             orfs_fasta.append(nucs)
             prots_fasta.append(trans)
         
@@ -845,10 +852,11 @@ class mapping2peptides:
             prots_fasta = [SeqRecord(id = ';'.join(prot_ids), seq=rec.seq)]
         return orfs_fasta, prots_fasta
 
+
+
 class pairwise_blast:
     def __init__(self, query, target, temp_folder, max_evalue=0.0001):
-        
-        
+            
         assert not isinstance(query, list)
         assert not isinstance(target, list)
         
@@ -859,6 +867,7 @@ class pairwise_blast:
         blast_result_record = NCBIXML.read(StringIO(output)) 
         
         results = [] 
+        variants = []
         hsps = []
         positions = []
         self.query = query
@@ -898,6 +907,8 @@ class pairwise_blast:
                     positions += [i + start for i, letter in enumerate(match) if letter == '+']
                     
                     results.append(h)
+                break
+
         os.remove(temp_folder +'/query.fasta')
         os.remove(temp_folder +'/target.fasta')
         
@@ -923,6 +934,7 @@ class pairwise_blast:
             return res
         else:
             return None
+    
 
 def icds_blast(fasta, temp_folder, max_evalue=0.0001):
     non_alligned = []
@@ -935,6 +947,26 @@ def icds_blast(fasta, temp_folder, max_evalue=0.0001):
                 if len(datum.hsps) == 0:
                     non_alligned.append('{}, {} (evalue cutoff {})'.format(qid, tid, str(max_evalue)))
     return non_alligned
+
+def reference_mapping_blast(fasta_orfs, fasta_refs, temp_folder, max_evalue=0.0001):
+    
+    non_alligned = []
+    min_hsp_e = np.inf
+    blast_pair = None
+
+    for qrec in fasta_orfs:
+        qid = qrec.id
+        for trec in fasta_refs:
+            tid = trec.id
+    
+            datum = pairwise_blast(qrec, trec,  temp_folder, max_evalue=max_evalue)
+            for hsp in datum.hsps:
+                if hsp.expect < min_hsp_e:
+                    min_hsp_e = hsp.expect
+
+                    blast_pair = '\n'.join(["Query id: {}".format(datum.query.id), "Target id: {}".format(datum.target.id), datum.results])
+
+    return min_hsp_e, blast_pair
 
 class annotate:
     def __init__(self, reference_protein, orf_sequence, specific_peptides, translation_table):
@@ -949,6 +981,17 @@ class annotate:
         pass
 
 
+def remove_asterisk(fasta):
+    new_fasta = []
+    for rec in fasta:
+        rs = str(rec.seq)
+        if rs[-1] == '*':
+            rs = rs[:-1]
+            rec.seq = Seq(rs)
+        new_fasta.append(rec)
+    return new_fasta
+
+
 
 @contextlib.contextmanager
 def stdout_redirect(where):
@@ -960,6 +1003,7 @@ def stdout_redirect(where):
         
 def clustalw(output_file, fasta):
      new_fasta = fasta.copy()
+
      for rec in new_fasta:
          new_ids = []
          ids = rec.id.split(';')
@@ -971,13 +1015,18 @@ def clustalw(output_file, fasta):
      cline = ClustalwCommandline("clustalw2", infile=output_file)
      stdout, stderr = cline()
      aln = output_file.split('.fasta')[0]
-     align = AlignIO.read(aln +'.aln', "clustal")
-     tree = Phylo.read(aln +".dnd", "newick")
-     with stdout_redirect(StringIO()) as new_stdout:
-         Phylo.draw_ascii(tree)
-     new_stdout.seek(0)
-     tree = new_stdout.read()
-     return align, tree
+
+     try:
+         align = AlignIO.read(aln +'.aln', "clustal")
+         tree = Phylo.read(aln +".dnd", "newick")
+         with stdout_redirect(StringIO()) as new_stdout:
+             Phylo.draw_ascii(tree)
+         new_stdout.seek(0)
+         tree = new_stdout.read()
+         return align, tree
+     except:
+         return None, None
+
 
 def muscle(fasta):
     new_fasta = fasta.copy()
@@ -998,8 +1047,11 @@ def muscle(fasta):
     SeqIO.write(new_fasta, child.stdin, "fasta")
     child.stdin.close()
     lines=[]
-    align = AlignIO.read(child.stdout, "clustal")
-    return align
+    try:
+        align = AlignIO.read(child.stdout, "clustal")
+        return align
+    except:
+        return None
 
 def list_trie_upper(fasta, peptide_list):
      new_fasta = fasta.copy()

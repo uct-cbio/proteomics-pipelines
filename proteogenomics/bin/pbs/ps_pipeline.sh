@@ -54,10 +54,11 @@ for spectrum_file in ${spectrum_files}/*.mgf; do
         sample=${sample%.mgf}_recalibrated.mgf
     fi
     if [ ! -f $output_folder/mzIdentMLs/$sample.mzid ]; then	
-	if [ -z $oldruns ]; then
- 	    ps_sample=$(echo "PS_sample.sh '$output_folder' '$spectrum_file'" | qsub -N $N -q $q -l $l -M $M -m $m)
-    	else
-	    ps_sample=$(echo "PS_sample.sh '$output_folder' '$spectrum_file'" | qsub -N $N -q $q -l $l -M $M -m $m -W depend=afterok:${deps})
+        echo "$output_folder/mzIdentMLs/$sample.mzid"
+        if [ -z $oldruns ]; then
+            ps_sample=$(echo "PS_sample.sh '$output_folder' '$spectrum_file'" | qsub -N $N -q $q -l $l -M $M -m $m)
+        else
+            ps_sample=$(echo "PS_sample.sh '$output_folder' '$spectrum_file'" | qsub -N $N -q $q -l $l -M $M -m $m -W depend=afterok:${deps})
         fi
         echo $ps_sample >> $config.joblist
         newruns+=($ps_sample)
@@ -78,7 +79,7 @@ if [ ! -d $output_folder/mzIdentMLS/analysis ]; then
     if [ -z $oldruns ]; then 
         msnid_shake=$(echo "${cmd}" | qsub -N $N -q $q -l $l -M $M -m $m )
     else
-	msnid_shake=$(echo "${cmd}" | qsub -N $N -q $q -l $l -M $M -m $m -W depend=afterok:${deps})
+	    msnid_shake=$(echo "${cmd}" | qsub -N $N -q $q -l $l -M $M -m $m -W depend=afterok:${deps})
     fi
     newruns+=($msnid_shake)
     echo ${msnid_shake} >> $config.joblist
@@ -88,4 +89,6 @@ fi
 oldruns=("${oldruns[@]}" "${newruns[@]}")
 newruns=()
 deps=$(echo $( IFS=$':'; echo "${oldruns[*]}" )) 
+
+
 

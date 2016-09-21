@@ -14,6 +14,7 @@ class peptidesmapped:
         self.taxon_peptides = taxon_peptides
         self.taxon_data = taxon_data
         self.mapped = self.mapped_entries()
+        self.counted = Counter(self.mapped)
         self.best, self.best_count, self.best_fasta, self.peptides_counted = self.best_mapped()
 
     def mapped_entries(self):
@@ -28,7 +29,7 @@ class peptidesmapped:
     def best_mapped(self):
         if len(self.mapped) > 0:
             mapped_fastas = {}
-            counted = Counter(self.mapped)
+            counted = self.counted
             biggest = max(counted.values())
             overlap_max = defaultdict(list)
             for key in counted:
@@ -64,7 +65,25 @@ class peptidesmapped:
             max_ref = 0
         return max_ref
 
+    def pep2proteome(self, proteome_id):
+        mapped_proteome = []
+        
+        if len(self.mapped) > 0:
+            for entry in self.mapped:
+                try:
+                    dict = self.taxon_data[entry]
+                    p = dict['Proteomes'].split(':')[0]
+                    protein = dict['Entry']
+                    genes = dict['Gene names']
+                    count = self.counted[entry]
+                    map = (protein, genes, count)
+                    if p == proteome_id:
+                        mapped_proteome.append(map)
+                except:
+                    pass
 
+        return mapped_proteome           
+            
 
 def map2fasta(ids, mapping):
     recs = []
