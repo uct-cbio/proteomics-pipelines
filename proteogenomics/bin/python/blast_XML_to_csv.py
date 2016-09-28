@@ -21,6 +21,7 @@ output = open(sys.argv[3],'w')
 
 output = csv.writer(output, delimiter='\t')
 
+aln_cutoff = int(sys.argv[4])
 
 
 headers = [         'blast_record.query',
@@ -64,9 +65,10 @@ headers = [         'blast_record.query',
 output.writerow(headers)
 
 for blast_record in blast_records:
-    aln_count = 1
     top_eval=None
     
+    aln_count = 1
+        
     qdesc = fasta_sequence[blast_record.query.split()[0]].description
     qseq = str(fasta_sequence[blast_record.query.split()[0]].seq)
     qlen = len(qseq)
@@ -123,4 +125,7 @@ for blast_record in blast_records:
             output.writerow(rd)
             hsp_count += 1
             row += 1
+        if aln_count == aln_cutoff:
+            break
         aln_count += 1
+        
