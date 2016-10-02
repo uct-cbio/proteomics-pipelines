@@ -29,12 +29,7 @@ chunked = grouper(records, chunksize)
 
 chunks =[]
 count=1
-for c in range( chunknumber ):
-    try:
-        chunk = chunked[c]
-    except:
-        chunk = []
-    
+for chunk in chunked:
     partname='{}.part.{}.fasta'.format(filename, count)
     chunk = pd.Series(chunk).dropna().tolist()
     count += 1

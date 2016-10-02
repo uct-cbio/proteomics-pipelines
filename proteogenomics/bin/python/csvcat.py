@@ -2,11 +2,14 @@
 
 import pandas as pd
 import sys
+import os
 
-frames = []
-for key in sys.argv[1:]:
-    df = pd.read_csv(key)
-    df['File'] = key
-    frames.append(df)
-combined = pd.concat(frames)
+files = []
+
+for file in os.listdir(sys.argv[1]):
+    df = pd.read_csv(sys.argv[1] +'/' + file, sep = None, engine='python')
+    df['File'] = file
+    files.append(df)
+
+combined = pd.concat(files)
 combined.to_csv(sys.stdout)

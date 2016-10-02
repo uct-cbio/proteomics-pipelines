@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 
+<<<<<<< HEAD
+peptideshaker='http://genesis.ugent.be/maven2/eu/isas/peptideshaker/PeptideShaker/1.13.1/PeptideShaker-1.13.1.zip'
+=======
 peptideshaker='http://genesis.ugent.be/maven2/eu/isas/peptideshaker/PeptideShaker/1.12.3/PeptideShaker-1.12.3.zip'
+>>>>>>> df71bcdd9a0c3572c9ec3179fc71d7788fc280ad
 
 searchgui='http://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/3.0.3/SearchGUI-3.0.3-mac_and_linux.tar.gz'
 
-denovogui='http://genesis.ugent.be/maven2/com/compomics/denovogui/DeNovoGUI/1.12.1/DeNovoGUI-1.12.1-mac_and_linux.tar.gz'
+denovogui='http://genesis.ugent.be/maven2/com/compomics/denovogui/DeNovoGUI/1.12.3/DeNovoGUI-1.12.3-mac_and_linux.tar.gz'
 
 ruby='https://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.5.tar.gz'
 
@@ -20,6 +24,7 @@ kibana='https://download.elastic.co/kibana/kibana/kibana-4.5.4-linux-x64.tar.gz'
 
 elasticsearch='https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.3.5/elasticsearch-2.3.5.tar.gz'
 
+R='https://cran.r-project.org/src/base/R-3/R-3.2.3.tar.gz'
 
 #############################
 # Create the base directory #
@@ -179,6 +184,23 @@ cd $dir/$base
 echo $name
 if [ ! -d "$name" ]; then 
     mkdir $name && cd $name && wget $url && tar -zxvf *.tar.gz && rm -rf *.tar.gz  
+fi 
+
+
+#################
+## R ###########
+#################
+url=$R
+file="${url##*/}"
+name="${file%.tar.gz}"
+base=R
+if [ ! -d "$dir/$base" ]; then 
+    mkdir $dir/$base
+fi 
+cd $dir/$base 
+echo $name
+if [ ! -d "$name" ]; then 
+    mkdir $name && cd $name && wget $url && tar -zxvf *.tar.gz && rm -rf *.tar.gz && cd R* && ./configure --prefix=$dir/$base/$name && make && make install 
 fi 
 
 
