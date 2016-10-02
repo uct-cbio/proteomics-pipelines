@@ -34,7 +34,10 @@ python2ve=$HOME/ve273   # interproscan needs python 2 (Create one with virtualen
 #mq_genome_to_peptide.py $config $outpath
 #uniprot_peptide2db.py $config $outpath
 #mq_peptide_to_referencedb.py $config $outpath
-#mq_export_proteinGroup_fasta.py $config $outpath
+
+
+#mq_fasta_export.py $config $outpath
+#ips_fasta.py $outpath/fasta/combined_translated.fasta $outpath/fasta
 #ips.sh $outpath/fasta/nr_translated_pg_orfs.fasta $outpath/fasta $python2ve
 
 mq_peptide_to_protein.py $config $outpath

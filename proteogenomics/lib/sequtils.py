@@ -4,7 +4,7 @@ from collections import Counter
 import multiprocessing
 import pandas as pd
 import numpy as np
-
+import json
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq, translate
 from Bio.Data import CodonTable
@@ -270,7 +270,7 @@ def translate_start(rec, table=11, starts = ['ATG','GTG','TTG']): # list of Met-
     if seq[:3] in starts:
         translated = 'M' + str(translate(seq, table = table))[1:]
     else:
-        translated=str(translate(seq,table=table))
+        translated=str(translate(seq,table=table, cds=False))
 
     if translated.endswith('*'):
         translated = translated[:-1]
@@ -341,7 +341,7 @@ class gff3:
         self.table = pd.read_csv(os.path.abspath(GFF3),sep='\t',comment='#')
         self.table = self.table.iloc[:,:9]
         self.table.columns = self.gffcols
-        self.attributes_columns()
+        #self.attributes_columns()
 
     def attributes_columns(self):
         pos_cols = ['ID', 'Name', 'Alias', 'Parent', 'Target', 'Gap', 'Derives_from','Note', 'Dbxref', 'Ontology_term', 'Is_circular']
@@ -369,6 +369,17 @@ class gff3:
 
     def entryCount(self):
         return len(self.table)
+    
+    def expand_table(self, mapping):
+        new_df = pd.DataFrame()
+        new_df['_mapped.id'] = pd.Series(list(mapping.keys()))
+        new_df['seqid'] = new_df['_mapped.id'].apply(lambda x : mapping[x])
+        
+        merged = pd.merge(self.table, new_df)
+        merged['seqid'] = merged['_mapped.id'].apply(lambda x : x.split('|')[1])
+        self.table=merged
+    
+
 
 class vcf:
     '''Basic class for vcf data'''
@@ -786,7 +797,7 @@ class peptides2proteome:
 
 class mapping2peptides:
     '''Basic class to export classes of peptides from peptide2genome mapping table'''
-    
+    # consider that when calculating the unique tanslated sequences, * at the end should be excluded.  
     def __init__(self, mapping, translation_table):
         self.mapping=mapping
         self.translation_table = translation_table
@@ -836,8 +847,8 @@ class mapping2peptides:
             orf_nucs = orf_nucs_list[item]
             orf_trans = orf_trans_list[item]
             
-            nucs=SeqRecord(id=orf.id, seq=Seq(orf_nucs))
-            trans=SeqRecord(id=orf.id, seq=Seq(orf_trans))
+            nucs=SeqRecord(id=orf_id, seq=Seq(orf_nucs))
+            trans=SeqRecord(id=orf_id, seq=Seq(orf_trans))
             
             #nucs=SeqRecord(id='|'.join(orf_id.split('|')[1:]),seq=Seq(orf_nucs))
             #trans=SeqRecord(id='|'.join(orf_id.split('|')[1:]),seq=Seq(orf_trans))
@@ -853,10 +864,8 @@ class mapping2peptides:
         return orfs_fasta, prots_fasta
 
 
-
 class pairwise_blast:
     def __init__(self, query, target, temp_folder, max_evalue=0.0001):
-            
         assert not isinstance(query, list)
         assert not isinstance(target, list)
         
@@ -872,6 +881,11 @@ class pairwise_blast:
         positions = []
         self.query = query
         self.target = target
+
+        self.querylength=len(str(query.seq))
+        self.targetlength = len(str(target.seq))
+        
+        var_dict={}
 
         for alignment in blast_result_record.alignments:
             for hsp in alignment.hsps:
@@ -904,8 +918,23 @@ class pairwise_blast:
                     match = str(hsp.match)
                     start = int(hsp.sbjct_start)
                     
-                    positions += [i + start for i, letter in enumerate(match) if letter == '+']
+                    qstart = int(hsp.query_start)
+                    tstart = int(hsp.sbjct_start)
                     
+                    diff = tstart-qstart
+                    for i, letter in enumerate(str(query.seq)):
+                        location = i + 1 + diff
+                        matchpos= location-tstart
+                        if (matchpos >= 0) and (matchpos < len(match)):
+                            if match[matchpos] == '+':
+                                positions.append(location)
+                                var_dict[location]='{}->{}'
+                                var='{}->{}'.format(str(query.seq)[i], str(target.seq)[i+diff])
+                                var_dict[location]=var
+                        elif (location >= 1) and (location <= len(str(target.seq))):
+                            positions.append(location)
+                            var='{}->{}'.format(str(query.seq)[i], str(target.seq)[i+diff])
+                            var_dict[location]=var
                     results.append(h)
                 break
 
@@ -915,6 +944,7 @@ class pairwise_blast:
         self.results = '\n'.join(results)
         self.hsps = hsps
         self.differences = list(set(positions))
+        self.variants = var_dict
 
     def feature_overlap(self, gff3):  # sequtils gff3 object (must be from UniProt! Target must be a UniProt fasta record with id sp|P9WQP5|P9WQP5_MYCTU etc..
         if len(self.differences) > 0:
@@ -926,27 +956,120 @@ class pairwise_blast:
                 fields = []
                 for ind in row[1].index:
                     if not ind.startswith('_'):
-                        datum = '{} : {}'.format(ind, row[1][ind])
+                        datum = '{}: {}'.format(ind, row[1][ind])
                         fields.append(datum)
-                fields = '\n'.join(fields)     
+                fields = ', '.join(fields)
                 res.append(fields)
             res = '\n\n'.join(res)
             return res
         else:
             return None
-    
 
+class frameshift_peptides:
+    def __init__(self, recs, peptides, tempfolder, max_evalue=0.0001):
+        mapped_orfs = {}
+        self.reclist= recs.copy()
+        frameshift_peptides=[]
+        icds_map=defaultdict(list)
+        peptide_stt_map = defaultdict(list)
+        peptide_end_map = defaultdict(list)
+        frameshifts=defaultdict(list)
+        blast_res=defaultdict()
+        
+        frameshift_blast=defaultdict()
+        results = {}
+
+        for rec in self.reclist[:]:
+            self.reclist.remove(rec)
+            
+            for trec in self.reclist:
+                lst = [rec, trec]
+                assert len(lst) ==2 
+                if len(icds_blast(lst, tempfolder)) > 0:
+                    
+                    icds_map[rec.id].append(trec.id)
+                    icds_map[trec.id].append(rec.id)
+                    
+                    start_rec=None
+                    end_rec=None
+
+                    for peptide in peptides:
+                        if not peptide in blast_res:
+                            blast_res[peptide]=defaultdict()
+                            
+                        start_found=False
+                        end_found=False
+                        fs_start =None
+                        peprec = SeqRecord(seq=Seq(peptide), id='peptide_{}'.format(peptide))
+                        for protrec in lst:
+                            res = pairwise_blast(peprec, protrec, tempfolder)
+                            top_hsp=res.hsps[0]
+                            pep_len=len(peptide)
+                            
+                            blast_res[peptide][protrec.id] = res.results
+
+                            start = top_hsp.query_start
+                            end   = top_hsp.query_end
+                            
+                            rexes = ['-', ' ', '+']
+
+                            if (start == 1) and (end != pep_len):
+                                temp_match = top_hsp.match
+                                for rex in rexes:
+                                    if rex in temp_match:
+                                        temp_match = temp_match.split(rex)[0]
+                                ml = len(temp_match)
+                                fs_start=ml + top_hsp.sbjct_start
+                                
+                                start_found=True
+                                peptide_stt_map[peptide].append(protrec.id)
+                                start_rec=protrec.id
+
+                            elif (start != 1) and (end == pep_len):
+                                
+                                #temp_match = top_hsp.match
+                                #for rex in rexes:
+                                #    if rex in temp_match:
+                                #        temp_match = temp_match.split(rex)[1]
+                                #ml = len(temp_match)
+                                #print(top_hsp.sbjct_end - ml)
+                                
+                                
+                                end_found=True
+                                peptide_end_map[peptide].append(protrec.id)
+                                end_rec=protrec.id
+
+                        if (end_found&start_found) == True:
+                            frameshift_peptides.append(peptide)
+                            fs="{}, {}".format(start_rec, end_rec)
+                            frameshifts[fs].append(peptide)
+                            frameshift_blast[fs] = '\n'.join(['****\nProtein BLAST results for peptide {}\nin 2 non-alligning sequences {}\n- likely frameshift after aa position {} in {}\n****'.format(peptide, fs, int(fs_start), start_rec), blast_res[peptide][start_rec],blast_res[peptide][end_rec]])
+
+        self.frameshift_peptides = frameshift_peptides
+        self.peptide_stt_map = json.loads(json.dumps(peptide_stt_map))
+        self.peptide_end_map = json.loads(json.dumps(peptide_end_map))
+        self.frameshifts=json.loads(json.dumps(frameshifts))
+        self.frameshift_blast = '\n'.join([frameshift_blast[d] for d in list(frameshift_blast.keys())])
+
+                    
 def icds_blast(fasta, temp_folder, max_evalue=0.0001):
+    
+    tempfasta = fasta.copy()
     non_alligned = []
-    for qrec in fasta:
+    blasted = []
+
+    for qrec in tempfasta[:]:
         qid = qrec.id
-        for trec in fasta:
+        tempfasta.remove(qrec) # dont blast it against itself or again after the loop
+
+        for trec in tempfasta:
             tid = trec.id
-            if tid != qid:
-                datum = pairwise_blast(qrec, trec, temp_folder, max_evalue=max_evalue)
-                if len(datum.hsps) == 0:
-                    non_alligned.append('{}, {} (evalue cutoff {})'.format(qid, tid, str(max_evalue)))
+            
+            datum = pairwise_blast(qrec, trec, temp_folder, max_evalue=max_evalue)
+            if len(datum.hsps) == 0:
+                non_alligned.append('{}, {} (evalue cutoff {})'.format(qid, tid, str(max_evalue)))
     return non_alligned
+
 
 def reference_mapping_blast(fasta_orfs, fasta_refs, temp_folder, max_evalue=0.0001):
     
@@ -1004,13 +1127,15 @@ def stdout_redirect(where):
 def clustalw(output_file, fasta):
      new_fasta = fasta.copy()
 
-     for rec in new_fasta:
-         new_ids = []
-         ids = rec.id.split(';')
-         for id in ids:
-             new_ids.append(id.split('|')[0])
-         new_ids = ';'.join(new_ids)
-         rec.id = new_ids
+     #for rec in new_fasta:
+     #    new_ids = []
+     #    ids = rec.id.split(';')
+     ##    for id in ids:
+     #        print(id)
+     #        new_ids.append(id.split('|')[1])
+     #    new_ids = ';'.join(new_ids)
+     #    rec.id = new_ids
+
      SeqIO.write(new_fasta, output_file, 'fasta')
      cline = ClustalwCommandline("clustalw2", infile=output_file)
      stdout, stderr = cline()
@@ -1030,13 +1155,15 @@ def clustalw(output_file, fasta):
 
 def muscle(fasta):
     new_fasta = fasta.copy()
-    for rec in new_fasta:
-        new_ids = []
-        ids = rec.id.split(';')
-        for id in ids:
-            new_ids.append(id.split('|')[0])
-        new_ids = ';'.join(new_ids)
-        rec.id = new_ids
+    #for rec in new_fasta:
+    #    new_ids = []
+    #    ids = rec.id.split(';')
+    #    for id in ids:
+    #        print(id)
+    #        new_ids.append(id.split('|')[1])
+    #    new_ids = ';'.join(new_ids)
+    #    rec.id = new_ids
+    
     cline = MuscleCommandline(clwstrict=True)
     child = subprocess.Popen(str(cline),
     stdin=subprocess.PIPE,

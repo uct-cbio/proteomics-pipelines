@@ -45,6 +45,10 @@ taxon_data=json.loads(open(output +'/mapping/entrydata.json'.format(config.refer
 
 reference_features = sequtils.gff3(output +'/uniprot/features/{}.gff'.format(config.reference_taxid))
 
+orf_features = sequtils.gff3(output +'/fasta/nr_translated_pg_orfs.fasta.gff3')
+orf_feature_mapping = json.loads(open(output + '/fasta/id_mapping.json').read())
+orf_features.expand_table(orf_feature_mapping)
+
 samples = config.samples
 
 try:
@@ -117,16 +121,16 @@ def peptide_list_blast(peptides, targets, features):
             pairwise_blast = []
             pairwise_features = []
 
-            id = 'peptide_{}'.format(strain, str(count))
+            id = 'peptide_{}_{}'.format(strain, str(count))
             seq = Seq(p)
             rec = SeqRecord(id = id, seq = seq)
-            out = sequtils.pairwise_blast(rec, target, output)
             
+            out = sequtils.pairwise_blast(rec, target, output)
             if len(out.differences) > 0:
                 header = '***Results for peptide {} in record {}***'.format(p, target.id) 
                 pairwise_blast.append(header)
                 pairwise_blast.append(out.results)
-                pairwise_blast.append('\nIdentified polymorphism positions: {}'.format(';'.join([str(i) for i in out.differences])))
+                pairwise_blast.append('\nIdentified polymorphism positions: {}'.format('; '.join(['{} ({})'.format(str(i), out.variants[i]) for i in out.differences])))
                 
                 overlap = out.feature_overlap(features)
                 
@@ -148,9 +152,11 @@ strain_dct={}
 for sample in samples:
     strain_dct[sample] = samples[sample]['STRAIN']
 
-# 1048
-pg = pg[pg['id']==934] #mutant
-#pg = pg[pg['id'] ==  2356] 
+#pg = pg[pg['id']==934] #mutant
+#pg = pg[(pg['id']==1528) | (pg['id']==934)] #mutants
+#pg = pg[pg['id'] ==  410]  two frames in 5527
+
+#pg = pg[pg['id'] == 142]
 
 for row in pg.iterrows():
     print(row[0])
@@ -204,7 +210,9 @@ for row in pg.iterrows():
     best_eval_strain = None
 
     row_variant_features_ref, row_variant_blast_ref = peptide_list_blast(row_specific, refps, reference_features)
+    
     row_variant_features_ref_list = []
+    
     row_variant_blast_ref_list = []
     
     for pep in row_variant_blast_ref:
@@ -220,6 +228,7 @@ for row in pg.iterrows():
         
         specific_strain_peps = st_peps & row_specific
         genome_unmapped = specific_strain_peps - strain_sets[strain]
+        
         strain_exclusive_novel = specific_strain_peps & strain_sets_exclusive[strain]
         x,y = peptide_mapping.return_fasta(row_specific)
         all_orfs_fasta += x
@@ -260,6 +269,13 @@ for row in pg.iterrows():
         pg.loc[row[0], "_unmapped.peptides.strain.{}".format(strain)]='\n'.join(genome_unmapped) 
         pg.loc[row[0], "_translated.orfs.strain.{}".format(strain)] = '\n'.join(trie)
         
+
+        fs_st = sequtils.frameshift_peptides(y, genome_unmapped, output)
+        if len(fs_st.frameshift_peptides) > 0:
+            pg.loc[row[0], '_orfs.mapped.frameshift.validated.strain.{}'.format(strain)] = '+' 
+            pg.loc[row[0], '_orfs.mapped.frameshift.evidence.strain.{}'.format(strain)] = fs_st.frameshift_blast 
+        
+        
         ref_blast = sequtils.reference_mapping_blast(y, refps, output)
         
         if ref_blast[0] < min_eval_ref_blast:
@@ -268,12 +284,39 @@ for row in pg.iterrows():
 
         pg.loc[row[0], "_translated.orfs.mapped.reference.best.blast.evalue.strain.{}".format(strain)] = ref_blast[0]
         pg.loc[row[0], "_translated.orfs.mapped.reference.best.blast.match.{}".format(strain)] = ref_blast[1]
+    
+    for orf in  mapped_orfs:
+        print(orf.format('fasta'))
+
+
 
     for key in id_holder:
         ids = id_holder[key]
         if len(ids) > 1:
             frameshifts.append(key) 
-     
+    
+    ####################### 
+    # ORF feature overlap #
+    ######################
+    row_variant_features_orfs, row_variant_blast_orfs = peptide_list_blast(row_specific, mapped_orfs, orf_features)
+    row_variant_features_orfs_list = []
+    row_variant_blast_orfs_list = []
+    for pep in row_variant_blast_orfs:
+        row_variant_blast_orfs_list += list(row_variant_blast_orfs[pep].values())
+        if pep in row_variant_features_orfs:
+            row_variant_features_orfs_list += list(row_variant_features_orfs[pep].values()) 
+    blasted = []
+    features = []
+    for p in row_specific:
+        if p in row_variant_blast_orfs:
+            blasted += list(row_variant_blast_orfs[p].values())
+            if p in row_variant_features_orfs:
+                features += list(row_variant_features_orfs[p].values())
+    
+    pg.loc[row[0], "_specific.peptides.variants.blast.orfs"]='\n'.join(blasted) 
+    pg.loc[row[0], "_identified.polymorphism.feature.overlap.orfs"]='\n'.join(features) 
+
+
     pg.loc[row[0],"_frameshift"] = '\n'.join(list(frameshifts))
     pg.loc[row[0],"_exclusive.peptide.strains"] = '\n'.join(list(strains_exclusive))
     pg.loc[row[0],"_combined.specific.peptides"] ='\n'.join(list(row_specific))
@@ -312,9 +355,14 @@ for row in pg.iterrows():
         pg.loc[row[0],'_reference.proteome.best.peptide.count'] = max_ref
         
         icds = sequtils.icds_blast(refps, output)
+        
         if len(icds) > 0: 
             pg.loc[row[0],'_reference.proteome.mapped.non.alligned'] = '\n'.join(icds)
-        
+            fs_ref = sequtils.frameshift_peptides(refps, row_novel, output)
+            if len(fs_ref.frameshift_peptides) > 0:
+                pg.loc[row[0], '_reference.proteome.mapped.frameshift.validated'] = '+' 
+                pg.loc[row[0], '_reference.proteome.mapped.frameshift.evidence'] = fs_ref.frameshift_blast 
+
         if max_pep != None:
             if (max_ref < max_pep) and (len(icds) > 0):
                best = spec_fastas[0].id
@@ -326,8 +374,6 @@ for row in pg.iterrows():
             else:
                 best=None
                 rmatch = False
-         
-    
 
     pg.loc[row[0],'_taxon.best.matches'] = mapped_taxa 
     pg.loc[row[0],'_taxon.best.peptide.count'] = max_pep

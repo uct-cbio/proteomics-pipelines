@@ -15,6 +15,7 @@ class peptidesmapped:
         self.taxon_data = taxon_data
         self.mapped = self.mapped_entries()
         self.counted = Counter(self.mapped)
+        self.mapped = list(set(self.mapped))
         self.best, self.best_count, self.best_fasta, self.peptides_counted = self.best_mapped()
 
     def mapped_entries(self):
@@ -24,6 +25,7 @@ class peptidesmapped:
                 entries = self.taxon_peptides[peptide]
                 assert len(entries) == len(list(set(entries)))
                 mapped += entries
+        #mapped = list(set(mapped))
         return mapped
 
     def best_mapped(self):
@@ -37,7 +39,7 @@ class peptidesmapped:
                     dict = self.taxon_data[key]
                     val = '{} - {} Taxid: {}'.format(dict['Entry'] ,dict['Organism'],dict['Organism ID'])
                     seq = Seq(dict['Sequence'])
-                    rec = SeqRecord(seq = seq, id = dict['Entry'], description = dict['Organism'    ])    
+                    rec = SeqRecord(seq = seq, id = dict['Entry'], description = dict['Organism'])    
                     mapped_fastas[dict['Entry']] = rec
                     lineage = dict['Taxonomic lineage IDs (all)'].split(', ')
                     lineage  = [int(i) for i in lineage]

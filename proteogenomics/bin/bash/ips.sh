@@ -12,4 +12,3 @@ ve=$3
 source $ve/bin/activate
 interproscan.sh -i $input_fasta -d $outdir -goterms -iprlookup -pa
 
-
