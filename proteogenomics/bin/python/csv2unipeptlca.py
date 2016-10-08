@@ -27,8 +27,8 @@ def ILequivalence(peptide):
             newplist.append('L')
         else:
             newplist.append(p)
-     newp = ''.join(newplist)
-     return newp
+    newp = ''.join(newplist)
+    return newp
 
 table = pd.read_csv(sys.argv[1], sep=None, engine='python')
 
@@ -64,6 +64,12 @@ assert process.returncode == 0
 
 
 cmd = "cat {}/prot2pept.csv | unipept pept2prot --equate > {}/pept2prot_all.csv".format(outfolder,  outfolder)
+process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+process.wait()
+assert process.returncode == 0
+
+
+cmd = "cat {}/prot2pept.csv | unipept pept2taxa --all --equate > {}/pept2taxa_all.csv".format(outfolder,  outfolder)
 process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 process.wait()
 assert process.returncode == 0

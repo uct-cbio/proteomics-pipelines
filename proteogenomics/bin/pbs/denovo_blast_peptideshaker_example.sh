@@ -7,13 +7,13 @@
 #PBS -m be
 
 # Config
-experiment='andrew_adult_stool_universal_export'
-output_folder="/mnt/lustre/users/mpotgieter1/andrew_stool_out/ps_universal_export"  
-spectrum_files="/home/mpotgieter1/lustre/blackburn/andrew_adult_stool/mgf2" 
-target_fasta="/home/mpotgieter1/lustre/andrew_stool_out/andrew_PAM30_Universal/unipept/pept2prot_excl_root_only_accessions_mult_peptides.fasta" 
+experiment='S507_S5527_proteogenomics'
+output_folder="/mnt/lustre/users/mpotgieter1/hh_out/hh"
+spectrum_files="/home/mpotgieter1/lustre/blackburn/hypohyper/S507_S5527_hexdata/mgf_hh"
+target_fasta="/mnt/lustre/users/mpotgieter1/blackburn/hypohyper/S507_S5527_hexdata/HYPOHYPER/proteomes/UP000001584_14_03_2016.fasta"
 contaminant_fasta="/mnt/lustre/users/mpotgieter1/blackburn/hypohyper/S507_S5527_hexdata/HYPOHYPER/proteomes/gpm_crap_2016_07_03.fasta"
 ps_folder='/home/mpotgieter1/software/PeptideShaker/PeptideShaker-1.13.1'
-sg_folder='/home/mpotgieter1/software/SearchGUI/SearchGUI-3.1.0'       
+sg_folder='/home/mpotgieter1/software/SearchGUI/SearchGUI-3.1.0'
 
 # SearchGUI parameters 
 output_data='1'
@@ -66,31 +66,33 @@ tide_min_pep_length=7
 tide_max_pep_length=30
 
 # MzidCLI parameters #
-contact_first_name='Matthys'
-contact_last_name='Potgieter'
-contact_email='matthys.potgietere@gmail.com'
+
+contact_first_name='Nyari'
+contact_last_name='Chigorimbo'
+contact_email='Nyari.chigorimbo@hiv-research.org.za'
 contact_address='Same as organization adress'
 organization_name='University of Cape Town'
 organization_email='organization@email.com'
-organization_address='Dept of Integrative Biomedical Sciences, Computational Biology Group, Institute of Infectious Disease and Molecular Medicine, University of Cape Town Health Sciences Campus, Anzio Rd, Observatory, 7925 South Africa'                              
-contact_url='http://www.cbio.uct.ac.za/people/present-students/36-thys.html'
+organization_address='Anzio Road, Observatory'
+contact_url='http://www.cbio.uct.ac.za/'
 organization_url='http://www.cbio.uct.ac.za'
 
 threads=24
 psm_type=0
 recalibrate=1  # recalibrate mgf funcionality of PeptideShaker (two searches will be done)
-MSnID_FDR_value=5 #FDR to control global identifications (%)
-MSnID_FDR_level="accession"  # options are 'PSM','peptide','accession'
+MSnID_FDR_value=1 #FDR to control global identifications (%)
+MSnID_FDR_level="peptide"  # options are 'PSM','peptide','accession'
 
 # gnu paralllel
 ps_gnu_parallel_j=1
 
 # Derivative jobs
-headnode_user_ip=mpotgieter1@lengau.chpc.ac.za  #headnode user account - NB for derivative qsub jobs
+headnode_user_ip=nchigorimbo@scp.chpc.ac.za  #headnode user account - NB for derivative qsub jobs
 d_q='smp'
 d_l='select=1:ncpus=24:mpiprocs=24'
 d_P='CBBI0825'
-#    
+
+
 ############
 # Pipeline #
 ############
@@ -140,6 +142,3 @@ if [ ! -d $output_folder/mzIdentMLS/analysis ]; then
     
 fi
 
-#if [ ! -d $output_folder/mzIdentMLS/analysis ]; then
-#     cd ${output_folder} && MSnIDshake.R -i mzIdentMLs/ -v ${MSnID_FDR_value} -l ${MSnID_FDR_level}
-#fi

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import pandas as pd
-import config
 import Bio
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
