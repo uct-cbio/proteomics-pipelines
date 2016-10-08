@@ -1,12 +1,7 @@
 #!/usr/bin/env bash
 
-<<<<<<< HEAD
 peptideshaker='http://genesis.ugent.be/maven2/eu/isas/peptideshaker/PeptideShaker/1.13.1/PeptideShaker-1.13.1.zip'
-=======
-peptideshaker='http://genesis.ugent.be/maven2/eu/isas/peptideshaker/PeptideShaker/1.12.3/PeptideShaker-1.12.3.zip'
->>>>>>> df71bcdd9a0c3572c9ec3179fc71d7788fc280ad
-
-searchgui='http://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/3.0.3/SearchGUI-3.0.3-mac_and_linux.tar.gz'
+searchgui='http://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/3.1.0/SearchGUI-3.1.0-mac_and_linux.tar.gz'
 
 denovogui='http://genesis.ugent.be/maven2/com/compomics/denovogui/DeNovoGUI/1.12.3/DeNovoGUI-1.12.3-mac_and_linux.tar.gz'
 

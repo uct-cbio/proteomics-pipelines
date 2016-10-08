@@ -19,6 +19,17 @@ def isgapped(val):
         return '-'
 
 
+def ILequivalence(peptide):
+    plist = list(peptide)
+    newplist = []
+    for p in plist:
+        if p == 'I':
+            newplist.append('L')
+        else:
+            newplist.append(p)
+     newp = ''.join(newplist)
+     return newp
+
 table = pd.read_csv(sys.argv[1], sep=None, engine='python')
 
 
@@ -26,7 +37,11 @@ table = table[(table['_alignment_rank'] ==1) & (table['_hsp_rank'] == 1) ]
 #table = table[:1000]
 
 table['_is.gapped'] = table[seqcol].apply(isgapped)
+table['_I2L.equivalent.sequence']  = table[seqcol].apply(ILequivalence)
+
+
 table2 = table[table['_is.gapped'] != '+']
+
 
 peps = set(table2[seqcol].tolist())
 
@@ -64,7 +79,7 @@ for col in processed.columns:
 
 tcols = table.columns.tolist()
 
-merged = pd.merge(table, processed, how='left', left_on=seqcol, right_on='_peptide')
+merged = pd.merge(table, processed, how='left', left_on='_I2L.equivalent.sequence', right_on='_peptide')
 newcols = tcols + pcols
 
 assert len(merged) == len(table)
