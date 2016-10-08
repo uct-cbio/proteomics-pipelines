@@ -865,14 +865,14 @@ class mapping2peptides:
 
 
 class pairwise_blast:
-    def __init__(self, query, target, temp_folder, max_evalue=0.0001):
+    def __init__(self, query, target, temp_folder, max_evalue=0.0001, matrix='BLOSUM62', word_size=3 ):
         assert not isinstance(query, list)
         assert not isinstance(target, list)
         
         SeqIO.write(query,  temp_folder +"/query.fasta", "fasta")
         SeqIO.write(target, temp_folder +"/target.fasta", "fasta")
         
-        output = NcbiblastpCommandline(query=temp_folder +"/query.fasta", subject=temp_folder +"/target.fasta", outfmt=5)()[0] 
+        output = NcbiblastpCommandline(query=temp_folder +"/query.fasta", subject=temp_folder +"/target.fasta", outfmt=5, evalue = max_evalue, matrix=matrix, word_size=word_size)()[0] 
         blast_result_record = NCBIXML.read(StringIO(output)) 
         
         results = [] 
@@ -958,7 +958,7 @@ class pairwise_blast:
                     if not ind.startswith('_'):
                         datum = '{}: {}'.format(ind, row[1][ind])
                         fields.append(datum)
-                fields = ', '.join(fields)
+                fields = '; '.join(fields)
                 res.append(fields)
             res = '\n\n'.join(res)
             return res
@@ -966,7 +966,7 @@ class pairwise_blast:
             return None
 
 class frameshift_peptides:
-    def __init__(self, recs, peptides, tempfolder, max_evalue=0.0001):
+    def __init__(self, recs, peptides, tempfolder):
         mapped_orfs = {}
         self.reclist= recs.copy()
         frameshift_peptides=[]
@@ -974,10 +974,10 @@ class frameshift_peptides:
         peptide_stt_map = defaultdict(list)
         peptide_end_map = defaultdict(list)
         frameshifts=defaultdict(list)
-        blast_res=defaultdict()
+        #blast_res=defaultdict()
         
-        frameshift_blast=defaultdict()
-        results = {}
+        frameshift_results=defaultdict(list)
+        frameshift_report = []
 
         for rec in self.reclist[:]:
             self.reclist.remove(rec)
@@ -994,62 +994,144 @@ class frameshift_peptides:
                     end_rec=None
 
                     for peptide in peptides:
-                        if not peptide in blast_res:
-                            blast_res[peptide]=defaultdict()
-                            
+                        
+                        pep_res={}
+
                         start_found=False
                         end_found=False
+
                         fs_start =None
-                        peprec = SeqRecord(seq=Seq(peptide), id='peptide_{}'.format(peptide))
+                        
+                        fake_pep = 'X'*len(peptide)
                         for protrec in lst:
-                            res = pairwise_blast(peprec, protrec, tempfolder)
-                            top_hsp=res.hsps[0]
-                            pep_len=len(peptide)
-                            
-                            blast_res[peptide][protrec.id] = res.results
 
-                            start = top_hsp.query_start
-                            end   = top_hsp.query_end
+                            protseq = str(protrec.seq).upper()
                             
-                            rexes = ['-', ' ', '+']
+                            pstart = peptide[:4]
+                            pend = peptide[-4:]
+                            
+                            id = protrec.id.split('|')
+                            
+                            nucs_coords = False
+                            pg = None
 
-                            if (start == 1) and (end != pep_len):
-                                temp_match = top_hsp.match
-                                for rex in rexes:
-                                    if rex in temp_match:
-                                        temp_match = temp_match.split(rex)[0]
-                                ml = len(temp_match)
-                                fs_start=ml + top_hsp.sbjct_start
-                                
+                            if len(id) == 3:
+                                try: 
+                                    strand = id[2].split('(')[1].split(')')[0]
+                                    assert ((strand=='+') or (strand =='-'))
+                                    coords = id[2].split(')')[1].split(':')
+                                    start = int(coords[0])
+                                    end   = int(coords[1])
+                                    contig = id[0]
+                                    nucs_coords = True
+                                except:
+                                    pass
+
+                            if (pstart in protseq) & (pend not in protseq):
                                 start_found=True
-                                peptide_stt_map[peptide].append(protrec.id)
+                                fake_pep = pstart + fake_pep[len(pstart):]
                                 start_rec=protrec.id
+                                for i, letter in enumerate(peptide[4:]):
+                                    if pstart + letter in protseq:
+                                        pstart = pstart + letter
+                                        fake_pep =  pstart + fake_pep[len(pstart):] 
+                                    else:
+                                        break
+                                
+                                if nucs_coords == True:
+                                    pg = pep2genome(pstart, protseq, strand, start, end, contig)
+                                    pep_res['start_rec_nuc_start'] = pg.genomic_start
+                                    pep_res['start_rec_nuc_end'] = pg.genomic_end
+                                    pep_res['start_rec_contig'] = pg.contig
+                                    pep_res['start_rec_strand'] = strand
 
-                            elif (start != 1) and (end == pep_len):
-                                
-                                #temp_match = top_hsp.match
-                                #for rex in rexes:
-                                #    if rex in temp_match:
-                                #        temp_match = temp_match.split(rex)[1]
-                                #ml = len(temp_match)
-                                #print(top_hsp.sbjct_end - ml)
-                                
-                                
+                                pep_res['start_rec_prot_start'] = protseq.find(pstart) + 1 
+                                pep_res['start_rec_prot_end'] = protseq.find(pstart) + len(pstart) 
+                                assert protseq[pep_res['start_rec_prot_start']-1:pep_res['start_rec_prot_end']] == pstart
+                                pep_res['start_rec'] = protrec.id
+                                pep_res['start_pep'] = pstart
+
+                            elif (pend in protseq) & (pstart not in protseq):
                                 end_found=True
-                                peptide_end_map[peptide].append(protrec.id)
-                                end_rec=protrec.id
-
+                                fake_pep = fake_pep[:-len(pend)] + pend 
+                                end_rec = protrec.id
+                                
+                                for i, letter in enumerate(peptide[:-4][::-1]):
+                                    if letter + pend in protseq:
+                                        pend = letter + pend
+                                        fake_pep = fake_pep[:-len(pend)] + pend
+                                    else:
+                                        break
+                                if nucs_coords == True:
+                                    pg = pep2genome(pend, protseq, strand, start, end, contig)
+                                    pep_res['end_rec_nuc_start'] = pg.genomic_start
+                                    pep_res['end_rec_nuc_end'] = pg.genomic_end
+                                    pep_res['end_rec_contig'] = pg.contig
+                                    pep_res['end_rec_strand'] = strand
+                                pep_res['end_rec_prot_start'] = protseq.find(pend) + 1
+                                pep_res['end_rec_prot_end'] = protseq.find(pend) + len(pend) 
+                                pep_res['end_rec'] = protrec.id
+                                pep_res['end_pep'] = pend
+                                assert protseq[pep_res['end_rec_prot_start']-1:pep_res['end_rec_prot_end']] == pend
                         if (end_found&start_found) == True:
                             frameshift_peptides.append(peptide)
-                            fs="{}, {}".format(start_rec, end_rec)
+                            fs='{} {}'.format(start_rec, end_rec)
                             frameshifts[fs].append(peptide)
-                            frameshift_blast[fs] = '\n'.join(['****\nProtein BLAST results for peptide {}\nin 2 non-alligning sequences {}\n- likely frameshift after aa position {} in {}\n****'.format(peptide, fs, int(fs_start), start_rec), blast_res[peptide][start_rec],blast_res[peptide][end_rec]])
+                            
+                            pep_res['covered_sequence'] = fake_pep
+                            pep_res['peptide_length'] = len(peptide)
+                            pep_res['covered_length'] = len(''.join(fake_pep.split('X')))
+                            pep_res['peptide'] = peptide
+                            
+                            results = []
+                            results.append('***Frameshift validation peptide {}***'.format(peptide))
+                            desc_start = '{} matched at aa postion {}-{} in {}'.format(pstart, pep_res['start_rec_prot_start'], pep_res['start_rec_prot_end'], pep_res['start_rec'])
+                            if 'start_rec_strand' in pep_res:
+                                desc_start = desc_start + ' (genomic coordinates: ({}){}:{} in contig {})'.format(pep_res['start_rec_strand'], pep_res['start_rec_nuc_start'], pep_res['start_rec_nuc_end'], pep_res['start_rec_contig'])
+                            results.append(desc_start)
 
+                            desc_end = '{} matched at aa postion {}-{} in {}'.format(pend, pep_res['end_rec_prot_start'], pep_res['end_rec_prot_end'], pep_res['end_rec'])
+                            if 'end_rec_strand' in pep_res:
+                                desc_end = desc_end + ' (genomic coordinates: ({}){}:{} in contig {})'.format(pep_res['end_rec_strand'], pep_res['end_rec_nuc_start'], pep_res['end_rec_nuc_end'], pep_res['end_rec_contig'])
+                            results.append(desc_end)
+                            results = '\n'.join(results)
+                            frameshift_results[fs].append(pep_res)
+                            frameshift_report.append(results)
+
+        self.frameshift_results = frameshift_results
         self.frameshift_peptides = frameshift_peptides
         self.peptide_stt_map = json.loads(json.dumps(peptide_stt_map))
         self.peptide_end_map = json.loads(json.dumps(peptide_end_map))
         self.frameshifts=json.loads(json.dumps(frameshifts))
-        self.frameshift_blast = '\n'.join([frameshift_blast[d] for d in list(frameshift_blast.keys())])
+        self.frameshift_report = '\n'.join(frameshift_report)
+
+class pep2genome:
+    def __init__(self, peptide, protein, strand, start, end, contig):
+        if peptide in protein:
+            if strand == '+':
+                pstart = protein.find(peptide) 
+                nstart = (pstart * 3) + start 
+                nend = (pstart + len(peptide)) * 3 + start -1
+                
+                self.genomic_start = nstart
+                self.genomic_end = nend
+
+            elif strand == '-':
+                pstart = protein.find(peptide) 
+                
+                nstart = end - (pstart * 3) 
+
+                nend = end - (pstart + len(peptide)) * 3  + 1 
+                
+                self.genomic_start = nend
+                self.genomic_end = nstart
+
+        self.contig = contig
+        self.peptide =peptide
+        
+    
+
+
 
                     
 def icds_blast(fasta, temp_folder, max_evalue=0.0001):

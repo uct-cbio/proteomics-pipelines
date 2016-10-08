@@ -156,7 +156,8 @@ for sample in samples:
 #pg = pg[(pg['id']==1528) | (pg['id']==934)] #mutants
 #pg = pg[pg['id'] ==  410]  two frames in 5527
 
-#pg = pg[pg['id'] == 142]
+#pg = pg[pg['id'] == 410]
+#pg = pg[pg['id'] == 613]
 
 for row in pg.iterrows():
     print(row[0])
@@ -273,7 +274,7 @@ for row in pg.iterrows():
         fs_st = sequtils.frameshift_peptides(y, genome_unmapped, output)
         if len(fs_st.frameshift_peptides) > 0:
             pg.loc[row[0], '_orfs.mapped.frameshift.validated.strain.{}'.format(strain)] = '+' 
-            pg.loc[row[0], '_orfs.mapped.frameshift.evidence.strain.{}'.format(strain)] = fs_st.frameshift_blast 
+            pg.loc[row[0], '_orfs.mapped.frameshift.evidence.strain.{}'.format(strain)] = fs_st.frameshift_report 
         
         
         ref_blast = sequtils.reference_mapping_blast(y, refps, output)
@@ -298,6 +299,7 @@ for row in pg.iterrows():
     ####################### 
     # ORF feature overlap #
     ######################
+    
     row_variant_features_orfs, row_variant_blast_orfs = peptide_list_blast(row_specific, mapped_orfs, orf_features)
     row_variant_features_orfs_list = []
     row_variant_blast_orfs_list = []
@@ -361,7 +363,7 @@ for row in pg.iterrows():
             fs_ref = sequtils.frameshift_peptides(refps, row_novel, output)
             if len(fs_ref.frameshift_peptides) > 0:
                 pg.loc[row[0], '_reference.proteome.mapped.frameshift.validated'] = '+' 
-                pg.loc[row[0], '_reference.proteome.mapped.frameshift.evidence'] = fs_ref.frameshift_blast 
+                pg.loc[row[0], '_reference.proteome.mapped.frameshift.evidence'] = fs_ref.frameshift_report
 
         if max_pep != None:
             if (max_ref < max_pep) and (len(icds) > 0):
@@ -404,7 +406,6 @@ for row in pg.iterrows():
     
     identifier = []
     
-
     if best_eval_strain  != None:
         pg.loc[row[0],'_strain.mapped.reference.blast.best.match.strain'] = best_eval_strain
         if rmatch == True:
@@ -414,10 +415,8 @@ for row in pg.iterrows():
         data = taxon_data[best]
         for key in data:
             pg.loc[row[0],key] = data[key]
-        identifier.append(data['Gene names'])
-    
+        identifier.append(data['Gene names']) 
     identifier.append('(protein group {})'.format(str(row[0])))
-
     pg.loc[row[0], 'Identifier'] = ' '.join(identifier)
 
 pg.to_csv(output+'/combined.csv')
