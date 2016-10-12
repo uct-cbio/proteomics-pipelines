@@ -157,7 +157,7 @@ for sample in samples:
 #pg = pg[pg['id'] ==  410]  two frames in 5527
 
 #pg = pg[pg['id'] == 410]
-#pg = pg[pg['id'] == 613]
+#pg = pg[pg['id'] == 41]
 
 for row in pg.iterrows():
     print(row[0])
@@ -235,7 +235,21 @@ for row in pg.iterrows():
         all_orfs_fasta += x
         all_prot_fasta += y
         trie = sequtils.list_trie_upper(y, st_peps)
+       
         
+        annotation_trie = []
+        annotation_type = []
+
+        for _ in x:
+            #print(refps[0].format('fasta'))
+            #print(_.format('fasta'))
+            
+            pgomics = sequtils.proteogenomics(specific_strain_peps, _, refps[0])
+            annotation_trie += pgomics.variant_sequences_trie
+            annotation_type += pgomics.annotation_type
+        
+        
+
         fasta_holder['{}_prots'.format(strain)] = y
         fasta_holder['{}_nucs'.format(strain)] = x
         id_holder[strain] =[rec.id for rec in y]
@@ -269,8 +283,9 @@ for row in pg.iterrows():
 
         pg.loc[row[0], "_unmapped.peptides.strain.{}".format(strain)]='\n'.join(genome_unmapped) 
         pg.loc[row[0], "_translated.orfs.strain.{}".format(strain)] = '\n'.join(trie)
-        
-
+        pg.loc[row[0], '_variant.orfs.strain.{}'.format(strain)] = '\n'.join(list(set(annotation_trie)))
+        pg.loc[row[0], '_annotation.type.strain.{}'.format(strain)] = '\n'.join(list(set(annotation_type)))
+        print('\n'.join(list(set(annotation_trie))))
         fs_st = sequtils.frameshift_peptides(y, genome_unmapped, output)
         if len(fs_st.frameshift_peptides) > 0:
             pg.loc[row[0], '_orfs.mapped.frameshift.validated.strain.{}'.format(strain)] = '+' 
@@ -286,8 +301,6 @@ for row in pg.iterrows():
         pg.loc[row[0], "_translated.orfs.mapped.reference.best.blast.evalue.strain.{}".format(strain)] = ref_blast[0]
         pg.loc[row[0], "_translated.orfs.mapped.reference.best.blast.match.{}".format(strain)] = ref_blast[1]
     
-    for orf in  mapped_orfs:
-        print(orf.format('fasta'))
 
 
 
@@ -348,8 +361,6 @@ for row in pg.iterrows():
         p2.append(d)
     pg.loc[row[0],'_{}.entries.mapped'.format(config.proteome2)] = '\n'.join(p2)
     
-
-
     best = None
     rmatch = True
     if len(mapped_reference) > 0:
@@ -419,7 +430,7 @@ for row in pg.iterrows():
     identifier.append('(protein group {})'.format(str(row[0])))
     pg.loc[row[0], 'Identifier'] = ' '.join(identifier)
 
-pg.to_csv(output+'/combined.csv')
+pg.to_csv(output+'/combined1.csv')
 
 
 
