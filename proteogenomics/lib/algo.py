@@ -87,10 +87,6 @@ class Trie:
         last_edges = []
         while i < len(string) + 1:
             found = False
-            if len(self.trie.getVertex(v).getConnections()) == 0:
-                return start, i
-            if i == len(string) + 1:
-                return
             if i < len(string):
                 symbol = string[i]
                 new_child = None
@@ -99,7 +95,9 @@ class Trie:
                     if edge == '#':
                         last_edge = start, i
                         last_edges.append(last_edge)
-                    elif symbol == edge:
+                for child in self.trie.getVertex(v).getConnections():
+                    edge = Vertex.getEdge(self.trie.getVertex(v), child)
+                    if symbol == edge:
                         new_child = child
                         pep.append(edge)        
                         found = True
@@ -114,7 +112,8 @@ class Trie:
                         last_edge = start, i
                         last_edges.append(last_edge)
             if found == False:
-                return last_edges
+                break
+        return last_edges
     def trie_matching(self, Text):
         coordinates = self.trie_coordinates(Text)
         positions = [i[0] for i in coordinates]
