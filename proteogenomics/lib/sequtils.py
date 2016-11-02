@@ -1528,12 +1528,12 @@ def list_trie_upper(fasta, peptide_list):
      new_fasta = fasta.copy()
      peptide_list = list(peptide_list)
      upper = []
-     pep_trie = algo.trie_graph(peptide_list)
+     Trie = algo.Trie(peptide_list)
      for rec in new_fasta:
          id = rec.id
          temp_seq = str(rec.seq)
          description= rec.description
-         temp_seq = algo.trie_upper(pep_trie, temp_seq)
+         temp_seq = Trie.trie_upper(temp_seq)
          assert(len(temp_seq)) == len(str(rec.seq))
          newrec = SeqRecord(seq = Seq(temp_seq), id = id, description = description)
          upper.append(newrec.format('fasta'))

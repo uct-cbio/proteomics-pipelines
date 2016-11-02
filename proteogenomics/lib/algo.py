@@ -3,7 +3,7 @@
 # Python graph functions and algorithms
 
 def fibonacci( n, a=0, b=1):
-    for i in xrange(0, n):
+    for i in range(0, n):
         a, b = b, a + b
     return a
 
@@ -58,7 +58,7 @@ class Trie:
         if Text != None:
             self.Text_coordinates = self.trie_coordinates(Text)
     def trie_graph(self, lst):
-        assert not isinstance(lst, basestring)    # make sure that the items you are making a trie_gr    aph from are in list format
+        assert not isinstance(lst, str)    # make sure that the items you are making a trie_gr    aph from are in list format
         trie = Graph()
         root=0
         mark = 0
@@ -123,10 +123,10 @@ class Trie:
         positions = set()
         coords =  self.trie_coordinates(Text)
         for coord in coords:
-            for indx in xrange(coord[0], coord[1]):
+            for indx in range(coord[0], coord[1]):
                 positions.add(indx)
         new_Text_list = []
-        for indx in xrange(len(Text)):
+        for indx in range(len(Text)):
             if indx not in positions:
                 new_Text_list.append(Text[indx].lower())
             else:
@@ -158,9 +158,9 @@ class Trie:
         positions = set()
         coords =  self.trie_coordinates(Text)
         for coord in coords:
-            for indx in xrange(coord[0], coord[1]):
+            for indx in range(coord[0], coord[1]):
                 positions.add(indx)
-        Text_indxs=set([ pos for pos in xrange(len(Text))]) 
+        Text_indxs=set([ pos for pos in range(len(Text))]) 
         Text_coverage = len(positions)/float(len(Text_indxs)) * 100
         return Text_coverage
         
