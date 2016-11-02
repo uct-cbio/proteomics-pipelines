@@ -24,13 +24,6 @@ fData(msnset) <- fdata
 combined <- merge(ids, p2lca, by.x='peptideSequence', by.y='peptide', all.x=TRUE)
 write.table(combined, paste('merged_msnid_unipept.txt',sep=''),sep='\t', row.names=FALSE)
 
-#combined$accession <- combined$taxon_name
-#combined["taxon_name"][is.na(combined[,"taxon_name"])] <- "No result"
-
-peptide_map <- data.frame(exprs(msnset))
-peptide_map <- add_rownames(peptide_map, "Row")
-write.table(peptide_map, paste('peptide_map_pept2lca.txt',sep=''),sep='\t', row.names=FALSE)
-
 psms(msnid) <- combined
 
 msnset.count <- combineFeatures(msnset, fData(msnset)$taxon_name, redundancy.handler='unique', fun="sum",cv=FALSE)

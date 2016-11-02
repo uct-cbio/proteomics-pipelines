@@ -8,32 +8,39 @@ import shutil
 import os
 import sys
 import math
+import tempfile
+import pandas as pd
 
 input_fasta=sys.argv[1]
-chunknumber=int(sys.argv[2])
+chunksize=int(sys.argv[2])
+
 output_folder=sys.argv[3]
 
 filename=os.path.basename(input_fasta)
 
-query_folder=output_folder 
+records=SeqIO.parse(input_fasta,'fasta')
 
-def grouper(iterable, n, fillvalue=None):
-    args = [iter(iterable)] * n
-    return list(zip_longest(*args, fillvalue=fillvalue))
-
-records =list(SeqIO.parse(input_fasta,'fasta'))
-
-chunksize = math.ceil(len(records)/chunknumber)
-chunked = grouper(records, chunksize)
-
-
-chunks =[]
 count=1
-for chunk in chunked:
+chunkcount=1
+recs = []
+
+for rec in records:
+    recs.append(rec)
+    if chunkcount==chunksize:
+        partname='{}.part.{}.fasta'.format(filename, count)
+        SeqIO.write(recs, output_folder +'/' + partname, 'fasta')
+        recs = []
+        count +=1
+        chunkcount=1
+    else:
+        chunkcount+= 1
+
+if len(recs) > 0:
     partname='{}.part.{}.fasta'.format(filename, count)
-    chunk = pd.Series(chunk).dropna().tolist()
-    count += 1
-    SeqIO.write(chunk, query_folder +'/' + partname, 'fasta')
+    SeqIO.write(recs, output_folder + '/' + partname, 'fasta')
+    recs = []
+    count +=1
+
 
 
 

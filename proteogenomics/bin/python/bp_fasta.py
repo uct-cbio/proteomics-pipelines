@@ -14,6 +14,7 @@ sequences_dct=defaultdict(list)
 for rec in data:
     s = str(rec.seq)
     i  = rec.id
+    assert '|' not in i
     sequences_dct[s].append(i)
     
 new_sequences=[]

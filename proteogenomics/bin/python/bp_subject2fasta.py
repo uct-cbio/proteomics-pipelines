@@ -18,11 +18,9 @@ def check_subject(value):
     else:
         return True
 
-data['subject_valid'] = data['hsp.sbjct'].apply(check_subject)
-data = data[data['subject_valid'] == True]
 recs = []
 
-peptides = list(set(data['hsp.sbjct'].values.tolist()))
+peptides = list(set(data['_hsp.sbjct.cleaned'].values.tolist()))
 count=1
 
 for peptide in peptides:
@@ -32,4 +30,4 @@ for peptide in peptides:
     recs.append(rec)
     count += 1
 
-SeqIO.write(recs, 'subject_export.fasta', 'fasta')
+SeqIO.write(recs, sys.argv[2], 'fasta')
