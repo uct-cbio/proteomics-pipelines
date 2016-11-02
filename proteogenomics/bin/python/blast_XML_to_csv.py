@@ -19,7 +19,7 @@ blast_records = NCBIXML.parse(result_handle)
 
 output = open(sys.argv[3],'w')
 
-output = csv.writer(output, delimiter='\t')
+output = csv.writer(output, delimiter=',')
 
 aln_cutoff = int(sys.argv[4])
 

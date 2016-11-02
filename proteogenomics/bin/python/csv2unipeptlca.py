@@ -9,14 +9,8 @@ import operator
 import os
 
 infile = sys.argv[1]
-seqcol = sys.argv[2]
+seqcol=sys.argv[2]
 outfolder = sys.argv[3]
-
-def isgapped(val):
-    if '-' in val:
-        return '+'
-    else:
-        return '-'
 
 
 def ILequivalence(peptide):
@@ -32,18 +26,12 @@ def ILequivalence(peptide):
 
 table = pd.read_csv(sys.argv[1], sep=None, engine='python')
 
-
 table = table[(table['_alignment_rank'] ==1) & (table['_hsp_rank'] == 1) ]
-#table = table[:1000]
 
-table['_is.gapped'] = table[seqcol].apply(isgapped)
 table['_I2L.equivalent.sequence']  = table[seqcol].apply(ILequivalence)
 
 
-table2 = table[table['_is.gapped'] != '+']
-
-
-peps = set(table2[seqcol].tolist())
+peps = set(table[seqcol].tolist())
 
 pepstr = '\n'.join(peps)
 
@@ -73,6 +61,14 @@ cmd = "cat {}/prot2pept.csv | unipept pept2taxa --all --equate > {}/pept2taxa_al
 process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 process.wait()
 assert process.returncode == 0
+
+pept2taxa = pd.read_csv('{}/pept2taxa_all.csv'.format(outfolder)).drop_duplicates()
+
+counted = Counter(pept2taxa['taxon_name'])
+sorted_counted = sorted(counted.items(), key=operator.itemgetter(1), reverse=True)
+counts = pd.DataFrame(sorted_counted)
+counts.to_csv(outfolder + '/pept2taxa_taxon_name_counts.csv')
+
 
 processed = pd.read_csv(outfolder +'/pept2lca.csv').drop_duplicates()
 p2 = processed.copy()
@@ -120,6 +116,36 @@ counted = Counter(inferred['uniprot_id'])
 sorted_counted = sorted(counted.items(), key=operator.itemgetter(1), reverse=True)
 counts = pd.DataFrame(sorted_counted)
 counts.to_csv(outfolder + '/pept2prot_counts_all.tsv', sep='\t')
+
+inferred_counts = counts
+inferred_counts.rename(columns={0:"_Protein.Accession",1:"_Protein.Accession.Tryptic.Peptide.Count"}, inplace=True)
+
+############
+## Mergedf pept2taxa, pept2prot, pep2prot_counts
+
+def combined_table(pept2taxa, pept2prot_counts, pept2prot):
+     pept2taxa_df = pept2taxa.copy()
+     pept2prot_counts_df = pept2prot_counts.copy()
+     pept2prot_df = pept2prot.copy()
+     del pept2taxa_df['peptide']
+     pept2taxa_df = pept2taxa_df.drop_duplicates()
+     pept2prot_counts_df.rename(columns={'1':'_Protein.Tryptic.Peptide.Counts' , '0': '_Protein.Accession'}, inplace=True) 
+     del pept2prot_df['peptide'] 
+     pept2prot_df = pept2prot_df.drop_duplicates() 
+     merged_df = pd.merge(pept2prot_df, pept2taxa_df, how = 'left', left_on='taxon_id', right_on='taxon_id') 
+     merged_df = pd.merge(merged_df, pept2prot_counts_df, how='left', left_on='uniprot_id', right_on='_Protein.Accession') 
+     newcols = [ i for i in merged_df.columns if not i.startswith('Unnamed: ')]
+     
+     merged_df = merged_df[newcols]
+
+     merged_df.to_csv(outfolder + '/merged_pept2prot_pept2taxa_pept2protCounts.csv')
+combined_table(pept2taxa, inferred_counts, inferred)
+
+
+
+
+
+
 
 #############################
 # Excluding root accessions #
@@ -229,16 +255,16 @@ counts.to_csv(outfolder + '/pept2prot_excl_root_peptides_mult_peptides_filtered_
 #process.wait()
 #assert process.returncode == 0
 
-cmd = "cat {}/pept2prot_excl_root_only_accessions_mult_peptides.txt | sort -u | uniprot --format fasta > {}/pept2prot_excl_root_only_accessions_mult_peptides.fasta".format( outfolder, outfolder)
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-process.wait()
-assert process.returncode == 0
+#cmd = "cat {}/pept2prot_excl_root_only_accessions_mult_peptides.txt | sort -u | uniprot --format fasta > {}/pept2prot_excl_root_only_accessions_mult_peptides.fasta".format( outfolder, outfolder)
+#process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+#process.wait()
+#assert process.returncode == 0
 
 
-cmd = "cat {}/pept2prot_excl_root_peptides_mult_peptides.txt | sort -u | uniprot --format fasta > {}/pept2prot_excl_root_peptides_mult_peptides.fasta".format( outfolder, outfolder)
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-process.wait()
-assert process.returncode == 0
+#cmd = "cat {}/pept2prot_excl_root_peptides_mult_peptides.txt | sort -u | uniprot --format fasta > {}/pept2prot_excl_root_peptides_mult_peptides.fasta".format( outfolder, outfolder)
+#process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+#process.wait()
+#assert process.returncode == 0
 
 #counted = Counter(inferred_non_root_peptides['uniprot_id'])
 #sorted_counted = sorted(counted.items(), key=operator.itemgetter(1), reverse=True)
@@ -248,7 +274,7 @@ assert process.returncode == 0
 
 w = open(outfolder + '/methods.txt','w')
 w.write('Explanantion of unipept analysis and files included.\n\n')
-w.write('peptide_set.txt is by default the export of hsp.sbjct sequences from the BLAST results in this pipeline (excluding sequences that are gapped alignemnts).\nWhen using the csv2unipeptlca.py  script in standalone  mode the required field with the peptide sequences needs to be specified .\n\n')
+w.write('peptide_set.txt is by default the export of cleaned (without -) hsp.sbjct sequences from the BLAST results in this pipeline (excluding sequences that are gapped alignemnts).\nWhen using the csv2unipeptlca.py  script in standalone  mode the required field with the peptide sequences needs to be specified .\n\n')
 w.write('prot2pept.csv is the unipept prot2pept output of the peptide_set.txt output (in silico tryptic digest).\n\n')
 w.write('pept2lca.csv is the unipept pept2lca analysis of the prot2pept.csv file.\n\n')
 w.write('pept2prot_all.csv is the unipept pept2prot analysis of prot2pept.csv.\n\n')
