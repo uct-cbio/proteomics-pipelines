@@ -1,176 +1,169 @@
-#!usr/bin/env python
+#!/usr/bin/env python
 
-import math
-import numpy as np
-from scipy import stats
+# Python graph functions and algorithms
 
-# Statistics
+def fibonacci( n, a=0, b=1):
+    for i in xrange(0, n):
+        a, b = b, a + b
+    return a
 
-def log2(val):
-    try:
-        return math.log(val,2)
-    except:
-        return np.nan
-
-def impute(df, col, width = 0.3, downshift = 1.8):
-    values = df[col].dropna()
-    missing = df[col].isnull()
-    assert len(values)/num_missing >= 2  # require min 50 % sample not missin
-    std = np.std(values, ddof = 1, dtype=np.float64)       # need to subtract ddof?
-    mean =  np.mean(values, dtype=np.float64)
-    shifted = mean - (downshift * std) 
-    for row in df.iterrows():
-        ind = row[0]
-        if df.loc[ind, col] == np.nan:
-            imputed = np.random.normal(loc=shifted, scale = width * std, size = 1)
-            df.loc[ind, col] = imputed
-    return df
-    
-def welch(arr1, arr2):
-    return stats.ttest_ind(arr1, arr2, equal_var = False)
-
-# Trie graph
 class Vertex:
     def __init__(self,key):
         self.id = key
         self.connectedTo = {}
-        
-    def addNeighbor(self,nbr,edge_label=None):
-        self.connectedTo[nbr] = edge_label
-        
+    def addNeighbour(self,neighbour,edge_label=None):
+        self.connectedTo[neighbour] = edge_label
     def __str__(self):
         return str(self.id) + ' connectedTo: '+ str([x.id for x in self.connectedTo])
-
     def getConnections(self):
         return self.connectedTo.keys()
-
     def getId(self):
         return self.id
-
-    def getEdge(self,nbr):
-        return self.connectedTo[nbr]
+    def getEdge(self,neighbour):
+        return self.connectedTo[neighbour]
 
 class Graph:
     def __init__(self):
-        self.vertList = {}
+        self.vertices = {}
         self.numVertices = 0
-
     def addVertex(self,key):
+        assert key not in self.vertices
         self.numVertices = self.numVertices + 1
         newVertex = Vertex(key)
-        self.vertList[key] = newVertex
+        self.vertices[key] = newVertex
         return newVertex
-
     def getVertex(self,n):
-        if n in self.vertList:
-            return self.vertList[n]
+        if n in self.vertices:
+            return self.vertices[n]
         else:
             return None
-
     def __contains__(self,n):
-        return n in self.vertList
-
-    def addEdge(self,f,t,cost=0):
-        if f not in self.vertList:
-            nv = self.addVertex(f)
-        if t not in self.vertList:
-            nv = self.addVertex(t)
-        self.vertList[f].addNeighbor(self.vertList[t], cost)
-
+        return n in self.vertices 
+    def addEdge(self,f,t,edge_label=0):
+        if f not in self.vertices:
+            self.addVertex(f)
+        if t not in self.vertices:
+            self.addVertex(t)
+        self.vertices[f].addNeighbour(t, edge_label)
     def getVertices(self):
-        return self.vertList.keys()
-
+        return self.vertices.keys()
     def __iter__(self):
-        return iter(self.vertList.values())
+        return iter(self.vertices.values())
 
-def trie_graph(lst):
-    assert not isinstance(lst, str)    # make sure that the items you are making a trie_graph from are in list format
-    trie = Graph()
-    nodes = 0
-    trie.addVertex(nodes)
-    for word in lst:
-        node = 0
-        word = word.lstrip().rstrip()+'#' # separates substrings of longer strings also in list
-        for i in range(0,len(word)):
-            symbol = word[i]
-            found = False
-            if trie.__contains__(node) == False:
-                trie.addEdge(node, nodes, symbol)
-                nodes = nodes + 1
-                node = nodes
-            else:
-                for neighbour in trie.getVertex(node).getConnections(): 
-                    if found != True:
-                        if symbol == Vertex.getEdge(trie.getVertex(node), neighbour):
-                            node = neighbour.getId()
-                            found = True
+class Trie:
+    def __init__(self, lst, Text=None):
+        self.trie = self.trie_graph(lst)
+        self.Text_coordinates=[]
+        self.Text = None
+        if Text != None:
+            self.Text_coordinates = self.trie_coordinates(Text)
+    def trie_graph(self, lst):
+        assert not isinstance(lst, basestring)    # make sure that the items you are making a trie_gr    aph from are in list format
+        trie = Graph()
+        root=0
+        mark = 0
+        trie.addVertex(root)
+        for word in lst:
+            node = root
+            word = word.lstrip().rstrip() + '#' # separates substrings of longer strings also in list
+            for i in range(0,len(word)):
+                symbol = word[i]
+                found = False
+                for neighbour in trie.getVertex(node).getConnections():
+                    if symbol == trie.getVertex(node).getEdge(neighbour):
+                        node = neighbour
+                        found = True
+                        break
                 if found == False:
-                    nodes = nodes + 1
-                    trie.addEdge(node, nodes, symbol)
-                    node = nodes
-    return trie
-
-def prefix_trie_match(trie, string, start): 
-    v = 0
-    i = start
-    pep = []
-    last_edge = None 
-    while i < len(string) + 1:
-        found = False 
-        if len(trie.getVertex(v).getConnections()) == 0:
-            return start, i
-        if i == len(string) + 1:
-            return
-        elif i <len(string):
-            symbol = string[i]
-        
-            for child in trie.getVertex(v).getConnections():
-                edge = Vertex.getEdge(trie.getVertex(v), child)
-                if edge == '#':
-                    last_edge = start, i
-                if symbol == edge:
-                    v = child.getId()
-                    i += 1
-                    pep.append(edge)
-                    found = True
-                    break
-        if found == False:
-            for child in trie.getVertex(v).getConnections():
-                edge = Vertex.getEdge(trie.getVertex(v), child) 
-                if edge == '#':
-                    last_edge = start, i
-            return last_edge
-
-def trie_upper(Trie, Text):
-    positions = []
-    start = 0
-    str = []
-    pos_dct = {}
-    while start < len(Text):
-        val = prefix_trie_match(Trie, Text, start) 
-        if val != None:
-            for i in range(val[0], val[1]):
-                pos_dct[i] = Text[i].upper()
-            start += 1
+                    mark = mark + 1
+                    trie.addEdge(node, mark, symbol)
+                    node = mark
+        return trie
+    def prefix_trie_match(self, string, start):
+        v = 0
+        i = start
+        pep = []
+        last_edge = None
+        last_edges = []
+        while i < len(string) + 1:
+            found = False
+            if len(self.trie.getVertex(v).getConnections()) == 0:
+                return start, i
+            if i == len(string) + 1:
+                return
+            if i < len(string):
+                symbol = string[i]
+                new_child = None
+                for child in self.trie.getVertex(v).getConnections():
+                    edge = Vertex.getEdge(self.trie.getVertex(v), child)
+                    if edge == '#':
+                        last_edge = start, i
+                        last_edges.append(last_edge)
+                    elif symbol == edge:
+                        new_child = child
+                        pep.append(edge)        
+                        found = True
+                        i += 1
+                if found == True:
+                    v = new_child
+            elif i == len(string):
+                new_child = None
+                for child in self.trie.getVertex(v).getConnections():
+                    edge = Vertex.getEdge(self.trie.getVertex(v), child)
+                    if edge == '#':
+                        last_edge = start, i
+                        last_edges.append(last_edge)
+            if found == False:
+                return last_edges
+    def trie_matching(self, Text):
+        coordinates = self.trie_coordinates(Text)
+        positions = [i[0] for i in coordinates]
+        return positions
+    def trie_upper(self, Text):
+        positions = set()
+        coords =  self.trie_coordinates(Text)
+        for coord in coords:
+            for indx in xrange(coord[0], coord[1]):
+                positions.add(indx)
+        new_Text_list = []
+        for indx in xrange(len(Text)):
+            if indx not in positions:
+                new_Text_list.append(Text[indx].lower())
+            else:
+                new_Text_list.append(Text[indx].upper())
+        new_Text = ''.join(new_Text_list)
+        return new_Text
+    def trie_coordinates(self, Text): 
+        if Text == self.Text:
+            coordinates = self.Text_coordinates
         else:
-            if start not in pos_dct:
-                pos_dct[start] = Text[start].lower()
-            start += 1
-    newText = ''.join(pos_dct.values())
-    
-    if len(Text) != len(newText):
-        assert newText == ''
-        print(newText)
-        newText = Text.lower()
-    return newText
+            coordinates = []
+            start = 0
+            while start < len(Text):
+                vals = self.prefix_trie_match( Text, start)
+                for val in vals:
+                    coordinates.append(val)
+                start += 1 
+            self.Text=Text
+            self.Text_coordinates=coordinates
+        return coordinates
+    def trie_export(self, Text):
+        coordinates = self.trie_coordinates(Text)
+        words = set()
+        for coord in coordinates:
+            word = Text[coord[0]:coord[1]]
+            words.add(word)
+        return words
+    def trie_coverage(self, Text): 
+        positions = set()
+        coords =  self.trie_coordinates(Text)
+        for coord in coords:
+            for indx in xrange(coord[0], coord[1]):
+                positions.add(indx)
+        Text_indxs=set([ pos for pos in xrange(len(Text))]) 
+        Text_coverage = len(positions)/float(len(Text_indxs)) * 100
+        return Text_coverage
+        
 
-def trie_matching(Trie, Text):
-    positions = []
-    start = 0
-    while start < len(Text):
-        val = prefix_trie_match(Trie, Text, start)
-        if val != None:
-            positions.append(val[0])
-        start += 1
-    return positions
+
 

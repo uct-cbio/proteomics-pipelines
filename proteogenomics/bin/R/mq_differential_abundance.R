@@ -172,44 +172,52 @@ par_path=paste(outdir,'parcoords/',sep='')
 dir.create(par_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 pcp <- function (df_, rows, valcols, labels, path, name) {
     df <- df_
-    png(paste(path,name,sep=''),units="in",width=20,height=20,res=300)
-    df$temp <- labels
+    #png(paste(path,name,sep=''),units="in",width=20,height=20,res=300)
+    pdf(paste(path,name,sep=''), width=15, height = 10)
+    
+    df$temp <-labels
+    
     df <- df[df$temp!= '' , ]  
     df <- df[rownames(df) %in% rows, ]
-    labels <- df$temp
-    df <- df[, valcols]
-    print(names(df))
+    
     write.csv(df, file=paste(path,name, '.csv',sep=''))
-    prot_labels <- as.numeric(labels)
-    prot_labels <- rev(rainbow_hcl(length(prot_labels)))[prot_labels]
-    par(las = 2, mar = c(15, 10, 5, 5) + 0.1, cex = .8)
-    MASS::parcoord(df, col = prot_labels, var.label = TRUE, lwd = 2)
-    #par(xpd = TRUE)
-    legend(x = 1.75,y=-.25,cex=1,
-       legend = as.character(levels(labels)),
-       fill = unique(prot_labels), horiz = TRUE) 
+    df <- read.csv(file=paste(path,name, '.csv',sep=''))
+    
+    row_labels <- df$temp
+    df <- df[, valcols]
+    print(str(row_labels))
+
+    row_cols <- rev(rainbow_hcl(length(row_labels)))[as.numeric(row_labels)]
+    print(row_cols)
+    
+    
+
+    par(las = 2, mar = c(10,5, 5, 5) + 0.1, cex = .8)
+    
+    MASS::parcoord(df, col = row_cols, var.label = TRUE, lwd = 3)
+    
+    par(xpd = TRUE)
+    legend(x = 0.75,y=1,cex=0.8,
+       legend = as.character(levels(row_labels)),
+       fill = unique(row_cols), horiz = FALSE,  bty = "n") 
+    
     dev.off() 
     # http://blog.safaribooksonline.com/2014/03/31/mastering-parallel-coordinate-charts-r/
     }
 
-#pcp(par_data,row.names(par_data),cols,par_data$Protein.families,par_path,"all_proteins_families_par_coord.png")
-
-#pcp(par_data,row.names(par_data),cols,par_data$Pathway,par_path,"all_proteins_pathway_par_coord.png")
-
+pcp(par_data,row.names(par_data),cols,par_data$Protein.families,par_path,"all_proteins_families_par_coord.pdf")
+pcp(par_data,row.names(par_data),cols,par_data$Pathway,par_path,"all_proteins_pathway_par_coord.pdf")
 # Strains
-#par_path=paste(outdir,'parcoords/strains/',sep='')
-#dir.create(par_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
-#print(inter_pvals_0_005)
+par_path=paste(outdir,'parcoords/strains/',sep='')
+dir.create(par_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 
-#pcp(par_data,inter_pvals_0_005,cols,par_data$Identifier,par_path,"str_parcoord_p_0_005.png")
-#pcp(par_data,inter_pvals,cols,par_data$Identifier,par_path,"str_parcoord_p_0_05.png")
-#pcp(par_data,inter_pvals_duplicated,cols,par_data$Identifier,par_path,"str_parcoord_p_0_05_mult.png")
-
-
-#pcp(par_data,inter_pvals,cols,par_data$Protein.families,par_path,"str_parcoord_p_0_05_families.png")
+pcp(par_data,inter_pvals_0_005,cols,par_data$Identifier,par_path,"str_parcoord_p_0_005.pdf")
+pcp(par_data,inter_pvals,cols,par_data$Identifier,par_path,"str_parcoord_p_0_05.pdf")
+pcp(par_data,inter_pvals_duplicated,cols,par_data$Identifier,par_path,"str_parcoord_p_0_05_mult.pdf")
+pcp(par_data,inter_pvals,cols,par_data$Protein.families,par_path,"str_parcoord_p_0_05_families.pdf")
 #pcp(par_data,inter_pvals,cols,par_data$Pathways,par_path,"str_parcoord_p_0_05_pathways.png")
 
-#print(names(par_data))
+pcp(par_data,inter_pvals_0_005,cols,par_data$Protein.families,par_path,"str_parcoord_p_0_005_families.pdf")
 
 
 
@@ -240,6 +248,19 @@ names(data_dendlist) <- hclust_methods
 cophenetic_cors <- cor.dendlist(data_dendlist)
 corrplot::corrplot(cophenetic_cors, "pie", "lower")
 dev.off()
+
+
+
+
+
+
+jpeg(paste(hclust_path,'replicate_cluster_corr.jpeg',sep=''))
+names(data_dendlist) <- hclust_methods
+cophenetic_cors <- cor.dendlist(data_dendlist)
+corrplot::corrplot(cophenetic_cors, "pie", "lower")
+dev.off()
+
+
 
 ############
 # Heatmaps #

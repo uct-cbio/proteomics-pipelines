@@ -40,14 +40,14 @@ python2ve=$HOME/ve273   # interproscan needs python 2 (Create one with virtualen
 #ips_fasta.py $outpath/fasta/combined_translated.fasta $outpath/fasta
 #ips.sh $outpath/fasta/nr_translated_pg_orfs.fasta $outpath/fasta $python2ve
 
-mq_peptide_to_protein.py $config $outpath
+#mq_peptide_to_protein.py $config $outpath
 
-#mq_export_tables.py $config $outpath
+mq_export_tables.py $config $outpath
 
 # Differential abundance analysis
-#mq_experimental_design.py $config $outpath
-#rm -rf ${outpath}/diff
-#mq_differential_abundance.R -d ${outpath}/experimental_design.R -p ${outpath}/combined.csv -o ${outpath}/diff
+mq_experimental_design.py $config $outpath
+rm -rf ${outpath}/diff
+mq_differential_abundance.R -d ${outpath}/experimental_design.R -p ${outpath}/combined.csv -o ${outpath}/diff
 
 
 

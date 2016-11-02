@@ -157,7 +157,7 @@ for sample in samples:
 #pg = pg[pg['id'] ==  410]  two frames in 5527
 
 #pg = pg[pg['id'] == 410]
-#pg = pg[pg['id'] == 41]
+#pg = pg[pg['id'] == 2357]
 
 for row in pg.iterrows():
     print(row[0])
@@ -239,14 +239,15 @@ for row in pg.iterrows():
         
         annotation_trie = []
         annotation_type = []
-
-        for _ in x:
-            #print(refps[0].format('fasta'))
-            #print(_.format('fasta'))
-            
-            pgomics = sequtils.proteogenomics(specific_strain_peps, _, refps[0])
-            annotation_trie += pgomics.variant_sequences_trie
-            annotation_type += pgomics.annotation_type
+        
+        if len(refps) > 0:
+            for _ in x:
+                #print(refps[0].format('fasta'))
+                #print(_.format('fasta'))
+                
+                pgomics = sequtils.proteogenomics(specific_strain_peps, _, refps[0])
+                annotation_trie += pgomics.variant_sequences_trie
+                annotation_type += pgomics.annotation_type
         
         
 

@@ -749,7 +749,9 @@ class peptides2genome:
             temp_pep = peptide[1:]
         else:
             temp_pep = peptide
+        
         df = df[[temp_pep in _ for _ in self.orf_trans_list]]
+        
         if len(df) != 0:
             df['Peptide_sequence'] = peptide
             df['Peptide_starts'] = df['ORF_translation'].apply(lambda x : self.locate_peptide(x, peptide))
@@ -763,10 +765,13 @@ class peptides2genome:
             df['Peptide_amino_acid_after'] =  df.apply(self.amino_after,axis=1)
             distinct_translated_ORF_count = len(set(df['ORF_translation'].values.tolist()))
             df['Peptide_distinct_translated_ORF_count'] = distinct_translated_ORF_count
+            
             if distinct_translated_ORF_count  == 1:
                 df['Peptide_distinct_translated_ORF_specfic']='+'
+            
             elif distinct_translated_ORF_count > 1:
                 df['Peptide_distinct_translated_ORF_specfic']='-'
+            
             return df
 
 class peptides2proteome:
@@ -1186,31 +1191,42 @@ class proteogenomics:
         self.other_peptidase_sequences = []
         self.upstream_inferred_tss_sequences = []
         self.variant_sequences_trie = []
-        
+        self.mapped_peptides = []
+        self.unmapped_peptides = []
+
+        for peptide in self.peptides:
+            if peptide.startswith("M"):
+                if peptide[1:] in self.translated_orf_sequence:
+                    self.mapped_peptides.append(peptide)
+                else:
+                    self.unmapped_peptides.append(peptide)
+            else:
+                if peptide in self.translated_orf_sequence:
+                    self.mapped_peptides.append(peptide)
+                else:
+                    self.unmapped_peptides.append(peptide)
+
         if len(self.pairwise_blast.hsps) == 0: # end the analysis if translated orf and ref dont align
             print('ORF and Reference not alligned')
             return
         
-        if len(self.peptides) == 0: # end the analysis if translated orf and ref dont align
+        if len(self.mapped_peptides) == 0: # end the analysis if translated orf and ref dont align
             print('No peptides for annotation')
             return
         
         orf_ref_pos = self.pairwise_blast.hsps[0].query_start - (self.pairwise_blast.hsps[0].sbjct_start - 1) -1 # 0 based position of annotated start site in translated orf sequence
-        
 
-        for peptide in self.peptides:
+        for peptide in self.mapped_peptides:
             enzymatic     = True
             met_init      = False   #  non-atg start codon translated with Met
             non_enzymatic = False   #  peptide not after anyzmatic cleavage site
-            start_site    = False   #  peptide starts at known start codon
+            start_site    = False   #7  peptide starts at known start codon
             met_cleaved   = False   #  peptide evidence for initiator methionine cleavage
             nterm_acetyl  = False 
 
             if peptide.startswith('M'):
-                assert peptide[1:] in self.translated_orf_sequence
                 pepstart = (self.translated_orf_sequence.find(peptide[1:]) - 1) # 0 based
             else:
-                assert peptide in self.translated_orf_sequence
                 pepstart = self.translated_orf_sequence.find(peptide)
             
             if pepstart == orf_ref_pos:

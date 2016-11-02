@@ -14,12 +14,12 @@ config = loader.load_module()
 output = sys.argv[2]
 
 peptides = pd.read_csv(config.mq_txt + 'peptides.txt', sep='\t',engine='python')
+
 peptides = peptides[(peptides['Potential contaminant'] != '+') & (peptides['Reverse'] != '+')]
 
 #peptides = peptides[:20] # DEV
 
 peptide_sequences = peptides['Sequence'].tolist()
-
 
 # Specific peptides for each strain
 for strain in config.strains:
@@ -33,6 +33,7 @@ for strain in config.strains:
         os.mkdir(strainpath)
     except:
         os.mkdir(strainpath)
+    
     speps.to_csv(strainpath + '/' + '{}_mapped_peptides.csv'.format(str(strain)))
     
 
