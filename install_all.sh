@@ -24,7 +24,7 @@ R='https://cran.r-project.org/src/base/R-3/R-3.2.3.tar.gz'
 
 cmake='https://cmake.org/files/v3.7/cmake-3.7.0-rc2.tar.gz'
 
-llvm='http://llvm.org/releases/3.8.1/llvm-3.8.1.src.tar.xz'
+llvm='http://llvm.org/releases/3.7.0/llvm-3.7.0.src.tar.xz'
 #############################
 # Create the base directory #
 #############################
