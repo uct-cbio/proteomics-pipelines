@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 peptideshaker='http://genesis.ugent.be/maven2/eu/isas/peptideshaker/PeptideShaker/1.13.1/PeptideShaker-1.13.1.zip'
+
 searchgui='http://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/3.1.0/SearchGUI-3.1.0-mac_and_linux.tar.gz'
 
 denovogui='http://genesis.ugent.be/maven2/com/compomics/denovogui/DeNovoGUI/1.12.3/DeNovoGUI-1.12.3-mac_and_linux.tar.gz'
@@ -9,7 +10,7 @@ ruby='https://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.5.tar.gz'
 
 proteowizard='https://sourceforge.net/projects/proteowizard/files/latest/download'
 
-blast='ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.4.0+-x64-linux.tar.gz'
+blast='ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.5.0+-x64-linux.tar.gz'
 
 clustalw='http://www.clustal.org/download/current/clustalw-2.1-linux-x86_64-libcppstatic.tar.gz'
 
@@ -21,6 +22,9 @@ elasticsearch='https://download.elastic.co/elasticsearch/release/org/elasticsear
 
 R='https://cran.r-project.org/src/base/R-3/R-3.2.3.tar.gz'
 
+cmake='https://cmake.org/files/v3.7/cmake-3.7.0-rc2.tar.gz'
+
+llvm='http://llvm.org/releases/3.8.1/llvm-3.8.1.src.tar.xz'
 #############################
 # Create the base directory #
 #############################
@@ -197,6 +201,51 @@ echo $name
 if [ ! -d "$name" ]; then 
     mkdir $name && cd $name && wget $url && tar -zxvf *.tar.gz && rm -rf *.tar.gz && cd R* && ./configure --prefix=$dir/$base/$name && make && make install 
 fi 
+
+##############
+# cmake      #
+##############
+url=$cmake
+file="${url##*/}"
+name="${file%.tar.gz}"
+base=cmake
+if [ ! -d "$dir/$base" ]; then 
+    mkdir $dir/$base
+fi 
+cd $dir/$base 
+echo $name
+if [ ! -d "$name" ]; then 
+    mkdir $name && cd $name && wget $url && tar -xvf *.tar.* && rm -rf *.tar.* && cd $name* && ./configure --prefix=$dir/$base/$name && make && make install || rm -rf $dir/$base/$name && exit 1
+fi 
+
+##############
+# llvm       #
+##############
+url=$llvm
+file="${url##*/}"
+name="${file%.src.tar.xz}"
+base=llvm
+if [ ! -d "$dir/$base" ]; then 
+    mkdir $dir/$base
+fi 
+cd $dir/$base 
+echo $name
+if [ ! -d "$name" ]; then 
+    rm -rf build && mkdir build
+    rm -rf dest && mkdir dest
+    mkdir $name && cd $name && wget $url && tar -xvf *.tar.xz && rm -rf *.tar.xz && cd $dir/$base/build && cmake $dir/$base/$name/$name* && cmake -DCMAKE_INSTALL_PREFIX:PATH=$dir/$base/dest . && make all install # cmake $dir/$base/$name/$name* && cmake --build . --target install #|| rm -rf $dir/$base/$name
+fi 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
