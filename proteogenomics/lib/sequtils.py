@@ -1506,8 +1506,7 @@ def muscle(fasta):
     #        print(id)
     #        new_ids.append(id.split('|')[1])
     #    new_ids = ';'.join(new_ids)
-    #    rec.id = new_ids
-    
+    #    rec.id = new_ids    
     cline = MuscleCommandline(clwstrict=True)
     child = subprocess.Popen(str(cline),
     stdin=subprocess.PIPE,
@@ -1519,7 +1518,7 @@ def muscle(fasta):
     child.stdin.close()
     lines=[]
     try:
-        align = AlignIO.read(child.stdout, "clustal")
+        align = AlignIO.read(child.stdout, "fasta")
         return align
     except:
         return None

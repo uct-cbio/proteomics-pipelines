@@ -42,7 +42,6 @@ for rec in db:
     rec_pep_ids = set()
     peptides_mapped=Trie.trie_export(qrec)
     covered = []
-    print(qrec, peptides_mapped)
     for pepstr in peptides_mapped:
         trec = pepdict[pepstr]
         tseq = str(trec.seq)
@@ -53,7 +52,8 @@ for rec in db:
     sample_spectra = defaultdict(list)
     for id in rec_pep_ids:
         sample = id.split(';')[0]
-        sample_spectra[sample].append(id)
+        spectrum = id
+        sample_spectra[sample].append(spectrum)
     cov = Trie.trie_coverage(qrec)
     sc = len(rec_pep_ids)
     if cov > 0: 
