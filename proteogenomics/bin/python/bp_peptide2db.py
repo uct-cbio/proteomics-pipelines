@@ -72,13 +72,14 @@ table = pd.DataFrame()
 table['ID'] = pd.Series(accession)
 table['Records'] = pd.Series(fasta)
 table['SpectralCounts'] = pd.Series(scounts)
-table['MSMS'] = pd.Series(scans)
+#table['MSMS'] = pd.Series(scans)
 table['SubjectSequences'] = pd.Series(peptides)
 table['SubjectCounts'] = pd.Series(num_peptides)
 table['SequenceCoverage_%'] = pd.Series(cv)
 table['SequenceLength'] = pd.Series(length)
 
 table = table.reset_index()
+
 del table['index']
 
 for row in table.iterrows():
