@@ -580,7 +580,13 @@ class peptides2genome:
         self.threads=threads
         self.translation_table = translation_table
         self.stop_codons = Stop_List(translation_table)
+        
+        mstart_peps=[i[1:] for i in peptides_list if i.startswith('M')]
+        non_mstart_peps=[i for i in peptides_list if not i.startswith('M')]
 
+        self.nonMetTrie = algo.Trie(non_mstart_peps)
+        self.MetTrie = algo.Trie(mstart_peps) #excluding N-term M
+        
         orfs = sf_contigs(genome, assembly_name = assembly_name, table=translation_table, codons='All', peptide_length=1, translated=False )
         
         orf_counts = defaultdict(list)  # This baby is to hold the values of the id's of ORFs that occur one or more times in the genome
@@ -763,15 +769,13 @@ class peptides2genome:
             df['Peptide_amino_acid_first'] =  df['Peptide_sequence'].apply(lambda x : x[:1])
             df['Peptide_amino_acid_last'] =  df['Peptide_sequence'].apply(lambda x : x[-1:])
             df['Peptide_amino_acid_after'] =  df.apply(self.amino_after,axis=1)
+            
             distinct_translated_ORF_count = len(set(df['ORF_translation'].values.tolist()))
             df['Peptide_distinct_translated_ORF_count'] = distinct_translated_ORF_count
-            
             if distinct_translated_ORF_count  == 1:
                 df['Peptide_distinct_translated_ORF_specfic']='+'
-            
             elif distinct_translated_ORF_count > 1:
                 df['Peptide_distinct_translated_ORF_specfic']='-'
-            
             return df
 
 class peptides2proteome:
@@ -1528,11 +1532,13 @@ def list_trie_upper(fasta, peptide_list):
      peptide_list = list(peptide_list)
      upper = []
      Trie = algo.Trie(peptide_list)
+     
      for rec in new_fasta:
          id = rec.id
          temp_seq = str(rec.seq)
          description= rec.description
-         temp_seq = Trie.trie_upper(temp_seq)
+         TrieMatch=algo.TrieMatch(Trie, temp_seq)
+         temp_seq = TrieMatch.trie_upper()
          assert(len(temp_seq)) == len(str(rec.seq))
          newrec = SeqRecord(seq = Seq(temp_seq), id = id, description = description)
          upper.append(newrec.format('fasta'))

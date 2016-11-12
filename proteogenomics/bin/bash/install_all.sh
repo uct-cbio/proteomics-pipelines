@@ -215,7 +215,7 @@ fi
 cd $dir/$base 
 echo $name
 if [ ! -d "$name" ]; then 
-    mkdir $name && cd $name && wget $url && tar -xvf *.tar.* && rm -rf *.tar.* && cd $name* && ./configure --prefix=$dir/$base/$name && make && make install || rm -rf $dir/$base/$name && exit 1
+    mkdir $name && cd $name && wget $url && tar -xvf *.tar.* && rm -rf *.tar.* && cd $name* && ./configure --prefix=$dir/$base/$name && make && make install 
 fi 
 
 ##############

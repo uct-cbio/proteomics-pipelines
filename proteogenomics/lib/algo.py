@@ -50,13 +50,10 @@ class Graph:
     def __iter__(self):
         return iter(self.vertices.values())
 
+
 class Trie:
-    def __init__(self, lst, Text=None):
+    def __init__(self, lst):
         self.trie = self.trie_graph(lst)
-        self.Text_coordinates=[]
-        self.Text = None
-        if Text != None:
-            self.Text_coordinates = self.trie_coordinates(Text)
     def trie_graph(self, lst):
         assert not isinstance(lst, str)    # make sure that the items you are making a trie_gr    aph from are in list format
         trie = Graph()
@@ -79,6 +76,13 @@ class Trie:
                     trie.addEdge(node, mark, symbol)
                     node = mark
         return trie
+
+class TrieMatch:
+    def __init__(self, Trie, Text):
+        self.trie = Trie.trie
+        self.Text=Text
+        self.Text_coordinates = self.trie_coordinates()
+    
     def prefix_trie_match(self, string, start):
         v = 0
         i = start
@@ -114,52 +118,50 @@ class Trie:
             if found == False:
                 break
         return last_edges
-    def trie_matching(self, Text):
-        coordinates = self.trie_coordinates(Text)
+    def trie_matching(self):
+        coordinates = self.Text_coordinates
         positions = [i[0] for i in coordinates]
         return positions
-    def trie_upper(self, Text):
+
+    def trie_upper(self):
         positions = set()
-        coords =  self.trie_coordinates(Text)
+        coords =  self.Text_coordinates
         for coord in coords:
             for indx in range(coord[0], coord[1]):
                 positions.add(indx)
         new_Text_list = []
-        for indx in range(len(Text)):
+        for indx in range(len(self.Text)):
             if indx not in positions:
-                new_Text_list.append(Text[indx].lower())
+                new_Text_list.append(self.Text[indx].lower())
             else:
-                new_Text_list.append(Text[indx].upper())
+                new_Text_list.append(self.Text[indx].upper())
         new_Text = ''.join(new_Text_list)
         return new_Text
-    def trie_coordinates(self, Text): 
-        if Text == self.Text:
-            coordinates = self.Text_coordinates
-        else:
-            coordinates = []
-            start = 0
-            while start < len(Text):
-                vals = self.prefix_trie_match( Text, start)
-                for val in vals:
-                    coordinates.append(val)
-                start += 1 
-            self.Text=Text
-            self.Text_coordinates=coordinates
+    def trie_coordinates(self): 
+        coordinates = []
+        start = 0
+        while start < len(self.Text):
+            vals = self.prefix_trie_match( self.Text, start)
+            for val in vals:
+                coordinates.append(val)
+            start += 1 
         return coordinates
-    def trie_export(self, Text):
-        coordinates = self.trie_coordinates(Text)
+
+    def trie_export(self):
+        coordinates = self.Text_coordinates
         words = set()
         for coord in coordinates:
-            word = Text[coord[0]:coord[1]]
+            word = self.Text[coord[0]:coord[1]]
             words.add(word)
         return words
-    def trie_coverage(self, Text): 
+
+    def trie_coverage(self): 
         positions = set()
-        coords =  self.trie_coordinates(Text)
+        coords =  self.Text_coordinates
         for coord in coords:
             for indx in range(coord[0], coord[1]):
                 positions.add(indx)
-        Text_indxs=set([ pos for pos in range(len(Text))]) 
+        Text_indxs=set([ pos for pos in range(len(self.Text))]) 
         Text_coverage = len(positions)/float(len(Text_indxs)) * 100
         return Text_coverage
         
