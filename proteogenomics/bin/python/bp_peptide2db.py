@@ -10,6 +10,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 import algo
 import re
+import tagmatch
 import proteomics
 
 db = SeqIO.parse(sys.argv[1],'fasta')
@@ -26,7 +27,8 @@ print('created peptide dict')
 Trie = algo.Trie(list(pepdict.keys()))
 print('created trie')
 
-out = sys.argv[3] + '/' + sys.argv[1].split('/')[-1] +'.csv'
+fragtol = float(sys.argv[3])
+out = sys.argv[4] + '/' + sys.argv[1].split('/')[-1] +'.csv'
 cv = []
 scounts = []
 length = []
@@ -36,46 +38,65 @@ num_peptides = []
 fasta = []
 accession = []
 samples = [] 
+
 for rec in db:
     qrec = str(rec.seq)
-    rec_peps = []
+    rec_peps = set()
     rec_pep_ids = set()
-    peptides_mapped=Trie.trie_export(qrec)
+    TrieMatch=algo.TrieMatch(Trie, qrec)
+    peptides_mapped=TrieMatch.trie_export()
     covered = []
+
     for pepstr in peptides_mapped:
         trec = pepdict[pepstr]
         tseq = str(trec.seq)
-        rec_peps.append(tseq)
         ids = trec.description.split('scans=')[1].split('|')
-        rec_pep_ids.update(ids)
+        prec_ions = defaultdict(set)
+        
+        for id in ids:
+            _ = id.split(';')
+            mz = float(_[-2])
+            charge = int(_[-1][0])
+            mw = tagmatch.mz2mw(mz, charge)
+            prec_ions[mw].add(id)
+        
+        prec_array = list(prec_ions.keys())
+        tm  = tagmatch.TagMatch(pepstr, prec_array, qrec, tol = fragtol)
+        rec_peps.update(tm.validated_peptides)
+        
+        for _ in tm.validated_precursor:
+            validated_scans = prec_ions[_]
+            rec_pep_ids.update(validated_scans)
+
     ln = len(qrec)
     sample_spectra = defaultdict(list)
     for id in rec_pep_ids:
         sample = id.split(';')[0]
         spectrum = id
         sample_spectra[sample].append(spectrum)
-    cov = Trie.trie_coverage(qrec)
+
+    #cov = TrieMatch.trie_coverage()
     sc = len(rec_pep_ids)
-    if cov > 0: 
+    if len(rec_pep_ids) > 0: 
         samples.append(sample_spectra.copy())
         peptides.append('\n'.join(rec_peps))
         num_peptides.append(len(rec_peps))
         scans.append('\n'.join(rec_pep_ids))
         scounts.append(sc)
-        cv.append(cov)
+        #cv.append(cov)
         accession.append(rec.id)
         fasta.append(rec.format('fasta'))
         length.append(ln)
-    
+  
 table = pd.DataFrame()
 
 table['ID'] = pd.Series(accession)
 table['Records'] = pd.Series(fasta)
 table['SpectralCounts'] = pd.Series(scounts)
-#table['MSMS'] = pd.Series(scans)
-table['SubjectSequences'] = pd.Series(peptides)
-table['SubjectCounts'] = pd.Series(num_peptides)
-table['SequenceCoverage_%'] = pd.Series(cv)
+table['MSMS'] = pd.Series(scans)
+table['PeptideSequences'] = pd.Series(peptides)
+table['PeptideCounts'] = pd.Series(num_peptides)
+#table['SequenceCoverage_%'] = pd.Series(cv)
 table['SequenceLength'] = pd.Series(length)
 
 table = table.reset_index()

@@ -6,6 +6,8 @@ from collections import defaultdict
 import re
 
 def peptide_mass(peptide):
+    if 'X' in peptide:
+        return 0
     masses = []
     mass_h20=18.01056
 
