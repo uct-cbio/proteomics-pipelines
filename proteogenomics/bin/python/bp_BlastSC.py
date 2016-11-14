@@ -38,7 +38,7 @@ fastas = []
 
 for peptide in peptide_seqs:
     group = df_filt[df_filt['_hsp.sbjct.cleaned'] == peptide]
-    scanlist = group['blast_record.query'].apply(lambda x : x.split()[1].split('|'))
+    scanlist = group['blast_record.query'].apply(lambda x : x.split('scans=')[1].split('|'))
     comb_scans = set()
     for scans in scanlist:
         for scan in scans:

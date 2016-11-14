@@ -22,7 +22,8 @@ count=0
 
 for sequence in sequences_dct:
     id='denovo_sequence_{}'.format(count)
-    desc = '|'.join(sequences_dct[sequence])
+    descs= list(set(sequences_dct[sequence]))
+    desc = 'sc={};scans='.format(len(descs)) + '|'.join(descs)
     rec=SeqRecord(id=id, seq=Seq(sequence), description=desc)
     new_sequences.append(rec)
     count +=1

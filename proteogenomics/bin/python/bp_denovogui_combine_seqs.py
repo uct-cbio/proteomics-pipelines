@@ -18,7 +18,7 @@ fasta=sys.argv[1]
 out=sys.argv[2]
 method=sys.argv[3]
 
-methods=['consensus', 'concatenated']
+methods=['multiple', 'consensus', 'concatenate']
 assert method in methods
 
 inpt = list(SeqIO.parse(fasta,'fasta'))
@@ -61,8 +61,14 @@ def process(key):
     new_record = SeqRecord(id= key, seq=Seq(peptide))
     return new_record
 
-pool = multiprocessing.Pool(56)
-newrecords = pool.map(process, keys)
-
+if method !='multiple':
+    pool = multiprocessing.Pool(56)
+    newrecords = pool.map(process, keys)
+else:
+    newrecords=[]
+    for scan in records:
+        for option in records[scan]:
+            new_record = SeqRecord(id= scan, seq=option.seq)
+            newrecords.append(new_record)
 SeqIO.write(newrecords, out, 'fasta')
 

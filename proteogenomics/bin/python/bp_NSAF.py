@@ -2,12 +2,20 @@
 
 import pandas as pd
 import sys
-
+from collections import defaultdict
+from Bio import SeqIO
 
 data = pd.read_csv(sys.argv[1])
 
-data = data[[i for i in data.columns if not i.startswith('Untitled: ')]]
+peptide_list = list(SeqIO.parse(sys.argv[2], 'fasta'))
+peptide_dict = defaultdict(set)
+for _ in peptide_list:
+    s = str(_.seq)
+    ids = _.description.split('scans=')[1].split('|')
+    peptide_dict[s].update(ids)
+del peptide_list
 
+data = data[[i for i in data.columns if not i.startswith('Untitled: ')]]
 sample_cols = [i for i in data.columns if i.startswith('Sample ')]
 
 nsafcols = []
@@ -25,28 +33,31 @@ data = data.sort_values(by='Summed NSAF', ascending = False)
 data = data.reset_index()
 del data['index']
 
-data['MSMS_list'] = data['MSMS'].apply( lambda x : x.split('\n'))
-all_msms = data['MSMS_list'].tolist()
+data['peptides_list'] = data['SubjectSequences'].apply( lambda x : x.split('\n'))
+all_peptides = data['peptides_list'].tolist()
+del data['peptides_list']
 
 msms_set = set()
 all_cum= []
 
-for msms in all_msms:
-    msms_set.update(msms)
+for peptides in all_peptides:
+    for peptide in peptides:
+        msms_set.update(peptide_dict[peptide])
     cum_set_len = len(list(msms_set))
     all_cum.append(cum_set_len)
 
 msms_set_len = len(list(msms_set))
+
 data['CumulativeMSMSCount'] = pd.Series(all_cum)
 data['CumulativeMSMSPercentage'] = data['CumulativeMSMSCount'] / msms_set_len * 100.0
 
-del data['MSMS_list']
 
-prefix = sys.argv[2].split('.csv')[0]
-data.to_csv(sys.argv[2])
+prefix = sys.argv[3].split('.csv')[0]
+data.to_csv(sys.argv[3])
 
-records = data['Records'].tolist()
-w= open(prefix +'_100perc_msmms_mapped.fasta','w')
+data_99 = data[data['CumulativeMSMSPercentage'] <= 99]
+records = data_99['Records'].tolist()
+w= open(prefix +'_99perc_msmms_mapped.fasta','w')
 w.write('\n'.join(records))
 w.close()
 
