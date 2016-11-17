@@ -44,35 +44,43 @@ data['CumulativeMSMSPercentage'] = data['CumulativeMSMSCount'] / msms_set_len * 
 prefix = sys.argv[2].split('.csv')[0]
 data.to_csv(sys.argv[2])
 
-data_100 = data[data['CumulativeMSMSPercentage'] <= 100]
-records = data_100['Records'].tolist()
-w= open(prefix +'_100perc_msmms_mapped.fasta','w')
-w.write('\n'.join(records))
+data_filt = data.drop_duplicates('CumulativeMSMSPercentage', keep='first')
+filt_prefix=prefix + '_compacted'
+data_filt.to_csv(filt_prefix +'.csv')
+data_filt_recs = data_filt['Records'].tolist()
+w  = open(filt_prefix + '.fasta', 'w')
+w.write(''.join(data_filt_recs))
 w.close()
 
-data_99 = data[data['CumulativeMSMSPercentage'] <= 99]
-records = data_99['Records'].tolist()
-w= open(prefix +'_99perc_msmms_mapped.fasta','w')
-w.write('\n'.join(records))
-w.close()
+#data_100 = data[data['CumulativeMSMSPercentage'] <= 100]
+#records = data_100['Records'].tolist()
+#w= open(prefix +'_100perc_msmms_mapped.fasta','w')
+#w.write('\n'.join(records))
+#w.close()
 
-data_95 = data[data['CumulativeMSMSPercentage'] <= 95]
-records = data_95['Records'].tolist()
-w= open(prefix +'_95perc_msmms_mapped.fasta','w')
-w.write('\n'.join(records))
-w.close()
+#data_99 = data[data['CumulativeMSMSPercentage'] <= 99]
+#records = data_99['Records'].tolist()
+#w= open(prefix +'_99perc_msmms_mapped.fasta','w')
+#w.write('\n'.join(records))
+#w.close()
 
-data_90 = data[data['CumulativeMSMSPercentage'] <= 90]
-records = data_90['Records'].tolist()
-w= open(prefix +'_90perc_msmms_mapped.fasta','w')
-w.write('\n'.join(records))
-w.close()
+#data_95 = data[data['CumulativeMSMSPercentage'] <= 95]
+#records = data_95['Records'].tolist()
+#w= open(prefix +'_95perc_msmms_mapped.fasta','w')
+#w.write('\n'.join(records))
+#w.close()
 
-data_80 = data[data['CumulativeMSMSPercentage'] <= 80]
-records = data_80['Records'].tolist()
-w= open(prefix +'_80perc_msmms_mapped.fasta','w')
-w.write('\n'.join(records))
-w.close()
+#data_90 = data[data['CumulativeMSMSPercentage'] <= 90]
+#records = data_90['Records'].tolist()
+#w= open(prefix +'_90perc_msmms_mapped.fasta','w')
+#w.write('\n'.join(records))
+#w.close()
+
+#data_80 = data[data['CumulativeMSMSPercentage'] <= 80]
+#records = data_80['Records'].tolist()
+#w= open(prefix +'_80perc_msmms_mapped.fasta','w')
+#w.write('\n'.join(records))
+#w.close()
 
 
 
