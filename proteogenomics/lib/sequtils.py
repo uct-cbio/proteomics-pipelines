@@ -588,9 +588,10 @@ class peptides2genome:
         self.MetTrie = algo.Trie(mstart_peps) #excluding N-term M
         
         orfs = sf_contigs(genome, assembly_name = assembly_name, table=translation_table, codons='All', peptide_length=1, translated=False )
-        
+        print(len(orfs))       
         orf_counts = defaultdict(list)  # This baby is to hold the values of the id's of ORFs that occur one or more times in the genome
         preceding_codon = defaultdict() 
+        
         for rec in orfs:
             _ = str(rec.seq)
             assert ';' not in rec.id
