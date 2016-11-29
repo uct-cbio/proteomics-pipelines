@@ -31,7 +31,9 @@ python2ve=$HOME/ve273   # interproscan needs python 2 (Create one with virtualen
 
 # Proteogenomics analysis
 #mq_uniprot.py $config $outpath
-#mq_genome_to_peptide.py $config $outpath
+
+mq_genome_to_peptide.py $config $outpath
+
 #uniprot_peptide2db.py $config $outpath
 #mq_peptide_to_referencedb.py $config $outpath
 
@@ -42,12 +44,12 @@ python2ve=$HOME/ve273   # interproscan needs python 2 (Create one with virtualen
 
 #mq_peptide_to_protein.py $config $outpath
 
-mq_export_tables.py $config $outpath
+#mq_export_tables.py $config $outpath
 
 # Differential abundance analysis
-mq_experimental_design.py $config $outpath
-rm -rf ${outpath}/diff
-mq_differential_abundance.R -d ${outpath}/experimental_design.R -p ${outpath}/combined.csv -o ${outpath}/diff
+#mq_experimental_design.py $config $outpath
+#rm -rf ${outpath}/diff
+#mq_differential_abundance.R -d ${outpath}/experimental_design.R -p ${outpath}/combined.csv -o ${outpath}/diff
 
 
 

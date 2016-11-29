@@ -576,41 +576,118 @@ def sam_parse(sam):
 
 class peptides2genome:
     '''Basic class for peptides to genome mapping - list of BioPython seqrecords for genome contigs'''
-    def __init__(self, genome, assembly_name, translation_table, peptides_list, threads=1):
+    def __init__(self, genome, assembly_name, translation_table, peptides_list, threads=1, start_codons=['ATG','GTG','TTG']):
         self.threads=threads
         self.translation_table = translation_table
         self.stop_codons = Stop_List(translation_table)
+        self.start_codons = start_codons
         
         mstart_peps=[i[1:] for i in peptides_list if i.startswith('M')]
         non_mstart_peps=[i for i in peptides_list if not i.startswith('M')]
 
         self.nonMetTrie = algo.Trie(non_mstart_peps)
         self.MetTrie = algo.Trie(mstart_peps) #excluding N-term M
-        
+        self.peptide2orf = defaultdict(list)
+
         orfs = sf_contigs(genome, assembly_name = assembly_name, table=translation_table, codons='All', peptide_length=1, translated=False )
-        
+        #print(orfs)
+        self.orfs = orfs
+
         orf_counts = defaultdict(list)  # This baby is to hold the values of the id's of ORFs that occur one or more times in the genome
         preceding_codon = defaultdict() 
-        for rec in orfs:
-            _ = str(rec.seq)
-            assert ';' not in rec.id
-            orf_counts[_].append(rec.id)
-            preceding_codon[rec.id] = rec.description.split('Preceding_codon=')[1].split('.')[0]
+        
+        orf_seq_list= [str(rec.seq) for rec in orfs]
+        orf_trans_list = [str(translate(rec.seq, table=self.translation_table, cds=False)) for rec in orfs]
+        orf_id_list = [rec.id for rec in orfs]
 
-        orf_series = pd.Series(orf_counts, name='ORF_ids').apply(lambda x : ';'.join(x))
+        preceding_codons = [rec.description.split('Preceding_codon=')[1].split('.')[0] for rec in orfs]
+        
+        most_upstream_peptide_pos=[]
+        trie_peptide_dict = []
+
+
+        orf_series = pd.Series(orf_id_list, name='ORF_id')
+        orf_series.index=orf_seq_list
         orf_series.index.name = 'ORF_sequence'
         
         orf_df = orf_series.reset_index()
-        orf_df['ORF_genome_count'] = orf_df['ORF_ids'].apply(lambda x : len(x.split(';')))
-        orf_df['ORF_translation'] = orf_df['ORF_sequence'].apply(lambda x : str(translate(Seq(x), table = translation_table, cds=False)))  # DEV change the way in-sequence stops are translated (eg. use selenocysteine)
-        orf_df['ORF_preceding_codons'] = orf_df['ORF_ids'].apply(lambda x : self.preceding_codons(preceding_codon, x))
+        #orf_df['ORF_genome_count'] = orf_df['ORF_ids'].apply(lambda x : len(x.split(';')))
+        orf_df['ORF_translation'] = pd.Series(orf_trans_list) # DEV change the way in-sequence stops are translated (eg. use selenocysteine)
+        
+        orf_df['ORF_preceding_codons'] = pd.Series(preceding_codons)
         orf_df['ORF_Cterm_fragment'] = orf_df['ORF_sequence'].apply(lambda x : self.cterm_fragment(x))
         orf_df['ORF_Nterm_fragment'] = orf_df['ORF_preceding_codons'].apply(lambda x : self.nterm_fragment(x))
         orf_df['Assembly'] = assembly_name
+        
+        orf_df['Most_Upstream_Inferred_Start'] = orf_df.apply(self.most_upstream_start, axis=1)
+        
+        orf_df = orf_df[orf_df['Most_Upstream_Inferred_Start'].notnull()]
+        orf_df['Most_Upstream_Inferred_Codon'] = orf_df.apply(self.most_upstream_codon, axis=1)
+        orf_df['Most_Upstream_Inferred_Translation'] = orf_df.apply(self.most_upstream_translation, axis=1)
+
         self.orf_df = orf_df
         self.orf_trans_list = orf_df['ORF_translation'].tolist()
 
         self.peptides = self.process_peptides(peptides_list)
+    
+
+    def most_upstream_start(self, df):
+        
+        pep_positions = []
+        non_met_position_aminos = defaultdict(list)
+
+        orf_trans = df['ORF_translation']
+        orf_nucs = df['ORF_sequence']
+        orf_id = df['ORF_id']
+
+        nonMetTM = algo.TrieMatch(self.nonMetTrie, orf_trans)
+        pep_positions += nonMetTM.trie_matching()
+        for pep in nonMetTM.trie_export():
+            self.peptide2orf[pep].append(orf_id)
+            non_met_positions= [m.start() for m in re.finditer('(?={})'.format(pep), orf_trans)]
+            for pos in non_met_positions:
+                non_met_position_aminos[pos].append(pep[0])
+        
+        MetTM = algo.TrieMatch(self.MetTrie, orf_trans)
+        met_peptides = MetTM.trie_export()
+        for metpep in met_peptides:
+            met_positions= [m.start() for m in re.finditer('(?={})'.format(metpep), orf_trans)]
+            for metpos in met_positions:
+                if metpos != 0:
+                    first_pos = metpos-1
+                    nuc_pos= first_pos * 3
+                    first_codon = orf_nucs[nuc_pos:nuc_pos + 3]
+                    first_amino = orf_trans[first_pos]
+                    if (first_amino == 'M') or (first_codon in self.start_codons):
+                        pep_positions.append(first_pos)
+                        #position_aminos[first_pos].append('M')
+                        self.peptide2orf["M" + metpep].append(orf_id)
+
+        if len(pep_positions)> 0:
+            most_upstream_codon_pos  = min(pep_positions) * 3
+            most_upstream_codon = orf_nucs[most_upstream_codon_pos:most_upstream_codon_pos + 3]
+            while ((most_upstream_codon not in self.start_codons) and (most_upstream_codon_pos != 0)) or ((most_upstream_codon_pos/3 in non_met_position_aminos) and (most_upstream_codon_pos !=0)): # Keep searching upstream if a non-Met amino was mapped to the most upstream position.
+                most_upstream_codon_pos -= 3
+                most_upstream_codon = orf_nucs[most_upstream_codon_pos:most_upstream_codon_pos + 3]
+            #print(most_upstream_codon)
+            #most_upstream_aminos = []
+            #if most_upstream_codon_pos/3 in non_met_position_aminos:
+            #    most_upstream_aminos += non_met_position_aminos[most_upstream_codon_pos/3]
+            
+            return most_upstream_codon_pos
+    def most_upstream_codon(self, df):
+        upstream_start = df['Most_Upstream_Inferred_Start']
+        nuc_pos = int(upstream_start)
+        orf_sequence = df['ORF_sequence']
+        upstream_codon = orf_sequence[nuc_pos : nuc_pos + 3]
+        return upstream_codon
+
+    def most_upstream_translation(self, df):
+        upstream_start = df['Most_Upstream_Inferred_Start']
+        upstream_codon = df['Most_Upstream_Inferred_Codon']
+        orf_trans = df['ORF_translation']
+        most_upstream = orf_trans[int(upstream_start/3):]
+        return most_upstream        
 
     def ORF_set_count(self):
         print(self.orf_df[self.orf_df['ORF_Cterm_fragment']=='True'].head())
@@ -622,12 +699,6 @@ class peptides2genome:
             return 'False'
         else:
             return 'True'
-
-    def preceding_codons(self, codon_dict, val):
-        preceding = []
-        for v in val.split(';'):
-            preceding.append(codon_dict[v])
-        return ';'.join(preceding)
 
     def nterm_fragment(self, val): #supply a list of preceding codons/fragments of codons.
         for v in val.split(';'):
@@ -750,14 +821,9 @@ class peptides2genome:
         return peptides
 
     def peptide_df(self, peptide):
-        df = self.orf_df.copy() 
-        if peptide.startswith('M'):
-            temp_pep = peptide[1:]
-        else:
-            temp_pep = peptide
-        
-        df = df[[temp_pep in _ for _ in self.orf_trans_list]]
-        
+        ids = self.peptide2orf[peptide]
+        df = self.orf_df.copy()
+        df = df[df['ORF_id'].isin(ids)]
         if len(df) != 0:
             df['Peptide_sequence'] = peptide
             df['Peptide_starts'] = df['ORF_translation'].apply(lambda x : self.locate_peptide(x, peptide))
@@ -770,12 +836,14 @@ class peptides2genome:
             df['Peptide_amino_acid_last'] =  df['Peptide_sequence'].apply(lambda x : x[-1:])
             df['Peptide_amino_acid_after'] =  df.apply(self.amino_after,axis=1)
             
-            distinct_translated_ORF_count = len(set(df['ORF_translation'].values.tolist()))
-            df['Peptide_distinct_translated_ORF_count'] = distinct_translated_ORF_count
+            distinct_translated_ORF_count = len(df.drop_duplicates(['Peptide_first_codon', 'Peptide_previous_codon', 'Most_Upstream_Inferred_Translation'], keep='first'))
+            df['Peptide_inferred_translated_sequence_count'] = distinct_translated_ORF_count
+            mapped_orfs = len(list(set(df['ORF_id'].tolist())))
             if distinct_translated_ORF_count  == 1:
-                df['Peptide_distinct_translated_ORF_specfic']='+'
+                df['Peptide_inferred_translated_sequence_specific']='+'
             elif distinct_translated_ORF_count > 1:
-                df['Peptide_distinct_translated_ORF_specfic']='-'
+                df['Peptide_inferred_translated_sequence_specific']='-'
+            df['Peptide_genome_ORF_count'] = mapped_orfs 
             return df
 
 class peptides2proteome:
@@ -812,13 +880,13 @@ class mapping2peptides:
         self.translation_table = translation_table
     def non_specific(self):
         map = self.mapping 
-        ns =map[map['Peptide_distinct_translated_ORF_specfic'] =='-']['Peptide_sequence'].tolist()
+        ns =map[map['Peptide_inferred_translated_sequence_specific'] =='-']['Peptide_sequence'].tolist()
         ns = set(ns)
         return ns
     
     def specific(self):
         map = self.mapping
-        s =map[map['Peptide_distinct_translated_ORF_specfic'] =='+']['Peptide_sequence'].tolist()
+        s =map[map['Peptide_inferred_translated_sequence_specific'] =='+']['Peptide_sequence'].tolist()
         s = set(s)
         return s
     
@@ -843,13 +911,13 @@ class mapping2peptides:
         prots_fasta=[]
         identical_translated= False
         specific_map=map[map['Peptide_sequence'].isin(peptides)].copy()
-        specific_map = specific_map.drop_duplicates(['ORF_ids'])
-        orf_id_list =specific_map['ORF_ids'].tolist()
+        specific_map = specific_map.drop_duplicates(['ORF_id'])
+        orf_id_list =specific_map['ORF_id'].tolist()
         orf_nucs_list =specific_map['ORF_sequence'].tolist()
         orf_trans_list =specific_map['ORF_translation'].tolist()
         
-        if len(set(orf_trans_list)) == 1:
-            identical_translated=True
+        #if len(set(orf_trans_list)) == 1:
+        #    identical_translated=True
         
         for item in range(len(orf_id_list)):
             orf_id = orf_id_list[item]
@@ -865,11 +933,11 @@ class mapping2peptides:
             orfs_fasta.append(nucs)
             prots_fasta.append(trans)
         
-        if identical_translated == True: # In case the translated ORF sequence is identical
-            prot_ids = []
-            for rec in prots_fasta:
-                prot_ids.append(rec.id)
-            prots_fasta = [SeqRecord(id = ';'.join(prot_ids), seq=rec.seq)]
+        #if identical_translated == True: # In case the translated ORF sequence is identical
+        #    prot_ids = []
+        #    for rec in prots_fasta:
+        #        prot_ids.append(rec.id)
+        #    prots_fasta = [SeqRecord(id = ';'.join(prot_ids), seq=rec.seq)]
         return orfs_fasta, prots_fasta
 
 
@@ -1398,7 +1466,6 @@ class proteogenomics:
         start = int(coords.split(')')[1].split(':')[0])
         end = int(coords.split(')')[1].split(':')[1])
         return strand, start, end
-
                     
 def icds_blast(fasta, temp_folder, max_evalue=0.0001):
     
@@ -1417,7 +1484,6 @@ def icds_blast(fasta, temp_folder, max_evalue=0.0001):
             if len(datum.hsps) == 0:
                 non_alligned.append('{}, {} (evalue cutoff {})'.format(qid, tid, str(max_evalue)))
     return non_alligned
-
 
 def reference_mapping_blast(fasta_orfs, fasta_refs, temp_folder, max_evalue=0.0001):
     
