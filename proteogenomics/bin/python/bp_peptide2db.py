@@ -22,6 +22,8 @@ pepdict = {}
 for peprec in peprecs:
     pepdict[str(peprec.seq)]=peprec
 
+del peprecs
+
 print('created peptide dict')
 
 Trie = algo.Trie(list(pepdict.keys()))

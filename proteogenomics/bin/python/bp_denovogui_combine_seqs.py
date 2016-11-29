@@ -26,8 +26,9 @@ inpt = list(SeqIO.parse(fasta,'fasta'))
 records = defaultdict(list)
 for rec in inpt:
     desc = ';'.join(rec.description.split(';')[:-2])
-    desc = '.'.join(desc.split())
-    records[desc].append(rec)
+    if not desc.endswith(';'):
+        desc = '.'.join(desc.split())
+        records[desc].append(rec)
 
 newrecords = []
 
@@ -62,7 +63,7 @@ def process(key):
     return new_record
 
 if method !='multiple':
-    pool = multiprocessing.Pool(56)
+    pool = multiprocessing.Pool(24)
     newrecords = pool.map(process, keys)
 else:
     newrecords=[]

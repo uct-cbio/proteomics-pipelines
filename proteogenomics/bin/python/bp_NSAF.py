@@ -4,9 +4,19 @@ import pandas as pd
 import sys
 from collections import defaultdict
 from Bio import SeqIO
+from collections import Counter
 
 data = pd.read_csv(sys.argv[1])
 
+def get_organism(val):
+    try:
+        val = val.split('OS=')[1]
+        if '=' in val:
+            val = val.split('=')[0]
+            val = ' '.join(val.split()[:-1])
+        return val
+    except:
+        return val.split('\n')[0]
 
 data = data[[i for i in data.columns if not i.startswith('Untitled: ')]]
 sample_cols = [i for i in data.columns if i.startswith('Sample ')]
@@ -21,8 +31,12 @@ for col in sample_cols:
     nsafcols.append(nsafcol)
 
 data['Summed NSAF'] = data[nsafcols].sum(axis=1)
+#data['Organism'] = data['Records'].apply(get_organism)
+#org_counter = Counter(data['Organism'])
 
-data = data.sort_values(by='Summed NSAF', ascending = False)
+#data['OrganismCounts'] = data['Organism'].apply(lambda x : org_counter[x] )
+
+data = data.sort_values( by='Summed NSAF', ascending = False )
 data = data.reset_index()
 del data['index']
 

@@ -6,11 +6,11 @@ java $JVM_ARGS -cp ${sample_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.Pat
 }
 
 function searchgui {	
-    java -DsocksProxyHost=127.0.0.1 $JVM_ARGS -cp $sg/SearchGUI-*.jar eu.isas.searchgui.cmd.SearchCLI -mgf_splitting "${mgf_splitting}" -threads ${threads} -spectrum_files ${spectrum_file} -output_folder ${sample_folder} -id_params ${output_folder}"/identification.par" -output_data "${output_data}" -xtandem "${xtandem}" -myrimatch "${myrimatch}" -ms_amanda "${ms_amanda}" -msgf "${msgf}" -omssa "${omssa}" -comet "${comet}" -tide "${tide}" -andromeda "${andromeda}" >> $log 2>&1 ; wait 
+    java $JVM_ARGS -cp $sg/SearchGUI-*.jar eu.isas.searchgui.cmd.SearchCLI -mgf_splitting "${mgf_splitting}" -threads ${threads} -spectrum_files ${spectrum_file} -output_folder ${sample_folder} -id_params ${output_folder}"/identification.par" -output_data "${output_data}" -xtandem "${xtandem}" -myrimatch "${myrimatch}" -ms_amanda "${ms_amanda}" -msgf "${msgf}" -omssa "${omssa}" -comet "${comet}" -tide "${tide}" -andromeda "${andromeda}" >> $log 2>&1 ; wait 
 }
 
 function peptideshaker {
-    java -DsocksProxyHost=127.0.0.1 $JVM_ARGS -cp $ps/PeptideShaker-*.jar eu.isas.peptideshaker.cmd.PeptideShakerCLI -experiment ${experiment} -threads ${threads} -sample $sample -replicate  ${replicate} -identification_files  ${sample_folder}"/searchgui_out.zip"  -spectrum_files  ${spectrum_file} -id_params  ${output_folder}"/identification.par" -out ${sample_folder}"/"${sample}".cpsx" >> $log ; wait 
+    java $JVM_ARGS -cp $ps/PeptideShaker-*.jar eu.isas.peptideshaker.cmd.PeptideShakerCLI -experiment ${experiment} -threads ${threads} -sample $sample -replicate  ${replicate} -identification_files  ${sample_folder}"/searchgui_out.zip"  -spectrum_files  ${spectrum_file} -id_params  ${output_folder}"/identification.par" -out ${sample_folder}"/"${sample}".cpsx" >> $log ; wait 
 }
 
 function recalibrate {
