@@ -51,7 +51,11 @@ eu.isas.searchgui.cmd.FastaCLI \
 -in ${fasta} -decoy 
 wait
 
+echo $enzyme
+
 # Create search parameters
-java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -out ${output_folder}/identification.par -db ${fasta%.fasta}_concatenated_target_decoy.fasta -prec_tol ${prec_tol} -prec_ppm ${prec_ppm} -frag_tol ${frag_tol} -frag_ppm ${frag_ppm} -enzyme "${enzyme}" -fixed_mods "${fixed_mods}" -variable_mods "${variable_mods}" -min_charge ${min_charge} -max_charge ${max_charge} -mc ${mc} -fi ${fi} -ri ${ri} -psm_fdr ${psm_fdr} -peptide_fdr ${peptide_fdr} -protein_fdr ${protein_fdr} -myrimatch_min_pep_length ${myrimatch_min_pep_length} -myrimatch_max_pep_length ${myrimatch_max_pep_length} -msgf_instrument ${msgf_instrument} -msgf_min_pep_length ${msgf_min_pep_length} -msgf_max_pep_length ${msgf_max_pep_length} -tide_min_pep_length ${tide_min_pep_length} -tide_max_pep_length ${tide_max_pep_length} -import_peptide_length_min ${import_peptide_length_min} -import_peptide_length_max ${import_peptide_length_max} -annotation_level ${annotation_level} 
+cmd='java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -out ${output_folder}/identification.par -db ${fasta%.fasta}_concatenated_target_decoy.fasta -prec_tol ${prec_tol} -prec_ppm ${prec_ppm} -frag_tol ${frag_tol} -frag_ppm ${frag_ppm} -enzyme ${enzyme} -fixed_mods "${fixed_mods}" -variable_mods "${variable_mods}" -min_charge ${min_charge} -max_charge ${max_charge} -mc ${mc} -fi ${fi} -ri ${ri} -psm_fdr ${psm_fdr} -peptide_fdr ${peptide_fdr} -protein_fdr ${protein_fdr} -myrimatch_min_pep_length ${myrimatch_min_pep_length} -myrimatch_max_pep_length ${myrimatch_max_pep_length} -msgf_instrument ${msgf_instrument} -msgf_min_pep_length ${msgf_min_pep_length} -msgf_max_pep_length ${msgf_max_pep_length} -tide_min_pep_length ${tide_min_pep_length} -tide_max_pep_length ${tide_max_pep_length} -import_peptide_length_min ${import_peptide_length_min} -import_peptide_length_max ${import_peptide_length_max} -annotation_level ${annotation_level}'
+echo $cmd
+$(cmd)
 wait
 

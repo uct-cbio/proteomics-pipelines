@@ -54,29 +54,72 @@ function ps_prepare {
 
     temp_folder=${output_folder}"/temp"
     log_folder=${output_folder}"/log"
-
     mkdir ${temp_folder}
     mkdir ${log_folder}
-    
     mkdir ${output_folder}/runs
-
     cp -R ${ps_folder} ${output_folder}/ps
     cp -R ${sg_folder} ${output_folder}/sg
     wait
-
     # Set paths for logs and temporary files
     java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.PathSettingsCLI -temp_folder ${temp_folder} -log ${log_folder} 
     wait
-
     # create target-decoy fasta in the output directory
     java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar \
     eu.isas.searchgui.cmd.FastaCLI \
     -in ${fasta} -decoy 
     wait
-
     # Create search parameters
-    java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -out ${output_folder}/identification.par -db ${fasta%.fasta}_concatenated_target_decoy.fasta -prec_tol ${prec_tol} -prec_ppm ${prec_ppm} -frag_tol ${frag_tol} -frag_ppm ${frag_ppm} -enzyme "${enzyme}" -fixed_mods "${fixed_mods}" -variable_mods "${variable_mods}" -min_charge ${min_charge} -max_charge ${max_charge} -mc ${mc} -fi ${fi} -ri ${ri} -psm_fdr ${psm_fdr} -peptide_fdr ${peptide_fdr} -protein_fdr ${protein_fdr} -myrimatch_min_pep_length ${myrimatch_min_pep_length} -myrimatch_max_pep_length ${myrimatch_max_pep_length} -msgf_instrument ${msgf_instrument} -msgf_min_pep_length ${msgf_min_pep_length} -msgf_max_pep_length ${msgf_max_pep_length} -tide_min_pep_length ${tide_min_pep_length} -tide_max_pep_length ${tide_max_pep_length} -import_peptide_length_min ${import_peptide_length_min} -import_peptide_length_max ${import_peptide_length_max} -annotation_level ${annotation_level} 
+    # Set FASTA file
+    java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -out ${output_folder}/identification.par -db ${fasta%.fasta}_concatenated_target_decoy.fasta 
     wait
+    # Set Tolerances
+    java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -id_params ${output_folder}/identification.par -out ${output_folder}/identification.par -prec_tol ${prec_tol} -prec_ppm ${prec_ppm} -frag_tol ${frag_tol} -frag_ppm ${frag_ppm} 
+    wait
+    # Set Enzyme
+    java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -id_params ${output_folder}/identification.par -out ${output_folder}/identification.par -enzyme "${enzyme}" 
+    wait
+    # Set Modifications
+    java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -id_params ${output_folder}/identification.par -out ${output_folder}/identification.par -fixed_mods "${fixed_mods}" -variable_mods "${variable_mods}"
+    wait
+    # Set Charges
+    java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -id_params ${output_folder}/identification.par -out ${output_folder}/identification.par -min_charge ${min_charge} -max_charge ${max_charge} 
+    wait
+    # Set MC
+    java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -id_params ${output_folder}/identification.par -out ${output_folder}/identification.par -mc ${mc} 
+    wait
+    # Set ion type
+    java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -id_params ${output_folder}/identification.par -out ${output_folder}/identification.par -fi ${fi} -ri ${ri} 
+    wait
+    # Set FDR
+    java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -id_params ${output_folder}/identification.par -out ${output_folder}/identification.par -psm_fdr ${psm_fdr} -peptide_fdr ${peptide_fdr} -protein_fdr ${protein_fdr} 
+    wait
+    # Myrimatch settings
+    java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -id_params ${output_folder}/identification.par -out ${output_folder}/identification.par -myrimatch_min_pep_length ${myrimatch_min_pep_length} -myrimatch_max_pep_length ${myrimatch_max_pep_length} 
+    wait
+    # MSGF+ settings
+    java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -id_params ${output_folder}/identification.par -out ${output_folder}/identification.par -msgf_instrument ${msgf_instrument} -msgf_min_pep_length ${msgf_min_pep_length} -msgf_max_pep_length ${msgf_max_pep_length} 
+    wait
+    
+    # Tide settings
+    java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -id_params ${output_folder}/identification.par -out ${output_folder}/identification.par -tide_min_pep_length ${tide_min_pep_length} -tide_max_pep_length ${tide_max_pep_length} 
+    wait
+    
+    # Import settings
+    java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -id_params ${output_folder}/identification.par -out ${output_folder}/identification.par -import_peptide_length_min ${import_peptide_length_min} -import_peptide_length_max ${import_peptide_length_max} 
+    wait
+    
+    # Gene Annotation
+    java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -id_params ${output_folder}/identification.par -out ${output_folder}/identification.par -useGeneMapping ${useGeneMapping} -updateGeneMapping ${updateGeneMapping}
+    wait
+    
+    # Set annotation level
+    java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -id_params ${output_folder}/identification.par -out ${output_folder}/identification.par -annotation_level ${annotation_level}
+    wait
+
+    # PTM localization
+    java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -id_params ${output_folder}/identification.par -out ${output_folder}/identification.par -ptm_score ${ptm_score} -score_neutral_losses ${score_neutral_losses} -ptm_sequence_matching_type ${ptm_sequence_matching_type} -ptm_alignment ${ptm_alignment}
+    wait
+
     }
 
 function search {
