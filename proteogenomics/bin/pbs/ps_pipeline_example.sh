@@ -1,19 +1,22 @@
 #PBS -P CBBI0825
 #PBS -M matthys.potgieter@gmail.com
-#PBS -l select=10:ncpus=24:nodetype=haswell_reg
+#PBS -l select=15:ncpus=24:nodetype=haswell_reg
 #PBS -l walltime=48:00:00
-#PBS -N UniversalPS
-#PBS -q normal
+#PBS -N S5527_S507_Test
+#PBS -q large
+#PBS -W group_list=largeq
 #PBS -m be
 
+# NB change "PBS -l select= " parameter to equal number of samples to be processed. If restarting the job, change it to equal the number of samples left.
+
 # Config
-experiment='FusionMPTest1'
-output_folder="/mnt/lustre/users/nchigorimbo/FusionSTIMP1"  
-spectrum_files="/home/nchigorimbo/MyMGF" 
-target_fasta="/home/nchigorimbo/FASTA/ALLSTIBACTERIAHuman.fasta" 
-contaminant_fasta="/home/nchigorimbo/FASTA/gpm_crap_07_03.fasta"
-ps_folder='/home/mpotgieter1/software/PeptideShaker/PeptideShaker-1.13.1'
-sg_folder='/home/mpotgieter1/software/SearchGUI/SearchGUI-3.1.0'       
+experiment='ThysTest'
+output_folder="/mnt/lustre/users/mpotgieter1/thys_out/HH_PS_large"
+spectrum_files="/home/mpotgieter1/lustre/blackburn/hypohyper/S507_S5527_hexdata/mgf_hh"
+target_fasta='/home/mpotgieter1/lustre/blackburn/hypohyper/S507_S5527_hexdata/proteomes/S507_S5527_combined_allstarts_proteins.fasta'
+contaminant_fasta="/mnt/lustre/users/mpotgieter1/blackburn/hypohyper/S507_S5527_hexdata/HYPOHYPER/proteomes/gpm_crap_2016_07_03.fasta"
+ps_folder='/home/mpotgieter1/software/PeptideShaker/PeptideShaker-1.14.1'
+sg_folder='/home/mpotgieter1/software/SearchGUI/SearchGUI-3.2.1'      
 
 # SearchGUI parameters 
 output_data='1'
@@ -42,34 +45,45 @@ ri='y'
 
 # Optional advanced parameters
 mgf_splitting='1000'
+threads=24
 
 # Spectrum annotation
 annotation_level=0.75
 
 # Import filters
-import_peptide_length_min=7
+import_peptide_length_min=8
 import_peptide_length_max=30
 psm_fdr=5
 peptide_fdr=5
 protein_fdr=5
 
 # MyriMatch advanced parameters
-myrimatch_min_pep_length=7
+myrimatch_min_pep_length=8
 myrimatch_max_pep_length=30
+
 # MS-GF advanced parameters
 msgf_instrument=3
-msgf_min_pep_length=7
+msgf_min_pep_length=8
 msgf_max_pep_length=30
 
 # OMSSA advanced parameters
-tide_min_pep_length=7
+tide_min_pep_length=8
 tide_max_pep_length=30
 
-# MzidCLI parameters #
+# PTM localization
+ptm_score=1
+score_neutral_losses=0
+ptm_sequence_matching_type=1
+ptm_alignment=0 # https://github.com/compomics/peptide-shaker/issues/232#issuecomment-264406533
 
-contact_first_name='Nyari'
-contact_last_name='Chigorimbo'
-contact_email='Nyari.chigorimbo@hiv-research.org.za'
+# Gene Annotation
+useGeneMapping=0
+updateGeneMapping=0
+
+# MzidCLI parameters #
+contact_first_name='matthys.potgieter@gmail.com'
+contact_last_name='Potgieter'
+contact_email='matthys.potgieter@gmail.com'
 contact_address='Same as organization adress'
 organization_name='University of Cape Town'
 organization_email='organization@email.com'
@@ -77,11 +91,13 @@ organization_address='Anzio Road, Observatory'
 contact_url='http://www.cbio.uct.ac.za/'
 organization_url='http://www.cbio.uct.ac.za'
 
-threads=24
-psm_type=0
+
+#Optional spectrum export parameters
+psm_type=0 
+
 recalibrate=1  # recalibrate mgf funcionality of PeptideShaker (two searches will be done)
 MSnID_FDR_value=1 #FDR to control global identifications (%)
-MSnID_FDR_level="peptide"  # options are 'PSM','peptide','accession'
+MSnID_FDR_level="accession"  # options are 'PSM','peptide','accession'
 
 # gnu paralllel
 ps_gnu_parallel_j=1
@@ -99,7 +115,7 @@ d_P='CBBI0825'
 
 set -e
 
-JVM_ARGS="-d64 -Xms1024M -Xmx15360M -server"
+JVM_ARGS="-d64 -Xms1024M -Xmx153600M -server"
 
 source compomics.sh
 
