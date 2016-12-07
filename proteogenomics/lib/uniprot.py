@@ -58,9 +58,11 @@ class peptidesmapped:
 
     def count_best_mapped(self, reference_list): # Return highest peptide count
         max_ref = []
-        for ref in reference_list:
-            refc = self.peptides_counted[ref]
-            max_ref.append(refc)
+        if len(self.mapped) > 0:
+            for ref in reference_list:
+                print(ref)
+                refc = self.peptides_counted[ref]
+                max_ref.append(refc)
         if len(max_ref) > 0:
             max_ref = max(max_ref)
         else:

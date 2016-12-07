@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import pickle
 import numpy as np
 import pandas as pd
 import sys
@@ -61,11 +61,7 @@ for seq in orf_sequence:
     export.append(record)
     count += 1
 
-jstr = json.dumps(mapping)
-
-w = open(path +'/id_mapping.json','w')
-w.write(jstr)
-w.close()
+pickle.dump(mapping, open(path +'/id_mapping.p','wb'))
 
 SeqIO.write(export, path +'/nr_translated_pg_orfs.fasta','fasta')
 

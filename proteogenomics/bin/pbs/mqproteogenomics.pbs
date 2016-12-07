@@ -1,4 +1,4 @@
-#PBS -N MyJob
+#PBS -N S507_S5527
 #PBS -q UCTlong
 #PBS -l nodes=1:ppn=30:series600
 #PBS -M matthys.potgieter@gmail.com
@@ -19,6 +19,7 @@ hostname
 set -e
 config='/home/ptgmat003/cbio-pipelines/proteogenomics/bin/config/mq_proteogeomics_example_config.py'
 outpath=/researchdata/fhgfs/ptgmat003/hexout/hypohyper/mq
+kegg_id='mtu'
 python2ve=$HOME/ve273   # interproscan needs python 2 (Create one with virtualenv)
 
 # The rest is generic
@@ -31,22 +32,33 @@ python2ve=$HOME/ve273   # interproscan needs python 2 (Create one with virtualen
 
 # Proteogenomics analysis
 #mq_uniprot.py $config $outpath
-
-mq_genome_to_peptide.py $config $outpath
-
+#mq_genome_to_peptide.py $config $outpath
 #uniprot_peptide2db.py $config $outpath
 #mq_peptide_to_referencedb.py $config $outpath
-
 
 #mq_fasta_export.py $config $outpath
 #ips_fasta.py $outpath/fasta/combined_translated.fasta $outpath/fasta
 #ips.sh $outpath/fasta/nr_translated_pg_orfs.fasta $outpath/fasta $python2ve
 
 #mq_peptide_to_protein.py $config $outpath
-
 #mq_export_tables.py $config $outpath
 
 # Differential abundance analysis
+
+#############################
+# Identification Statistics #
+#############################
+
+mq_basestats.py $config $outpath
+
+
+##################
+# IPS Enrichment #
+##################
+#ips_gsea.py $outpath 
+#mq_annotate.py $outpath
+#mq_genesets.R --outdir $outpath --keggid $kegg_id
+
 #mq_experimental_design.py $config $outpath
 #rm -rf ${outpath}/diff
 #mq_differential_abundance.R -d ${outpath}/experimental_design.R -p ${outpath}/combined.csv -o ${outpath}/diff

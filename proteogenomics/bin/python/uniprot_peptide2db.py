@@ -7,6 +7,7 @@ import os
 import collections
 from collections import defaultdict
 import json
+import pickle
 import shutil
 
 loader = importlib.machinery.SourceFileLoader('config', sys.argv[1])
@@ -19,8 +20,9 @@ nonspec_pep = []
 map_dfs = []
 
 for strain in config.strains:
-    gssp_df = pd.read_csv(output +'/' + strain +'/{}_mapped_peptides.csv'.format(strain))
-    ns = gssp_df[gssp_df['Peptide_distinct_translated_ORF_specfic'] != '+']['Peptide_sequence'].tolist()
+    gssp_df_path=output +'/' + strain +'/{}_mapped_peptides.p'.format(strain)
+    gssp_df = pickle.load(open(gssp_df_path,'rb'))
+    ns = gssp_df[gssp_df['Peptide_inferred_translated_sequence_specific'] != '+']['Peptide_sequence'].tolist()
     nonspec_pep += ns    
     map_dfs.append(gssp_df)
 
@@ -52,8 +54,8 @@ def get_mapping(df):
     
 up_db.apply(get_mapping, axis=1)
 
-pep2entry = json.dumps(pep2entry)
-entrydata = json.dumps(entrydata)
+#pep2entry = json.dumps(pep2entry)
+#entrydata = json.dumps(entrydata)
 
 try:
     os.mkdir(output +'/mapping')
@@ -61,8 +63,12 @@ except:
     shutil.rmtree(output +'/mapping')
     os.mkdir(output +'/mapping')
 
-w = open(output +'/mapping/pep2entry.json', 'w')
-w.write(pep2entry); w.close()
+#w = open(output +'/mapping/pep2entry.json', 'w')
+#w.write(pep2entry); w.close()
 
-w = open(output +'/mapping/entrydata.json', 'w')
-w.write(entrydata); w.close()
+pickle.dump( pep2entry, open(output + "/mapping/pep2entry.p", "wb" ) )
+pickle.dump( entrydata, open(output + "/mapping/entrydata.p", "wb" ) )
+
+#w = open(output +'/mapping/entrydata.json', 'w')
+#w.write(entrydata); w.close()
+

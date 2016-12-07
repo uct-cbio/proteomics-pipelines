@@ -8,6 +8,7 @@ import sequtils
 import shutil
 import os
 from collections import defaultdict
+import pickle
 
 loader = importlib.machinery.SourceFileLoader('config', sys.argv[1])
 config = loader.load_module()
@@ -53,7 +54,9 @@ for strain in config.strains:
         os.mkdir(strainpath)
     except:
         os.mkdir(strainpath)    
-    speps.to_csv(strainpath + '/' + '{}_mapped_peptides.csv'.format(str(strain)))
+    outpath=strainpath + '/' + '{}_mapped_peptides.p'.format(str(strain))
+    #speps.to_csv(strainpath + '/' + '{}_mapped_peptides.csv'.format(str(strain)))
+    pickle.dump( speps, open( outpath, "wb" ) )
     
 
 

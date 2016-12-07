@@ -10,6 +10,7 @@ import json
 import sequtils
 import shutil
 import Bio; from Bio import SeqIO
+import pickle
 
 loader = importlib.machinery.SourceFileLoader('config', sys.argv[1])
 config = loader.load_module()
@@ -21,9 +22,6 @@ peptides = peptides[(peptides['Reverse']!='+') & (peptides['Potential contaminan
 
 mapped = sequtils.peptides2proteome(proteome,peptides['Sequence'].tolist(), threads=config.threads)
 
-jstr =json.dumps(mapped.pepdict)
-
-w=open(output +'/mapping/{}_peptides.json'.format(config.reference_proteome_id),'w')
-w.write(jstr)
-w.close()
+outpath = output + '/mapping/{}_peptides.p'.format(config.reference_proteome_id)
+pickle.dump( mapped.pepdict, open( outpath, "wb" ) )
 

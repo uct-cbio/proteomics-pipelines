@@ -11,6 +11,7 @@ library('data.table')
 library('qvalue')
 library("optparse")
 library('MSnbase')
+library("dplyr")
  
 option_list = list(
 make_option(c("-d", "--design"), type="character", default=NULL,
@@ -50,7 +51,7 @@ data <- data[rowSums(is.na(data[,cols])) < length(cols)/2, ]
 #######################################################
 # Create MSnBase object, normalization and imputation #
 #######################################################
-
+print('Creating msnbase object')
 msnbase_path=paste(outdir,'msnbase/',sep='')
 dir.create(msnbase_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 
@@ -67,7 +68,7 @@ par(mfrow = c(2, 1))
 boxplot(exprs(eset), notch=TRUE, col=(c("gold")), main="Samples", ylab="protein log2(iBAQ intensity)", las=2) 
 dev.off()
 
-x.nrm <- normalise(eset, "center.median")
+x.nrm <- normalise(eset, "quantiles")
 x.imputed <- impute(x.nrm, method = "QRILC")
 
 png(paste(msnbase_path,'boxplots_normalized.png',sep=''),units="in",width=11,height=8.5,res=300)
@@ -81,14 +82,33 @@ dev.off()
 
 data <- ms2df(x.imputed)
 
-orig_data <- data
+orig_data <- data[,cols]
+identifier <- data$Identifier
+orig_data$Identifier <- identifier 
+
+refids <- data$'X_reference.entries.mapped'
+orig_data$'reference.entries.mapped' <- refids
+
+orf_ids <- data$'X_combined_orf_ids'
+orig_data$'combined_orf_ids' <- orf_ids
+
+pg_ids  <- data$'Identifier'
+orig_data$'Identifier' <- pg_ids
+
+orig_data$'iBAQMean' <- rowMeans( data[,cols] )
+
+print('Removing isoform pg based on combined orf ids')
+orig_data <- orig_data[order(-orig_data$iBAQMean),] # Order by mean ibaq, ascending
+orig_data <- orig_data[!duplicated(orig_data$combined_orf_ids), ]
+
 data <- data[,cols]
+
 
 
 ######################
 # Let's make a SPLOM #
 ######################
-
+print('Creating a SPLOM')
 splomdata <- orig_data
 splom_path=paste(outdir,'splom/',sep='')
 dir.create(splom_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
@@ -105,8 +125,8 @@ splom <- function (df, valcols, labels, path, name) {
     dev.off() }
 
 splom(splomdata, cols, splomdata$Identifier, splom_path, 'all_proteins_splom.png')
-splom(splomdata, cols, splomdata$Protein.families, splom_path,'all_proteins_families_splom.png')
-splom(splomdata, cols, splomdata$Pathway, splom_path, 'all_proteins_pathways_splom.png')
+#splom(splomdata, cols, splomdata$Protein.families, splom_path,'all_proteins_families_splom.png')
+#splom(splomdata, cols, splomdata$Pathway, splom_path, 'all_proteins_pathways_splom.png')
 
 
 #############################################
@@ -205,8 +225,8 @@ pcp <- function (df_, rows, valcols, labels, path, name) {
     # http://blog.safaribooksonline.com/2014/03/31/mastering-parallel-coordinate-charts-r/
     }
 
-pcp(par_data,row.names(par_data),cols,par_data$Protein.families,par_path,"all_proteins_families_par_coord.pdf")
-pcp(par_data,row.names(par_data),cols,par_data$Pathway,par_path,"all_proteins_pathway_par_coord.pdf")
+#pcp(par_data,row.names(par_data),cols,par_data$Protein.families,par_path,"all_proteins_families_par_coord.pdf")
+#pcp(par_data,row.names(par_data),cols,par_data$Pathway,par_path,"all_proteins_pathway_par_coord.pdf")
 # Strains
 par_path=paste(outdir,'parcoords/strains/',sep='')
 dir.create(par_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
@@ -214,10 +234,10 @@ dir.create(par_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 pcp(par_data,inter_pvals_0_005,cols,par_data$Identifier,par_path,"str_parcoord_p_0_005.pdf")
 pcp(par_data,inter_pvals,cols,par_data$Identifier,par_path,"str_parcoord_p_0_05.pdf")
 pcp(par_data,inter_pvals_duplicated,cols,par_data$Identifier,par_path,"str_parcoord_p_0_05_mult.pdf")
-pcp(par_data,inter_pvals,cols,par_data$Protein.families,par_path,"str_parcoord_p_0_05_families.pdf")
+#pcp(par_data,inter_pvals,cols,par_data$Protein.families,par_path,"str_parcoord_p_0_05_families.pdf")
 #pcp(par_data,inter_pvals,cols,par_data$Pathways,par_path,"str_parcoord_p_0_05_pathways.png")
 
-pcp(par_data,inter_pvals_0_005,cols,par_data$Protein.families,par_path,"str_parcoord_p_0_005_families.pdf")
+#pcp(par_data,inter_pvals_0_005,cols,par_data$Protein.families,par_path,"str_parcoord_p_0_005_families.pdf")
 
 
 
@@ -227,6 +247,7 @@ pcp(par_data,inter_pvals_0_005,cols,par_data$Protein.families,par_path,"str_parc
 #########################################################
 # Hierarchical clustering and correlation of replicates #
 ######################################################### 
+print('Hierarchical clustering')
 
 reps = t(data)
 hclust_path=paste(outdir,'replicate_hclust/',sep='')
@@ -248,11 +269,6 @@ names(data_dendlist) <- hclust_methods
 cophenetic_cors <- cor.dendlist(data_dendlist)
 corrplot::corrplot(cophenetic_cors, "pie", "lower")
 dev.off()
-
-
-
-
-
 
 jpeg(paste(hclust_path,'replicate_cluster_corr.jpeg',sep=''))
 names(data_dendlist) <- hclust_methods

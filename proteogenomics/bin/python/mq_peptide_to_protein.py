@@ -20,7 +20,7 @@ import sys
 from collections import Counter
 from io import StringIO
 import uniprot
-
+import pickle
 
 loader = importlib.machinery.SourceFileLoader('config', sys.argv[1])
 config = loader.load_module()
@@ -35,18 +35,18 @@ peptides=peptides[(peptides['Potential contaminant'] != '+') & (peptides['Revers
 evidence=pd.read_csv(config.mq_txt +'evidence.txt',sep='\t')
 evidence=evidence[(evidence['Potential contaminant'] != '+') & (evidence['Reverse'] != '+')]
 
-reference_peptides=json.loads(open(output +'/mapping/{}_peptides.json'.format(config.reference_proteome_id)).read())
+reference_peptides=pickle.load(open(output +'/mapping/{}_peptides.p'.format(config.reference_proteome_id), 'rb'))
 
 ref_entry = reference_peptides[list(reference_peptides.keys())[0]][0].split('|')[1]
 
-
-taxon_peptides=json.loads(open(output +'/mapping/pep2entry.json'.format(config.reference_proteome_id)).read())
-taxon_data=json.loads(open(output +'/mapping/entrydata.json'.format(config.reference_proteome_id)).read())
+taxon_peptides=pickle.load(open(output +'/mapping/pep2entry.p','rb'))
+taxon_data=pickle.load(open(output +'/mapping/entrydata.p','rb'))
 
 reference_features = sequtils.gff3(output +'/uniprot/features/{}.gff'.format(config.reference_taxid))
 
 orf_features = sequtils.gff3(output +'/fasta/nr_translated_pg_orfs.fasta.gff3')
-orf_feature_mapping = json.loads(open(output + '/fasta/id_mapping.json').read())
+
+orf_feature_mapping = pickle.load(open(output + '/fasta/id_mapping.p','rb'))
 orf_features.expand_table(orf_feature_mapping)
 
 samples = config.samples
@@ -68,7 +68,7 @@ strain_map={}
 strain_sets={}
 
 for strain in config.strains:
-    st =  pd.read_csv(output +'/{}/{}_mapped_peptides.csv'.format(strain, strain)) 
+    st =  pickle.load( open(output +'/{}/{}_mapped_peptides.p'.format(strain, strain), 'rb')  )
     peptide_map = sequtils.mapping2peptides(st, config.translation_table)
     
     global_non_specific_peptides += peptide_map.non_specific()
@@ -158,6 +158,7 @@ for sample in samples:
 
 #pg = pg[pg['id'] == 410]
 #pg = pg[pg['id'] == 2357]
+#pg = pg[pg['id'] == 1124]
 
 for row in pg.iterrows():
     print(row[0])
@@ -222,7 +223,7 @@ for row in pg.iterrows():
             row_variant_features_ref_list += list(row_variant_features_ref[pep].values()) 
     
     mapped_orfs = []
-    
+
     for strain in strain_peps:
         peptide_mapping = strain_map[strain]
         st_peps = set(strain_peps[strain])        
@@ -292,7 +293,6 @@ for row in pg.iterrows():
             pg.loc[row[0], '_orfs.mapped.frameshift.validated.strain.{}'.format(strain)] = '+' 
             pg.loc[row[0], '_orfs.mapped.frameshift.evidence.strain.{}'.format(strain)] = fs_st.frameshift_report 
         
-        
         ref_blast = sequtils.reference_mapping_blast(y, refps, output)
         
         if ref_blast[0] < min_eval_ref_blast:
@@ -313,7 +313,7 @@ for row in pg.iterrows():
     ####################### 
     # ORF feature overlap #
     ######################
-    
+   
     row_variant_features_orfs, row_variant_blast_orfs = peptide_list_blast(row_specific, mapped_orfs, orf_features)
     row_variant_features_orfs_list = []
     row_variant_blast_orfs_list = []
@@ -332,13 +332,13 @@ for row in pg.iterrows():
     pg.loc[row[0], "_specific.peptides.variants.blast.orfs"]='\n'.join(blasted) 
     pg.loc[row[0], "_identified.polymorphism.feature.overlap.orfs"]='\n'.join(features) 
 
-
     pg.loc[row[0],"_frameshift"] = '\n'.join(list(frameshifts))
     pg.loc[row[0],"_exclusive.peptide.strains"] = '\n'.join(list(strains_exclusive))
     pg.loc[row[0],"_combined.specific.peptides"] ='\n'.join(list(row_specific))
     pg.loc[row[0],"_combined.specific.annotated.peptides"] ='\n'.join(row_annotated)
     pg.loc[row[0],"_combined.specific.novel.peptides"] ='\n'.join(row_novel)
-    
+   
+    pg.loc[row[0],"_combined_orf_ids"] = '\n'.join(rec.id for rec in mapped_orfs)
     pg.loc[row[0],'_reference.proteins.mapped']= '\n'.join(reftrie)
     pg.loc[row[0],'_reference.proteins.mapped.count'] = len(mapped_reference)
     pg.loc[row[0],'_reference.entries.mapped'] = ';'.join([i.split('|')[1] for i in mapped_reference])
@@ -350,7 +350,8 @@ for row in pg.iterrows():
     pg.loc[row[0],'_combined.non.atg.Met.start.peptides'] = '\n'.join(row_non_atg_starts)
     
     mapped  = uniprot.peptidesmapped(row_specific, config.reference_taxonomic_lineage, taxon_peptides, taxon_data)
-    
+    print(row_specific)
+
     mapped_proteome2= mapped.pep2proteome(config.proteome2)
     mapped_taxa = mapped.best
     max_pep = mapped.best_count 
@@ -365,6 +366,7 @@ for row in pg.iterrows():
     best = None
     rmatch = True
     if len(mapped_reference) > 0:
+        print(mapped_reference)
         max_ref = mapped.count_best_mapped([i.split('|')[1] for i in mapped_reference])
         pg.loc[row[0],'_reference.proteome.best.peptide.count'] = max_ref
         
@@ -425,13 +427,13 @@ for row in pg.iterrows():
 
     if best != None:
         data = taxon_data[best]
-        for key in data:
-            pg.loc[row[0],key] = data[key]
+        #for key in data:
+        #    pg.loc[row[0],key] = data[key]
         identifier.append(data['Gene names']) 
     identifier.append('(protein group {})'.format(str(row[0])))
     pg.loc[row[0], 'Identifier'] = ' '.join(identifier)
 
-pg.to_csv(output+'/combined1.csv')
+pg.to_csv(output+'/combined.csv')
 
 
 
