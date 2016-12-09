@@ -22,7 +22,7 @@ eval $cmd
 cmd="rm -f $fastq_r1_tmp $fastq_r2_tmp"
 
 # All stdout and stderr will go to individual per job *.o and *.e, so will not be piping to a log file.
-cmd="$uparse_base/usearch7 -fastq_mergepairs $fastq_r1_renamed -reverse $fastq_r2_renamed -fastq_maxdiffs $fastq_maxdiffs -fastqout $merged_fastq"
+cmd="$uparse_base/usearch9 -fastq_mergepairs $fastq_r1_renamed -reverse $fastq_r2_renamed -fastq_maxdiffs $fastq_maxdiffs -fastqout $merged_fastq"
 
 echo $cmd >> $cmds_log
 eval $cmd
