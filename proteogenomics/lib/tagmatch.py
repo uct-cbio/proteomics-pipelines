@@ -117,12 +117,12 @@ class TagMatch:
                             nterm_gap_match=False
                             cterm_gap_match=False
 
-                            nterm_amino_gaps = peptide_mass(amino_gaps[0], fixed_modifications=self.fixed_modifications, variable_modifications=self.variable_modifications, nterm=True, cterm=False)
+                            nterm_amino_gaps = peptide_mass(amino_gaps[0], fixed_modifications=self.fixed_modifications, variable_modifications=self.variable_modifications, nterm=False, cterm=False)
                             for nterm_amino_gap in nterm_amino_gaps:
                                 if nterm_amino_gap > (nterm_mass_gap - self.tolerance):
                                     nterm_gap_match=True
 
-                            cterm_amino_gaps = peptide_mass(amino_gaps[1], fixed_modifications=self.fixed_modifications, variable_modifications=self.variable_modifications, nterm=False, cterm=True)
+                            cterm_amino_gaps = peptide_mass(amino_gaps[1], fixed_modifications=self.fixed_modifications, variable_modifications=self.variable_modifications, nterm=False, cterm=False)
                             for cterm_amino_gap in cterm_amino_gaps:
                                 if cterm_amino_gap > (cterm_mass_gap - self.tolerance):
                                     cterm_gap_match=True
