@@ -47,6 +47,9 @@ def peptide_mass(peptide, fixed_modifications=["Carbamidomethylation of C"], var
     ##############
     # Fixed mods #
     ##############
+    options = ["Carbamidomethylation of C"]
+    for i in fixed_modifications:
+        assert i in options
     if "Carbamidomethylation of C" in fixed_modifications:
         monoisotopic['C'] = monoisotopic['C'] + 57.021464
     
@@ -71,7 +74,7 @@ def mz2mw(mz, charge):
 
 
 class TagMatch:
-    def __init__(self, query, tag_mass_list, target, fixed_modifications=[], variable_modifications=[], cleavage_rule='Tryptic', prec_tol=0.02):
+    def __init__(self, query, tag_mass_list, target, fixed_modifications=['Carbamidomethylation of C'], variable_modifications=[], cleavage_rule='Tryptic', prec_tol=0.02):
         self.target = target
         self.target_length = len(target)
 
@@ -203,3 +206,23 @@ class TagMatch:
 
         return amino_gap_dict
 
+
+def consensus_strip(consensus):
+    started=False
+    start_pos=0
+    while (started==False) and (start_pos < len(consensus)):
+        if consensus[start_pos]=='X':
+            start_pos += 1
+        else:
+            started = True
+
+    end_pos=len(consensus)-1
+    ended=False
+    while (ended==False) and (end_pos > 0):
+        if consensus[end_pos]=='X':
+            end_pos -= 1
+        else:
+            ended = True
+    return consensus[start_pos: end_pos + 1]
+        
+    
