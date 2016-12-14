@@ -4,6 +4,9 @@ import pandas as pd
 import collections
 from collections import defaultdict
 import re
+import numpy as np
+from Bio.SeqRecord import SeqRecord
+from Bio.Seq import Seq
 
 def peptide_mass(peptide, fixed_modifications=["Carbamidomethylation of C"], variable_modifications=[], nterm=True, cterm=True):
     if 'X' in peptide:
@@ -207,22 +210,144 @@ class TagMatch:
         return amino_gap_dict
 
 
-def consensus_strip(consensus):
+def character_strip(sequence, character):
     started=False
     start_pos=0
-    while (started==False) and (start_pos < len(consensus)):
-        if consensus[start_pos]=='X':
+    while (started==False) and (start_pos < len(sequence)):
+        if sequence[start_pos]==character:
             start_pos += 1
         else:
             started = True
 
-    end_pos=len(consensus)-1
+    end_pos=len(sequence)-1
     ended=False
     while (ended==False) and (end_pos > 0):
-        if consensus[end_pos]=='X':
+        if sequence[end_pos]==character:
             end_pos -= 1
         else:
             ended = True
-    return consensus[start_pos: end_pos + 1]
+    return sequence[start_pos: end_pos + 1]
         
+class blast_tags:
+    def __init__(self, subject, tags, fixed_modifications=['Carbamidomethylation of C'], variable_modifications=[], prec_tol=0.02):
+
+        self.subject=subject
+        self.tags=tags 
+        self.fixed_modifications = fixed_modifications
+        self.variable_modifications = variable_modifications
+        self.prec_tol  = prec_tol
+
+        self.mweights = set()
+        self.nmasses  = set()
+        self.cmasses  = set()
+        
+        self.samples  = set()
+        self.scans    = set()
+
+        for qtag in self.tags:
+            qseq = str(qtag.seq)
+            qsubst = self.longest_substring(qseq, self.subject)
+            qnmass_offsets=self.nmass_gap(self.subject,self.substring_coordinates(self.subject, qsubst))
+            qid = qtag.id
+            self.samples.add(qid.split(';')[0])
+            self.scans.add(qid.split(';')[1])
+
+
+            qid_mw = float(qid.split(';')[2].split('mw=')[1])
+            self.mweights.add(qid_mw)
+
+            qid_ng = float(qid.split(';')[3].split('nmg=')[1])
+            qid_cg = float(qid.split(';')[4].split('cmg=')[1])
+            
+            # Calculate mass gaps
+            qcoords = self.substring_coordinates(qseq, qsubst)
+            qnmassgaps = self.nmass_gap(qseq, qcoords)
+            for qngap in qnmassgaps:
+                for offset in qnmass_offsets:
+                    self.nmasses.add(qid_ng + (qngap - offset))
+            
+            qcmassgaps = self.cmass_gap(qseq, qcoords)
+            qcmass_offsets=self.cmass_gap(self.subject,self.substring_coordinates(self.subject, qsubst)) 
+            for qcgap in qcmassgaps:
+                for offset in qcmass_offsets:               
+                    self.cmasses.add( qid_cg +  (qcgap - offset) )
+            
+            #for ttag in self.tags:
+            #    tseq = str(ttag.seq)
+            #    tsubst = self.longest_substring(tseq, self.subject)
+            #    tsubst = self.longest_substring(tseq, self.subject)
+            #    tid = ttag.id
+            #    
+                
+            #    tid_mw = float(tid.split(';')[2].split('mw=')[1])
+            #    tid_ng = float(tid.split(';')[3].split('nmg=')[1])
+            #    tid_cg = float(tid.split(';')[4].split('cmg=')[1])
+            #    
+            #    # Calculate mass gaps
+            #    tcoords = self.substring_coordinates(tseq, tsubst)
+        
+        self.cmasses = set([np.round(i,6) for i in self.cmasses if i >= 0])
+        self.nmasses = set([np.round(i,6) for i in self.nmasses if i >= 0])
+
+        self.newtags = set()
+        
+        assert len(self.samples) ==1
+        assert len(self.scans) == 1
+
+        for mw in self.mweights:
+            for nmass in self.nmasses:
+                for cmass in self.cmasses:
+                    newtag = (self.subject, mw, nmass, cmass )
+                    if self.valid_tag(newtag) == True:
+                        self.newtags.add(newtag)
+        
+        self.newrecords = self.new_records()
+
+    def valid_tag(self, tag):
+        sequence_masses = peptide_mass(tag[0], fixed_modifications=self.fixed_modifications, variable_modifications = self.variable_modifications, cterm=True, nterm=True)
+        for mass in sequence_masses:
+            total = mass + tag[2] + tag[3]
+            diff = np.absolute(total - tag[1])
+            if diff < self.prec_tol:
+                return True
+
+    def longest_substring(self, reference, match_sequence):
+        substrings=[]
+        for charpos in range(len(match_sequence)):
+            mismatch=False
+            pos= charpos
+            while (mismatch == False) & (pos < len(match_sequence)):
+                if match_sequence[charpos:pos +1]  in reference:
+                    pos += 1
+                else:
+                    mismatch=True
+                subs = match_sequence[charpos:pos ]
+            substrings.append(subs)
+        return max(substrings, key=len)
     
+    def substring_coordinates(self, reference, substr):
+        coordinates=[(m.start(), m.start() + len(substr)) for m in re.finditer('(?={})'.format(substr), reference)]
+        return coordinates
+
+    def cmass_gap(self, reference, coordinates):
+        mass_gaps=[]
+        for coordinate in coordinates:
+            amino_gap = reference[coordinate[1]:]
+            amino_masses = peptide_mass(amino_gap, fixed_modifications = self.fixed_modifications, variable_modifications = self.variable_modifications, nterm=False, cterm=False)
+            mass_gaps += amino_masses
+        return mass_gaps
+
+    def nmass_gap(self, reference, coordinates):
+        mass_gaps=[]
+        for coordinate in coordinates:
+            amino_gap = reference[:coordinate[0]]
+            amino_masses = peptide_mass(amino_gap, fixed_modifications = self.fixed_modifications, variable_modifications = self.variable_modifications, nterm=False, cterm=False)
+            mass_gaps += amino_masses
+        return mass_gaps
+    
+    def new_records(self):
+        newrecords = []
+        for newtag in self.newtags:
+            rec = SeqRecord(seq=Seq(newtag[0]), id = '{};{};mw={};nmg={};cmg={}'.format(list(self.samples)[0], list(self.scans)[0], str(newtag[1]), str(newtag[2]), str(newtag[3])))
+            newrecords.append(rec)
+        return newrecords
