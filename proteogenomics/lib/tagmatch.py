@@ -256,8 +256,8 @@ class blast_tags:
             qid_mw = float(qid.split(';')[2].split('mw=')[1])
             self.mweights.add(qid_mw)
 
-            qid_ng = float(qid.split(';')[3].split('nmg=')[1])
-            qid_cg = float(qid.split(';')[4].split('cmg=')[1])
+            qid_ng = float(qid.split(';')[3].split('ngap=')[1])
+            qid_cg = float(qid.split(';')[4].split('cgap=')[1])
             
             # Calculate mass gaps
             qcoords = self.substring_coordinates(qseq, qsubst)
@@ -348,6 +348,6 @@ class blast_tags:
     def new_records(self):
         newrecords = []
         for newtag in self.newtags:
-            rec = SeqRecord(seq=Seq(newtag[0]), id = '{};{};mw={};nmg={};cmg={}'.format(list(self.samples)[0], list(self.scans)[0], str(newtag[1]), str(newtag[2]), str(newtag[3])))
+            rec = SeqRecord(seq=Seq(newtag[0]), id = '{};{};mw={};ngap={};cgap={}'.format(list(self.samples)[0], list(self.scans)[0], str(newtag[1]), str(newtag[2]), str(newtag[3])))
             newrecords.append(rec)
         return newrecords
