@@ -77,7 +77,7 @@ def mz2mw(mz, charge):
 
 
 class TagMatch:
-    def __init__(self, query, tag_mass_list, target, fixed_modifications=['Carbamidomethylation of C'], variable_modifications=[], cleavage_rule='Tryptic', prec_tol=0.02):
+    def __init__(self, query, tag_mass_list, target, fixed_modifications=['Carbamidomethylation of C'], variable_modifications=[], cleavage_rule='tryptic', specificity='specific', prec_tol=0.02):
         self.target = target
         self.target_length = len(target)
 
@@ -90,8 +90,9 @@ class TagMatch:
         self.query_positions = self.query_positions()
         self.tolerance = prec_tol
         self.validated=False
-        
-        if cleavage_rule=='Tryptic':
+        self.specificity = specificity
+
+        if cleavage_rule=='tryptic':
             self.tryptic_positions = self.tryptic_match()
             self.tryptic_peptides  = self.tryptic_peptides()
             self.tryptic_masses = self.tryptic_masses()
@@ -165,32 +166,44 @@ class TagMatch:
     def tryptic_match(self):
         tryptic_coords = []
         for coord in self.query_positions:
-            nterm = self.tryptic_nterm(coord[0])
-            cterm = self.tryptic_cterm(coord[1]-1)
-            tryptic_coords.append((nterm, cterm))
+            nterms = self.tryptic_nterm(coord[0])
+            cterms = self.tryptic_cterm(coord[1]-1)
+            for nterm in nterms:
+                for cterm in cterms:
+                    tryptic_coords.append((nterm, cterm))
         return tryptic_coords
 
 
     def tryptic_nterm(self, pos):
         nterm = pos
         cleavage_aminos=['R','K']
+        nterms=[]
         while True:
             if nterm == 0:
-                return nterm
+                nterms.append(nterm)
+                return nterms
             elif self.target[nterm-1] in cleavage_aminos:
-                return nterm
+                nterms.append(nterm)
+                return nterms
             else: 
+                if self.specificity == 'semi-specific':
+                    nterms.append(nterm)
                 nterm -= 1
 
     def tryptic_cterm(self, pos):
         cterm = pos
         cleavage_aminos=['R','K']
+        cterms=[]
         while True:
             if cterm == self.target_length-1:
-                return cterm + 1
+                cterms.append(cterm + 1)
+                return cterms
             elif self.target[cterm] in cleavage_aminos:
-                return cterm + 1
+                cterms.append(cterm + 1)
+                return cterms
             else: 
+                if self.specificity == 'semi-specific':
+                    cterms.append(cterm + 1)
                 cterm += 1
     
     def amino_gaps(self):
@@ -227,7 +240,74 @@ def character_strip(sequence, character):
         else:
             ended = True
     return sequence[start_pos: end_pos + 1]
+
+class gap_sequence:
+    def __init__(self, gap, fixed_modifications=['Carbamidomethylation of C'], variable_modifications=[], prec_tol=0.02):
+        self.gap = gap
+        self.prec_tol = prec_tol
+        self.fixed_modifications = fixed_modifications
+        self.variable_modifications = variable_modifications
+        self.gap_sequences=[]
         
+        self.possible = set([0])
+        self.valid = False
+
+        self.aminos     =           ['A', 
+                                     'C', 
+                                     'D', 
+                                     'E', 
+                                     'F' ,
+                                     'G', 
+                                     'H', 
+                                     'U', 
+                                     'O', 
+                                     'I', 
+                                     'K', 
+                                     'L', 
+                                     'J',
+                                     'M', 
+                                     'N', 
+                                     'P' , 
+                                     'Q', 
+                                     'R', 
+                                     'S', 
+                                     'T' , 
+                                     'V' , 
+                                     'W', 
+                                     'Y']
+
+    def sequences(self, mass=0, sequence=''):
+        diff = np.absolute(mass - self.gap)
+
+        if diff < self.prec_tol:
+            self.gap_sequences.append(sequence)
+        
+        elif (mass < self.gap):
+            for amino in self.aminos:
+                masses=peptide_mass(amino, variable_modifications = self.variable_modifications, fixed_modifications=self.fixed_modifications, nterm=False, cterm=False)
+                for m in masses:
+                    newmass=mass + m
+                    newsequence = sequence + amino
+                    self.sequences(newmass, newsequence)
+    
+    def validate(self):
+        newpossible=set()
+        for mass in self.possible:
+            diff = np.absolute(mass - self.gap)
+
+            if diff < self.prec_tol:
+                self.valid = True
+        
+            elif (mass < self.gap) and (self.valid==False):
+                for amino in self.aminos:
+                    masses=peptide_mass(amino, variable_modifications = self.variable_modifications, fixed_modifications=self.fixed_modifications, nterm=False, cterm=False)
+                    for m in masses:
+                        newmass = mass + m
+                        newpossible.add(np.round(newmass,6))
+        if (len(newpossible) > 0) and (self.valid ==False):
+            self.possible=newpossible
+            self.validate()
+
 class blast_tags:
     def __init__(self, subject, tags, fixed_modifications=['Carbamidomethylation of C'], variable_modifications=[], prec_tol=0.02):
 
