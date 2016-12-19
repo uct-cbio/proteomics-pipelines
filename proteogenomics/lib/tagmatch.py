@@ -10,11 +10,11 @@ from Bio.Seq import Seq
 
 def peptide_mass(peptide, fixed_modifications=["Carbamidomethylation of C"], variable_modifications=[], nterm=True, cterm=True):
     if 'X' in peptide:
-        return 0
+        return [0]
     if 'Z' in peptide:
-        return 0
+        return [0]
     if 'B' in peptide:
-        return 0
+        return [0]
 
     
     masses = []
@@ -108,6 +108,7 @@ class TagMatch:
         validated_precursor = []
         precursor_peptides = defaultdict(list)
         validated_peptides = set()
+        
         for position_key in mass_dict:
             target_masses = mass_dict[position_key]
             target_peptide = self.tryptic_peptides[position_key]
