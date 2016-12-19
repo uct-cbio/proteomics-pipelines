@@ -193,6 +193,7 @@ class TagMatch:
                 if self.specificity == 'semi-specific':
                     nterms.append(nterm)
                 nterm -= 1
+                assert nterm >= 0
 
     def tryptic_cterm(self, pos):
         cterm = pos
@@ -209,7 +210,8 @@ class TagMatch:
                 if self.specificity == 'semi-specific':
                     cterms.append(cterm + 1)
                 cterm += 1
-    
+                assert cterm <= self.target_length -1
+
     def amino_gaps(self):
         amino_gap_dict = defaultdict(list)
         for key in self.tryptic_peptides:
