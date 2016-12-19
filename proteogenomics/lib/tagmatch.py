@@ -78,7 +78,7 @@ def mz2mw(mz, charge):
 
 
 class TagMatch:
-    def __init__(self, query, tag_mass_list, target, fixed_modifications=['Carbamidomethylation of C'], variable_modifications=[], cleavage_rule='tryptic', specificity='specific', prec_tol=0.02):
+    def __init__(self, query, tag_mass_list, target, fixed_modifications=['Carbamidomethylation of C'], variable_modifications=[], cleavage_rule='tryptic', specificity='specific', prec_tol=0.02, gap_tol=0.5):
         self.target = target
         self.target_length = len(target)
 
@@ -89,7 +89,9 @@ class TagMatch:
         self.fixed_modifications=fixed_modifications
         self.variable_modifications=variable_modifications
         self.query_positions = self.query_positions()
-        self.tolerance = prec_tol
+        self.prec_tol = prec_tol
+        self.gap_tol  = gap_tol
+
         self.validated=False
         self.specificity = specificity
 
@@ -119,7 +121,7 @@ class TagMatch:
                     assert len(tag_mass_set) == 3
                     query_mass = tag_mass_set[1]
                     diff = abs(target_mass - query_mass)
-                    if diff < self.tolerance:
+                    if diff < self.prec_tol:
                         nterm_mass_gap = tag_mass_set[0]
                         cterm_mass_gap = tag_mass_set[2]
                         for amino_gaps in self.amino_gaps[target_peptide]:
@@ -129,13 +131,13 @@ class TagMatch:
                             nterm_amino_gaps = peptide_mass(amino_gaps[0], fixed_modifications=self.fixed_modifications, variable_modifications=self.variable_modifications, nterm=False, cterm=False)
                             for nterm_amino_gap in nterm_amino_gaps:
                                 diff = abs(nterm_mass_gap - nterm_amino_gap)
-                                if diff < self.tolerance:
+                                if diff < self.gap_tol:
                                     nterm_gap_match=True
 
                             cterm_amino_gaps = peptide_mass(amino_gaps[1], fixed_modifications=self.fixed_modifications, variable_modifications=self.variable_modifications, nterm=False, cterm=False)
                             for cterm_amino_gap in cterm_amino_gaps:
                                 diff = abs(cterm_mass_gap - cterm_amino_gap)
-                                if diff < self.tolerance:
+                                if diff < self.gap_tol:
                                     cterm_gap_match=True
                             
                             if (cterm_gap_match==True) and (nterm_gap_match==True):
@@ -244,9 +246,10 @@ def character_strip(sequence, character):
     return sequence[start_pos: end_pos + 1]
 
 class gap_sequence:
-    def __init__(self, gap, fixed_modifications=['Carbamidomethylation of C'], variable_modifications=[], prec_tol=0.02):
+    def __init__(self, gap, fixed_modifications=['Carbamidomethylation of C'], variable_modifications=[], prec_tol=0.02, gap_tol=0.5):
         self.gap = gap
         self.prec_tol = prec_tol
+        self.gap_tol  = gap_tol
         self.fixed_modifications = fixed_modifications
         self.variable_modifications = variable_modifications
         self.gap_sequences=[]
