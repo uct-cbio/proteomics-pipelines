@@ -7,14 +7,15 @@ import re
 import numpy as np
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
+import numpy as np
 
 def peptide_mass(peptide, fixed_modifications=["Carbamidomethylation of C"], variable_modifications=[], nterm=True, cterm=True):
     if 'X' in peptide:
-        return [0]
+        return [np.inf]
     if 'Z' in peptide:
-        return [0]
+        return [np.inf]
     if 'B' in peptide:
-        return [0]
+        return [np.inf]
 
     
     masses = []
