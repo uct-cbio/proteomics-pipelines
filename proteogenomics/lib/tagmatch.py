@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import time
 import pandas as pd
 import collections
 from collections import defaultdict
@@ -8,6 +8,7 @@ import numpy as np
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 import numpy as np
+import re
 
 def peptide_mass(peptide, fixed_modifications=["Carbamidomethylation of C"], variable_modifications=[], nterm=True, cterm=True):
     if 'X' in peptide:
@@ -78,11 +79,27 @@ def mz2mw(mz, charge):
 
 
 class TagMatch:
-    def __init__(self, query, tag_mass_list, target, fixed_modifications=['Carbamidomethylation of C'], variable_modifications=[], cleavage_rule='tryptic', specificity='specific', prec_tol=0.02, gap_tol=0.5):
+    def __init__(self, query, tag_mass_list, target, fixed_modifications=['Carbamidomethylation of C'], variable_modifications=[], enzymes=['Trypsin'], specificity='specific', prec_tol=0.02, gap_tol=0.5, max_missed_cleavages=3):
+        self.possible_enzymes = ['Trypsin', 'Trypsin, no P rule','Whole protein']
+        self.enzymes = enzymes
+        self.max_missed_cleavages = max_missed_cleavages
+        for enzyme in self.enzymes:
+            assert enzyme in self.possible_enzymes
+
+        self.possible_specificity = ['specific', 'semi-specific', 'unspecific']
+        self.specificity = specificity
+        assert self.specificity in self.possible_specificity
+        
         self.target = target
         self.target_length = len(target)
 
         self.tag_mass_list = tag_mass_list
+        
+        self.gap_mass_dict = defaultdict(set)
+
+        self.max_gaps = self.max_gaps()
+        self.maxngap = self.max_gaps[0]
+        self.maxcgap = self.max_gaps[1]
 
         self.query=query
         self.query_length = len(query)
@@ -95,13 +112,12 @@ class TagMatch:
         self.validated=False
         self.specificity = specificity
 
-        if cleavage_rule=='tryptic':
-            self.tryptic_positions = self.tryptic_match()
-            self.tryptic_peptides  = self.tryptic_peptides()
-            self.tryptic_masses = self.tryptic_masses()
-            
-            self.amino_gaps = self.amino_gaps()
-            self.validate_masses(self.tryptic_masses)
+        self.positions = self.match()
+        self.peptides  = self.peptides()
+        self.masses = self.masses()
+        
+        self.amino_gaps = self.amino_gaps()
+        self.validate_masses(self.masses)
             
     def query_positions(self):
         positions = [(m.start(), m.start()+self.query_length ) for m in re.finditer('(?={})'.format(self.query), self.target)]
@@ -114,7 +130,7 @@ class TagMatch:
         
         for position_key in mass_dict:
             target_masses = mass_dict[position_key]
-            target_peptide = self.tryptic_peptides[position_key]
+            target_peptide = self.peptides[position_key]
             
             for target_mass in target_masses:
                 for tag_mass_set in self.tag_mass_list:
@@ -128,105 +144,187 @@ class TagMatch:
                             nterm_gap_match=False
                             cterm_gap_match=False
 
-                            nterm_amino_gaps = peptide_mass(amino_gaps[0], fixed_modifications=self.fixed_modifications, variable_modifications=self.variable_modifications, nterm=False, cterm=False)
+                            nterm_amino_gaps = self.gap_mass_dict[amino_gaps[0]]
                             for nterm_amino_gap in nterm_amino_gaps:
-                                diff = abs(nterm_mass_gap - nterm_amino_gap)
-                                if diff < self.gap_tol:
+                                if nterm_amino_gap > (nterm_mass_gap - self.gap_tol):
                                     nterm_gap_match=True
 
-                            cterm_amino_gaps = peptide_mass(amino_gaps[1], fixed_modifications=self.fixed_modifications, variable_modifications=self.variable_modifications, nterm=False, cterm=False)
+                            cterm_amino_gaps = self.gap_mass_dict[amino_gaps[1]]
                             for cterm_amino_gap in cterm_amino_gaps:
-                                diff = abs(cterm_mass_gap - cterm_amino_gap)
-                                if diff < self.gap_tol:
+                                if cterm_amino_gap > (cterm_mass_gap - self.gap_tol):
                                     cterm_gap_match=True
                             
                             if (cterm_gap_match==True) and (nterm_gap_match==True):
                                 validated_precursor.append(tag_mass_set)
-                                precursor_peptides[tag_mass_set].append(self.tryptic_peptides[position_key])
-                                validated_peptides.add(self.tryptic_peptides[position_key])
+                                precursor_peptides[tag_mass_set].append(self.peptides[position_key])
+                                validated_peptides.add(self.peptides[position_key])
         self.validated_precursor = validated_precursor
         self.precursor_peptides  = precursor_peptides
         self.validated_peptides = list(validated_peptides)
         if len(validated_precursor) > 0:
             self.validated = True
 
-    def tryptic_masses(self):
-        tryptic_masses = {}
-        for key in self.tryptic_peptides:
-            peptide = self.tryptic_peptides[key]
+    def masses(self):
+        masses = {}
+        for key in self.peptides:
+            peptide = self.peptides[key]
             masslist = peptide_mass(peptide, fixed_modifications=self.fixed_modifications, variable_modifications=self.variable_modifications, nterm=True, cterm=True)
-            tryptic_masses[key] = masslist
-        return tryptic_masses
+            masses[key] = masslist
+        return masses
 
-    def tryptic_peptides(self):
-        tryptic_peptides = {}
-        for coord in self.tryptic_positions:
+    def peptides(self):
+        peptides = {}
+        for coord in self.positions:
             p = self.target[coord[0]:coord[1]]
-            
             key='{}:{}'.format(str(coord[0]), str(coord[1]))
-            tryptic_peptides[key] = p
-        return tryptic_peptides
+            peptides[key] = p
+        return peptides
 
-    def tryptic_match(self):
-        tryptic_coords = []
+    def match(self):
+        coords = []
         for coord in self.query_positions:
-            nterms = self.tryptic_nterm(coord[0])
-            cterms = self.tryptic_cterm(coord[1]-1)
+            nterms = self.nterms(coord[0])
+            cterms = self.cterms(coord[1]-1)
             for nterm in nterms:
                 for cterm in cterms:
-                    tryptic_coords.append((nterm, cterm))
-        return tryptic_coords
+                    amino_acid_before = self.target[nterm -1: nterm]
+                    first_amino_acid  = self.target[nterm]
+                    last_amino_acid   = self.target[cterm -1]
+                    amino_acid_after   = self.target[cterm : cterm + 1]
+                    valid = self.valid_cleavage( amino_acid_before, first_amino_acid, last_amino_acid, amino_acid_after)
+                    if valid == True:
+                        mc = self.missed_cleavages(self.target[nterm:cterm])
+                        if (mc <= self.max_missed_cleavages):
+                            coords.append((nterm, cterm))
+        return coords
 
 
-    def tryptic_nterm(self, pos):
+    def nterms(self, pos):
         nterm = pos
-        cleavage_aminos=['R','K']
         nterms=[]
-        while True:
+        valid_gaps=True
+        limit = self.maxngap + self.gap_tol
+        while valid_gaps==True:
+            amino_gap = self.target[nterm:pos]
+            gaps = peptide_mass(amino_gap, fixed_modifications=self.fixed_modifications, variable_modifications=self.variable_modifications, nterm=False, cterm=False)
+            self.gap_mass_dict[amino_gap].update(gaps)
             if nterm == 0:
                 nterms.append(nterm)
                 return nterms
-            elif self.target[nterm-1] in cleavage_aminos:
-                nterms.append(nterm)
-                return nterms
             else: 
-                if self.specificity == 'semi-specific':
-                    nterms.append(nterm)
+                nterms.append(nterm)
                 nterm -= 1
                 assert nterm >= 0
+            if min(gaps) > limit:
+                return nterms
 
-    def tryptic_cterm(self, pos):
+    def cterms(self, pos):
         cterm = pos
-        cleavage_aminos=['R','K']
         cterms=[]
-        while True:
+        valid_gaps =True
+        limit = self.maxcgap + self.gap_tol
+        while valid_gaps ==True:
+            amino_gap = self.target[pos +1:cterm+1]
+            gaps = peptide_mass(amino_gap, fixed_modifications=self.fixed_modifications, variable_modifications=self.variable_modifications, nterm=False, cterm=False)
+            self.gap_mass_dict[amino_gap].update(gaps)
             if cterm == self.target_length-1:
                 cterms.append(cterm + 1)
                 return cterms
-            elif self.target[cterm] in cleavage_aminos:
-                cterms.append(cterm + 1)
-                return cterms
             else: 
-                if self.specificity == 'semi-specific':
-                    cterms.append(cterm + 1)
+                cterms.append(cterm + 1)
                 cterm += 1
                 assert cterm <= self.target_length -1
+            if min(gaps) > limit:
+                return cterms
+
+    def max_gaps(self):
+        ngaps = []
+        cgaps = []
+        for tag in self.tag_mass_list:
+            n = tag[0]
+            c = tag[2]
+            ngaps.append(n)
+            cgaps.append(c)
+        return (max(ngaps), max(cgaps))
 
     def amino_gaps(self):
         amino_gap_dict = defaultdict(list)
-        for key in self.tryptic_peptides:
-            peptide = self.tryptic_peptides[key]
+        for key in self.peptides:
+            peptide = self.peptides[key]
             positions = [(m.start(), m.start()+self.query_length ) for m in re.finditer('(?={})'.format(self.query), peptide)]
             for coord in positions:
                 tag_start = coord[0]
                 tag_end = tag_start + self.query_length
-
                 nterm_gap = peptide[:tag_start]
                 cterm_gap = peptide[tag_end:]
-                
                 amino_gap_dict[peptide].append( (nterm_gap, cterm_gap) )
-
         return amino_gap_dict
+
+    def valid_cleavage(self, amino_acid_before, first_amino_acid, last_amino_acid, amino_acid_after):
+        valid = False
+        nterm_valid=False
+        cterm_valid=False
+        for enzyme in self.enzymes:
+            if enzyme=='Trypsin, no P rule':
+                cleavage_aminos=['K','R']
+                if amino_acid_before == '':
+                    nterm_valid=True
+                elif amino_acid_before in cleavage_aminos:
+                    nterm_valid=True
+                if amino_acid_after =='':
+                    cterm_valid=True
+                elif last_amino_acid in cleavage_aminos:
+                    cterm_valid=True
+
+            elif enzyme == 'Trypsin':
+                cleavage_aminos=['K','R']
+                
+                if amino_acid_before == '':
+                    nterm_valid=True
+                elif (amino_acid_before in cleavage_aminos) and (first_amino_acid != 'P'):
+                    nterm_valid=True
+                
+                if amino_acid_after =='':
+                    cterm_valid=True
+                elif last_amino_acid in cleavage_aminos:
+                    cterm_valid=True
+            
+            elif enzyme == 'Whole protein':
+                
+                if amino_acid_before == '':
+                    nterm_valid=True
+                
+                if amino_acid_after =='':
+                    cterm_valid=True
+        if ((nterm_valid and cterm_valid) == True) and (self.specificity == 'specific'):
+            valid = True
+        elif ((nterm_valid or cterm_valid) == True) and (self.specificity == 'semi-specific'):
+            valid = True
+        elif self.specificity == 'unspecific':
+            valid=True
+        return valid
+    
+    def missed_cleavages(self, peptide):
+        
+        new_peptides = [peptide]
+
+        for enzyme in self.enzymes:
+            holder=[]
+            for datum in new_peptides:
+                if enzyme=='Trypsin, no P rule':
+                    peptides = re.sub(r'(?<=[RK])','\n', datum).split('\n')
+                    holder += peptides
+
+                elif enzyme == 'Trypsin':
+                    
+                    peptides = re.sub(r'(?<=[RK])(?=[^P])','\n', datum).split('\n')
+                    holder += peptides
+
+                elif enzyme == 'Whole protein':
+                    peptides = [datum]
+                    holder += peptides
+            new_peptides = holder
+        return len(new_peptides) - 1
 
 
 def character_strip(sequence, character):
