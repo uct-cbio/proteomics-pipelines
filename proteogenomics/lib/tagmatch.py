@@ -138,7 +138,7 @@ class TagMatch:
                     query_mass = tag_mass_set[1]
                     diff = abs(target_mass - query_mass)
                     if diff < self.prec_tol:
-                        #print(diff)
+                        #print(diff )
                         nterm_mass_gap = tag_mass_set[0]
                         cterm_mass_gap = tag_mass_set[2]
                         for amino_gaps in self.amino_gaps[target_peptide]:
