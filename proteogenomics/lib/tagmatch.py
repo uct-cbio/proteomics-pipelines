@@ -138,6 +138,7 @@ class TagMatch:
                     query_mass = tag_mass_set[1]
                     diff = abs(target_mass - query_mass)
                     if diff < self.prec_tol:
+                        #print(diff)
                         nterm_mass_gap = tag_mass_set[0]
                         cterm_mass_gap = tag_mass_set[2]
                         for amino_gaps in self.amino_gaps[target_peptide]:
@@ -146,12 +147,12 @@ class TagMatch:
 
                             nterm_amino_gaps = self.gap_mass_dict[amino_gaps[0]]
                             for nterm_amino_gap in nterm_amino_gaps:
-                                if nterm_amino_gap > (nterm_mass_gap - self.gap_tol):
+                                if abs(nterm_amino_gap - nterm_mass_gap) < self.gap_tol:
                                     nterm_gap_match=True
 
                             cterm_amino_gaps = self.gap_mass_dict[amino_gaps[1]]
                             for cterm_amino_gap in cterm_amino_gaps:
-                                if cterm_amino_gap > (cterm_mass_gap - self.gap_tol):
+                                if abs(cterm_amino_gap - cterm_mass_gap) < self.gap_tol:
                                     cterm_gap_match=True
                             
                             if (cterm_gap_match==True) and (nterm_gap_match==True):
