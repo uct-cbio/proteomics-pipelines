@@ -47,6 +47,7 @@ function ps_prepare {
 
     fasta=${fasta_folder}/${target}_${contaminant}.fasta
     cat ${target_fasta} <(annotateContaminantUniprotFasta.py ${contaminant_fasta}) > ${fasta}
+    #fasta=${fasta_folder}/${target}.fasta 
 
     unvalidated_folder=${output_folder}"/unvalidated"
 

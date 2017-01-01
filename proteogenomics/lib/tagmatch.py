@@ -533,7 +533,11 @@ class blast_tags:
     
     def new_records(self):
         newrecords = []
+        test = []
         for newtag in self.newtags:
             rec = SeqRecord(seq=Seq(newtag[0]), id = '{};{};mw={};ngap={};cgap={}'.format(list(self.samples)[0], list(self.scans)[0], str(newtag[1]), str(newtag[2]), str(newtag[3])))
-            newrecords.append(rec)
+            trec = rec.format('fasta')
+            if not trec in test:
+                test.append(trec)
+                newrecords.append(rec)
         return newrecords

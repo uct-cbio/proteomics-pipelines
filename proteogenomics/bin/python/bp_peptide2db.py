@@ -12,25 +12,32 @@ import algo
 import re
 import tagmatch
 import proteomics
+import pickle
+import numpy as np
 
 db = SeqIO.parse(sys.argv[1],'fasta')
 print('loaded db')
 
-peprecs = SeqIO.parse(sys.argv[2], 'fasta')
+pepdict = pickle.load(open(sys.argv[2], 'rb'))
+print('loaded peptide dict')
 
-pepdict = {}
-for peprec in peprecs:
-    pepdict[str(peprec.seq)]=peprec
+#Trie = algo.Trie(list(pepdict.keys()))
 
-del peprecs
+prectol = float(sys.argv[3])
 
-print('created peptide dict')
+specificity=sys.argv[4]
 
-Trie = algo.Trie(list(pepdict.keys()))
-print('created trie')
+enzymes = [i for i in sys.argv[5].split(';') if i != '']
+max_missed_cleavages = int(sys.argv[6])
+gap_tol = float(sys.argv[7])
+fixed_modifications = [i for i in sys.argv[8].split(';') if i != '']
+variable_modifications = [i for i in sys.argv[9].split(';') if i != '']
 
-fragtol = float(sys.argv[3])
-out = sys.argv[4] + '/' + sys.argv[1].split('/')[-1] +'.csv'
+
+Trie = pickle.load(open(sys.argv[10],'rb'))
+print('loaded trie')
+
+out = sys.argv[11] + '/' + sys.argv[1].split('/')[-1] +'.csv'
 cv = []
 scounts = []
 length = []
@@ -50,20 +57,24 @@ for rec in db:
     covered = []
 
     for pepstr in peptides_mapped:
-        trec = pepdict[pepstr]
-        tseq = str(trec.seq)
-        ids = trec.description.split('scans=')[1].split('|')
+        #trec = pepdict[pepstr]
+        ids = pepdict[pepstr]
+        #tseq = str(trec.seq)
+        tseq = pepstr
+        #ids = trec.description.split('scans=')[1].split('|')
         prec_ions = defaultdict(set)
         
         for id in ids:
             _ = id.split(';')
-            mz = float(_[-2])
-            charge = int(_[-1][0])
-            mw = tagmatch.mz2mw(mz, charge)
-            prec_ions[mw].add(id)
+            scan = _[0] + ';' + _[1]
+            mw = np.round(float(_[2].split('mw=')[1]),6)
+            ngap = np.round(float(_[3].split('ngap=')[1]),6)
+            cgap = np.round(float(_[4].split('cgap=')[1]),6)
+            prec_ions[(ngap, mw, cgap)].add(scan)
         
         prec_array = list(prec_ions.keys())
-        tm  = tagmatch.TagMatch(pepstr, prec_array, qrec, tol = fragtol)
+        print(pepstr, prec_array, qrec, prectol, specificity)
+        tm  = tagmatch.TagMatch(pepstr, prec_array, qrec, prec_tol = prectol, specificity=specificity, enzymes=enzymes, max_missed_cleavages=max_missed_cleavages, gap_tol=gap_tol , fixed_modifications=fixed_modifications, variable_modifications=variable_modifications)
         rec_peps.update(tm.validated_peptides)
         
         for _ in tm.validated_precursor:
