@@ -77,7 +77,6 @@ def mz2mw(mz, charge):
     mw = (mz * charge) - (proton_mass * charge) 
     return mw
 
-
 class TagMatch:
     def __init__(self, query, tag_mass_list, target, fixed_modifications=['Carbamidomethylation of C'], variable_modifications=[], enzymes=['Trypsin'], specificity='specific', prec_tol=0.02, gap_tol=0.5, max_missed_cleavages=3):
         self.possible_enzymes = ['Trypsin', 'Trypsin, no P rule','Whole protein']
@@ -327,7 +326,6 @@ class TagMatch:
             new_peptides = holder
         return len(new_peptides) - 1
 
-
 def character_strip(sequence, character):
     started=False
     start_pos=0
@@ -415,13 +413,14 @@ class gap_sequence:
             self.validate()
 
 class blast_tags:
-    def __init__(self, subject, tags, fixed_modifications=['Carbamidomethylation of C'], variable_modifications=[], prec_tol=0.02):
+    def __init__(self, subject, tags, fixed_modifications=['Carbamidomethylation of C'], variable_modifications=[], prec_tol=0.02, gap_tol=0.5):
 
         self.subject=subject
         self.tags=tags 
         self.fixed_modifications = fixed_modifications
         self.variable_modifications = variable_modifications
         self.prec_tol  = prec_tol
+        self.gap_tol = gap_tol
 
         self.mweights = set()
         self.nmasses  = set()
@@ -432,7 +431,14 @@ class blast_tags:
 
         for qtag in self.tags:
             qseq = str(qtag.seq)
-            qsubst = self.longest_substring(qseq, self.subject)
+            qsubstrings = self.substrings(qseq, self.subject)
+            
+            qsubst = self.longest_substring(qsubstrings)
+            
+            #####
+            # Instead of qsubst - give the matching reguon between subject and match - isobaric segments and 4 or  more matching amino acids.
+            #####
+
             qnmass_offsets=self.nmass_gap(self.subject,self.substring_coordinates(self.subject, qsubst))
             qid = qtag.id
             self.samples.add(qid.split(';')[0])
@@ -447,6 +453,7 @@ class blast_tags:
             
             # Calculate mass gaps
             qcoords = self.substring_coordinates(qseq, qsubst)
+            print(qcoords)
             qnmassgaps = self.nmass_gap(qseq, qcoords)
             for qngap in qnmassgaps:
                 for offset in qnmass_offsets:
@@ -497,7 +504,7 @@ class blast_tags:
             if diff < self.prec_tol:
                 return True
 
-    def longest_substring(self, reference, match_sequence):
+    def substrings(self, reference, match_sequence):
         substrings=[]
         for charpos in range(len(match_sequence)):
             mismatch=False
@@ -508,8 +515,14 @@ class blast_tags:
                 else:
                     mismatch=True
                 subs = match_sequence[charpos:pos ]
-            substrings.append(subs)
-        return max(substrings, key=len)
+            if subs != '':
+                substrings.append(subs)
+        return substrings
+
+    def longest_substring(self, substrings):    
+        maxlen = len(max(substrings, key=len))
+        maxes = [i for i in substrings if len(i) == maxlen]
+        return maxes
     
     def substring_coordinates(self, reference, substr):
         coordinates=[(m.start(), m.start() + len(substr)) for m in re.finditer('(?={})'.format(substr), reference)]
@@ -541,3 +554,79 @@ class blast_tags:
                 test.append(trec)
                 newrecords.append(rec)
         return newrecords
+    
+    def match_segments(self, tagsequence, blastsequence, substrings, min_identities, matchsequence='', matchngap=None, matchcgap=None, identities=[], matches = set()):
+        #print('running', matches, substrings, matchsequence, identities) 
+        
+        if (len(substrings) == 0):
+            #print('1')
+            if len(identities) > 0:
+                #print('2', min_identities)
+                if (len(''.join(identities)) >= min_identities):
+                    for cg in peptide_mass(blastsequence, cterm=False, nterm=False):
+                        for cg2 in peptide_mass(tagsequence, cterm=False, nterm=False):
+                            matches.add((matchsequence + blastsequence, matchngap, cg2-cg, '-'.join(identities)))
+            return matches
+
+        subst = substrings[0]
+        newsubstrings = substrings[1:]
+        refpos = [(m.start(), m.start()+len(subst)) for m in re.finditer('(?={})'.format(subst), blastsequence)]
+        tagpos = [(m.start(), m.start()+len(subst)) for m in re.finditer('(?={})'.format(subst), tagsequence)]
+        
+        #if len(refpos) == 0:
+        newtags = self.match_segments(tagsequence, blastsequence, newsubstrings, min_identities, matchsequence=matchsequence, matchngap=matchngap, matchcgap=matchcgap, identities=identities, matches=matches)
+        matches.update(newtags)
+        for r in refpos:
+            for t in tagpos:
+                refgap = blastsequence[:r[0]]
+                matchgap = tagsequence[:t[0]]
+                newblastsequence = blastsequence[r[1] :]
+                newtagsequence = tagsequence[t[1] :]
+
+                refgapmasses=peptide_mass(refgap, nterm=False, cterm=False)
+                matchgapmasses = peptide_mass(matchgap, nterm=False, cterm=False)
+
+                for rm in refgapmasses:
+                    for tm in matchgapmasses:
+                        if matchngap==None:
+                            newmatchngap = tm - rm
+                            newmatchngap = np.round(newmatchngap, 6)
+                            newmatchsequence = refgap + subst
+                            newtags = self.match_segments(newtagsequence, newblastsequence, newsubstrings, min_identities, matchsequence=newmatchsequence, matchngap=newmatchngap, matchcgap = matchcgap, identities=identities + [subst] , matches=matches)
+                            matches.update(newtags)
+                        elif rm==tm==0:
+                            return matches
+                        else:
+                            diff = abs(rm - tm)
+                            if diff < self.gap_tol:
+                                newmatchsequence = matchsequence + refgap + subst
+                                newtags = self.match_segments(newtagsequence, newblastsequence, newsubstrings, min_identities, matchsequence=newmatchsequence, matchngap=matchngap, matchcgap=matchcgap, identities=identities + [subst], matches=matches)
+                                matches.update(newtags)
+        return matches
+
+    def segment_matching(self, tagsequence, blastsequence, min_identities=4, IL_equivalence=True):
+        #print('Started')
+        if IL_equivalence==True:
+            newtagsequence = 'L'.join(tagsequence.split('I'))
+            newblastsequence = 'L'.join(blastsequence.split('I'))
+        else:
+            newtagsequence = tagsequence
+            newblastsequence = blastsequence
+
+        substrings = self.substrings(newblastsequence, newtagsequence)
+        newtags = self.match_segments(newtagsequence, newblastsequence, substrings, min_identities=min_identities, matchsequence='', matchngap=None, matchcgap=None, identities=[], matches=set())
+        besttags=[]
+        bestlen=0
+        for tag in newtags:
+            identities = ''.join(tag[3].split('-'))
+            if len(identities) > bestlen:
+                bestlen = len(identities)
+        
+        for tag in newtags:
+            identities = ''.join(tag[3].split('-'))
+            if len(identities) == bestlen:
+                besttags.append(tag)
+        return set(besttags)
+        
+
+
