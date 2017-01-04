@@ -137,7 +137,6 @@ class TagMatch:
                     query_mass = tag_mass_set[1]
                     diff = abs(target_mass - query_mass)
                     if diff < self.prec_tol:
-                        #print(diff )
                         nterm_mass_gap = tag_mass_set[0]
                         cterm_mass_gap = tag_mass_set[2]
                         for amino_gaps in self.amino_gaps[target_peptide]:
@@ -413,7 +412,7 @@ class gap_sequence:
             self.validate()
 
 class blast_tags:
-    def __init__(self, subject, tags, fixed_modifications=['Carbamidomethylation of C'], variable_modifications=[], prec_tol=0.02, gap_tol=0.5):
+    def __init__(self, subject, tags, fixed_modifications=['Carbamidomethylation of C'], variable_modifications=[], prec_tol=0.02, gap_tol=0.5, min_identities = 4, IL_equivalence=True):
 
         self.subject=subject
         self.tags=tags 
@@ -422,6 +421,9 @@ class blast_tags:
         self.prec_tol  = prec_tol
         self.gap_tol = gap_tol
 
+        self.min_identities = min_identities
+        self.IL_equivalence = IL_equivalence
+
         self.mweights = set()
         self.nmasses  = set()
         self.cmasses  = set()
@@ -429,72 +431,39 @@ class blast_tags:
         self.samples  = set()
         self.scans    = set()
 
+        record_holder = set()
+        self.newrecords = []
+
+
         for qtag in self.tags:
             qseq = str(qtag.seq)
             qsubstrings = self.substrings(qseq, self.subject)
             
-            qsubst = self.longest_substring(qsubstrings)
-            
-            #####
-            # Instead of qsubst - give the matching reguon between subject and match - isobaric segments and 4 or  more matching amino acids.
-            #####
+            modified_tags = self.segment_matching(qseq, self.subject, min_identities=self.min_identities, IL_equivalence=self.IL_equivalence)
+            idlist = qtag.id.split(';')
+            file = idlist[0]
+            scan = idlist[1]
+            mw = float(idlist[2].split('mw=')[1])
+            ngap = float(idlist[3].split('ngap=')[1])
+            cgap = float(idlist[4].split('cgap=')[1])
 
-            qnmass_offsets=self.nmass_gap(self.subject,self.substring_coordinates(self.subject, qsubst))
-            qid = qtag.id
-            self.samples.add(qid.split(';')[0])
-            self.scans.add(qid.split(';')[1])
-
-
-            qid_mw = float(qid.split(';')[2].split('mw=')[1])
-            self.mweights.add(qid_mw)
-
-            qid_ng = float(qid.split(';')[3].split('ngap=')[1])
-            qid_cg = float(qid.split(';')[4].split('cgap=')[1])
-            
-            # Calculate mass gaps
-            qcoords = self.substring_coordinates(qseq, qsubst)
-            print(qcoords)
-            qnmassgaps = self.nmass_gap(qseq, qcoords)
-            for qngap in qnmassgaps:
-                for offset in qnmass_offsets:
-                    self.nmasses.add(qid_ng + (qngap - offset))
-            
-            qcmassgaps = self.cmass_gap(qseq, qcoords)
-            qcmass_offsets=self.cmass_gap(self.subject,self.substring_coordinates(self.subject, qsubst)) 
-            for qcgap in qcmassgaps:
-                for offset in qcmass_offsets:               
-                    self.cmasses.add( qid_cg +  (qcgap - offset) )
-            
-            #for ttag in self.tags:
-            #    tseq = str(ttag.seq)
-            #    tsubst = self.longest_substring(tseq, self.subject)
-            #    tsubst = self.longest_substring(tseq, self.subject)
-            #    tid = ttag.id
-            #    
-                
-            #    tid_mw = float(tid.split(';')[2].split('mw=')[1])
-            #    tid_ng = float(tid.split(';')[3].split('nmg=')[1])
-            #    tid_cg = float(tid.split(';')[4].split('cmg=')[1])
-            #    
-            #    # Calculate mass gaps
-            #    tcoords = self.substring_coordinates(tseq, tsubst)
-        
-        self.cmasses = set([np.round(i,6) for i in self.cmasses if i >= 0])
-        self.nmasses = set([np.round(i,6) for i in self.nmasses if i >= 0])
-
-        self.newtags = set()
-        
-        assert len(self.samples) ==1
-        assert len(self.scans) == 1
-
-        for mw in self.mweights:
-            for nmass in self.nmasses:
-                for cmass in self.cmasses:
-                    newtag = (self.subject, mw, nmass, cmass )
-                    if self.valid_tag(newtag) == True:
-                        self.newtags.add(newtag)
-        
-        self.newrecords = self.new_records()
+            for i in modified_tags:
+                newseq=i[0]
+                newngap = np.round(ngap + i[1],6)
+                newcgap = np.round(cgap + i[2],6)
+                newseq, newngap, newcgap = self.fix_negative_gaps(newseq, newngap, newcgap)
+                valid_tag=True
+                if newngap <= -(self.gap_tol):
+                    valid_tag=False
+                elif newcgap < -(self.gap_tol):
+                    valid_tag=False
+                if valid_tag == True:
+                    newid ='{};{};mw={};ngap={};cgap={}'.format(file, scan, mw, newngap, newcgap)
+                    newrec=SeqRecord(seq=Seq(newseq),id=newid,description='Segment correction of {}-{}-{}'.format(ngap,qseq,cgap))
+                    temp = newrec.format('fasta')
+                    if not temp in record_holder:
+                        record_holder.add(temp)
+                        self.newrecords.append(newrec)
 
     def valid_tag(self, tag):
         sequence_masses = peptide_mass(tag[0], fixed_modifications=self.fixed_modifications, variable_modifications = self.variable_modifications, cterm=True, nterm=True)
@@ -556,15 +525,11 @@ class blast_tags:
         return newrecords
     
     def match_segments(self, tagsequence, blastsequence, substrings, min_identities, matchsequence='', matchngap=None, matchcgap=None, identities=[], matches = set()):
-        #print('running', matches, substrings, matchsequence, identities) 
-        
         if (len(substrings) == 0):
-            #print('1')
             if len(identities) > 0:
-                #print('2', min_identities)
                 if (len(''.join(identities)) >= min_identities):
-                    for cg in peptide_mass(blastsequence, cterm=False, nterm=False):
-                        for cg2 in peptide_mass(tagsequence, cterm=False, nterm=False):
+                    for cg in peptide_mass(blastsequence, cterm=False, nterm=False, fixed_modifications = self.fixed_modifications, variable_modifications = self.variable_modifications):
+                        for cg2 in peptide_mass(tagsequence, cterm=False, nterm=False, fixed_modifications = self.fixed_modifications, variable_modifications = self.variable_modifications ) :
                             matches.add((matchsequence + blastsequence, matchngap, cg2-cg, '-'.join(identities)))
             return matches
 
@@ -573,9 +538,9 @@ class blast_tags:
         refpos = [(m.start(), m.start()+len(subst)) for m in re.finditer('(?={})'.format(subst), blastsequence)]
         tagpos = [(m.start(), m.start()+len(subst)) for m in re.finditer('(?={})'.format(subst), tagsequence)]
         
-        #if len(refpos) == 0:
         newtags = self.match_segments(tagsequence, blastsequence, newsubstrings, min_identities, matchsequence=matchsequence, matchngap=matchngap, matchcgap=matchcgap, identities=identities, matches=matches)
         matches.update(newtags)
+        
         for r in refpos:
             for t in tagpos:
                 refgap = blastsequence[:r[0]]
@@ -583,8 +548,8 @@ class blast_tags:
                 newblastsequence = blastsequence[r[1] :]
                 newtagsequence = tagsequence[t[1] :]
 
-                refgapmasses=peptide_mass(refgap, nterm=False, cterm=False)
-                matchgapmasses = peptide_mass(matchgap, nterm=False, cterm=False)
+                refgapmasses=peptide_mass(refgap, nterm=False, cterm=False, fixed_modifications=self.fixed_modifications, variable_modifications=self.variable_modifications)
+                matchgapmasses = peptide_mass(matchgap, nterm=False, cterm=False, fixed_modifications=self.fixed_modifications, variable_modifications = self.variable_modifications)
 
                 for rm in refgapmasses:
                     for tm in matchgapmasses:
@@ -605,7 +570,6 @@ class blast_tags:
         return matches
 
     def segment_matching(self, tagsequence, blastsequence, min_identities=4, IL_equivalence=True):
-        #print('Started')
         if IL_equivalence==True:
             newtagsequence = 'L'.join(tagsequence.split('I'))
             newblastsequence = 'L'.join(blastsequence.split('I'))
@@ -617,6 +581,7 @@ class blast_tags:
         newtags = self.match_segments(newtagsequence, newblastsequence, substrings, min_identities=min_identities, matchsequence='', matchngap=None, matchcgap=None, identities=[], matches=set())
         besttags=[]
         bestlen=0
+        
         for tag in newtags:
             identities = ''.join(tag[3].split('-'))
             if len(identities) > bestlen:
@@ -625,8 +590,55 @@ class blast_tags:
         for tag in newtags:
             identities = ''.join(tag[3].split('-'))
             if len(identities) == bestlen:
+                assert tag[0] == newblastsequence
+                tag = (blastsequence, tag[1], tag[2], tag[3])
                 besttags.append(tag)
         return set(besttags)
         
+    def fix_negative_gaps(self, sequence, ngap, cgap):
+        
+        if ngap < 0:
+            ngap_fixed=False
+            for position in range(1, len(sequence)):
+                newsequence = sequence[position:]
+                newgapsequence = sequence[:position]
+                ng = peptide_mass(newgapsequence, nterm=False, cterm=False,  fixed_modifications=self.fixed_modifications, variable_modifications= self.variable_modifications)
+                mng = min(ng)
+                
+                if mng + ngap >= self.gap_tol:
+                    break    
+                
+                for _ in ng:
+                    newg = ngap + _
+                    if np.absolute(newg) < self.gap_tol:
+                        ngap = newg
+                        sequence = newsequence
+                        ngap_fixed=True
+                        break
+                if ngap_fixed==True:
+                    break
 
+        if cgap < 0:
+            cgap_fixed=False
+            for position in range(1, len(sequence)):
+                newsequence = sequence[:-position]
+                newgapsequence = sequence[-position:]
+                cg = peptide_mass(newgapsequence, nterm=False, cterm=False,  fixed_modifications=self.fixed_modifications, variable_modifications= self.variable_modifications)
+                
+                mcg = min(cg)
+                
+                if mcg + cgap >= self.gap_tol:
+                    break    
+    #            
+                for _ in cg:
+                    newg = cgap + _
+                    if np.absolute(newg) < self.gap_tol:
+                        cgap = newg
+                        sequence = newsequence
+                        cgap_fixed=True
+                        break
+                if cgap_fixed==True:
+                    break
+
+        return sequence, ngap, cgap
 
