@@ -96,7 +96,8 @@ class TagMatch:
         
         self.gap_mass_dict = defaultdict(set)
 
-        self.max_gaps = self.max_gaps()
+        self.gaps = self.gaps()
+        self.max_gaps = (max(self.gaps[0]), max(self.gaps[1]))
         self.maxngap = self.max_gaps[0]
         self.maxcgap = self.max_gaps[1]
 
@@ -207,11 +208,19 @@ class TagMatch:
             amino_gap = self.target[nterm:pos]
             gaps = peptide_mass(amino_gap, fixed_modifications=self.fixed_modifications, variable_modifications=self.variable_modifications, nterm=False, cterm=False)
             self.gap_mass_dict[amino_gap].update(gaps)
+            validated=False
+            for gap in gaps:
+                diff_gaps = set([(abs(i-gap) < self.gap_tol) for i in self.gaps[0]])
+                if True in diff_gaps:
+                    validated=True
+
             if nterm == 0:
-                nterms.append(nterm)
+                if validated == True:
+                    nterms.append(nterm)
                 return nterms
             else: 
-                nterms.append(nterm)
+                if validated == True:
+                    nterms.append(nterm)
                 nterm -= 1
                 assert nterm >= 0
             if min(gaps) > limit:
@@ -226,17 +235,26 @@ class TagMatch:
             amino_gap = self.target[pos +1:cterm+1]
             gaps = peptide_mass(amino_gap, fixed_modifications=self.fixed_modifications, variable_modifications=self.variable_modifications, nterm=False, cterm=False)
             self.gap_mass_dict[amino_gap].update(gaps)
+            validated=False
+            
+            for gap in gaps:
+                diff_gaps = set([(abs(i-gap) < self.gap_tol) for i in self.gaps[1]])
+                if True in diff_gaps:
+                    validated=True
+
             if cterm == self.target_length-1:
-                cterms.append(cterm + 1)
+                if validated == True:
+                    cterms.append(cterm + 1)
                 return cterms
             else: 
-                cterms.append(cterm + 1)
+                if validated == True:
+                    cterms.append(cterm + 1)
                 cterm += 1
                 assert cterm <= self.target_length -1
             if min(gaps) > limit:
                 return cterms
 
-    def max_gaps(self):
+    def gaps(self):
         ngaps = []
         cgaps = []
         for tag in self.tag_mass_list:
@@ -244,7 +262,7 @@ class TagMatch:
             c = tag[2]
             ngaps.append(n)
             cgaps.append(c)
-        return (max(ngaps), max(cgaps))
+        return (list(set(ngaps)), list(set(cgaps)))
 
     def amino_gaps(self):
         amino_gap_dict = defaultdict(list)
@@ -449,13 +467,13 @@ class blast_tags:
 
             for i in modified_tags:
                 newseq=i[0]
-                newngap = np.round(ngap + i[1],4)
-                newcgap = np.round(cgap + i[2],4)
+                newngap = np.round(ngap + i[1],6)
+                newcgap = np.round(cgap + i[2],6)
                 newseq, newngap, newcgap = self.fix_negative_gaps(newseq, newngap, newcgap)
                 valid_tag=True
                 if newngap <= -(self.gap_tol):
                     valid_tag=False
-                elif newcgap < -(self.gap_tol):
+                elif newcgap <= -(self.gap_tol):
                     valid_tag=False
                 if valid_tag == True:
                     newid ='{};{};mw={};ngap={};cgap={}'.format(file, scan, mw, newngap, newcgap)
@@ -555,7 +573,7 @@ class blast_tags:
                     for tm in matchgapmasses:
                         if matchngap==None:
                             newmatchngap = tm - rm
-                            newmatchngap = np.round(newmatchngap, 4)
+                            newmatchngap = np.round(newmatchngap, 6)
                             newmatchsequence = refgap + subst
                             newtags = self.match_segments(newtagsequence, newblastsequence, newsubstrings, min_identities, matchsequence=newmatchsequence, matchngap=newmatchngap, matchcgap = matchcgap, identities=identities + [subst] , matches=matches)
                             matches.update(newtags)
