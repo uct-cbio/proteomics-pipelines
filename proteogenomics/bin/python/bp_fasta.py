@@ -22,12 +22,12 @@ new_sequences=[]
 count=0
 
 for sequence in sequences_dct:
-    id='denovo_sequence_{}'.format(count)
+    id='distinct_sequence_{}'.format(count)
     descs= list(sequences_dct[sequence])
     desc = 'sc={};scans='.format(len(descs)) + '|'.join(descs)
-    rec=SeqRecord(id=id, seq=Seq(sequence), description=desc)
+    rec=SeqRecord(id=id, seq=Seq(sequence) )#, description=desc)
     new_sequences.append(rec)
     count +=1
 
-pickle.dump(sequences_dct, open(sys.argv[2] +'.seq2scans.p','wb'))
+#pickle.dump(sequences_dct, open(sys.argv[2] +'.seq2scans.p','wb'))
 SeqIO.write(new_sequences, sys.argv[2], 'fasta')

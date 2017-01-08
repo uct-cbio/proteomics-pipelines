@@ -7,9 +7,11 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 import pickle
 import sqlite3
+import numpy as np
 
 infile = sys.argv[1]
-outfile = sys.argv[2]
+minlen = int(sys.argv[2])
+outfile = sys.argv[3]
 
 def calcmw(df):
     charge = df['Identification Charge'] 
@@ -31,7 +33,7 @@ def create_fasta(df):
     rec = SeqRecord(id=id, seq=seq)
     return rec.format('fasta')
 
-tags = pd.read_csv(infile, sep='\t', nrows=100)
+tags = pd.read_csv(infile, sep='\t')
 columns = tags.columns.tolist()
 assert(columns[-1] == 'Identification Charge')
 tags = tags.reset_index()
@@ -39,6 +41,7 @@ tags = tags.reset_index()
 assert len(tags['Identification Charge'].dropna()) == 0
 del tags['Identification Charge']
 tags.columns = columns
+tags = tags[tags['Longest AminoAcid sequence'].apply(lambda x : len(x)) >= minlen ]
 
 tags['_calc.MW'] = tags.apply(calcmw, axis=1)
 tags['_scan'] = tags['Spectrum Title'].apply(lambda x : x.split('scan=')[1].split('"')[0])

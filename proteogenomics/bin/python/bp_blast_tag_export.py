@@ -12,23 +12,26 @@ table = pd.read_csv(sys.argv[1])
 db = sqlite3.connect(sys.argv[2])
 
 cursor = db.cursor()
+    
+min_identities = int(sys.argv[3])
 
-outfolder = sys.argv[3]
-
-
-export=[]
+export=set()
 
 def tag_export(df):
     global export
     subject=df['hsp.sbjct']
-    ids =df['_query.description'].split()[1].split('scans=')[1].split('|')
+    query= df['_query.sequence']
+    #ids =df['_query.description'].split()[1].split('scans=')[1].split('|')
+    res = cursor.execute("select scanid from combined where seqstr=?",(query,)).fetchall()
+    ids =set([i[0] for i in res])
+    
     for id in ids:
-        print('querying')
-        cursor.execute("select rec from tags where scanid=?",(id,))
-        recs = [pickle.loads(i[0]) for i in cursor.fetchall()]
-        print(recs)
-        tm = tagmatch.blast_tags(subject, recs)
-        export += tm.newrecords
+        res = cursor.execute("select rec from tags where (scanid=? AND source='denovo')",(id,)).fetchall()
+        recs = [pickle.loads(i[0]) for i in res]
+        tm = tagmatch.blast_tags(subject, recs, min_identities=min_identities)
+        for i in tm.newrecords:
+            print(i.format('fasta'))
+        export.update([i.format('fasta') for i in tm.newrecords])
 
 def fixsubject(val):
     try:
@@ -39,8 +42,15 @@ def fixsubject(val):
 
 #table = table[table['hsp.match']=='+DNDLR']
 #print(table[['hsp.sbjct','hsp.match', 'hsp.query']])
+
 table = table[table['hsp.sbjct'].notnull()]
+
 table['hsp.sbjct'] = table['hsp.sbjct'].apply(fixsubject)
+
+table = table.drop_duplicates(['_query.sequence','hsp.sbjct'])
+
 table.apply(tag_export, axis=1)
 
-SeqIO.write(export, sys.argv[3], 'fasta' )
+w = open(sys.argv[4], 'w')
+w.write(''.join(export))
+w.close()

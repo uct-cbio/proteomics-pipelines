@@ -75,7 +75,7 @@ def peptide_mass(peptide, fixed_modifications=["Carbamidomethylation of C"], var
 def mz2mw(mz, charge):
     proton_mass=1.007276
     mw = (mz * charge) - (proton_mass * charge) 
-    return mw
+    return np.round(mw, 4)
 
 class TagMatch:
     def __init__(self, query, tag_mass_list, target, fixed_modifications=['Carbamidomethylation of C'], variable_modifications=[], enzymes=['Trypsin'], specificity='specific', prec_tol=0.02, gap_tol=0.5, max_missed_cleavages=3):
@@ -406,7 +406,7 @@ class gap_sequence:
                     masses=peptide_mass(amino, variable_modifications = self.variable_modifications, fixed_modifications=self.fixed_modifications, nterm=False, cterm=False)
                     for m in masses:
                         newmass = mass + m
-                        newpossible.add(np.round(newmass,6))
+                        newpossible.add(np.round(newmass,4))
         if (len(newpossible) > 0) and (self.valid ==False):
             self.possible=newpossible
             self.validate()
@@ -449,8 +449,8 @@ class blast_tags:
 
             for i in modified_tags:
                 newseq=i[0]
-                newngap = np.round(ngap + i[1],6)
-                newcgap = np.round(cgap + i[2],6)
+                newngap = np.round(ngap + i[1],4)
+                newcgap = np.round(cgap + i[2],4)
                 newseq, newngap, newcgap = self.fix_negative_gaps(newseq, newngap, newcgap)
                 valid_tag=True
                 if newngap <= -(self.gap_tol):
@@ -555,7 +555,7 @@ class blast_tags:
                     for tm in matchgapmasses:
                         if matchngap==None:
                             newmatchngap = tm - rm
-                            newmatchngap = np.round(newmatchngap, 6)
+                            newmatchngap = np.round(newmatchngap, 4)
                             newmatchsequence = refgap + subst
                             newtags = self.match_segments(newtagsequence, newblastsequence, newsubstrings, min_identities, matchsequence=newmatchsequence, matchngap=newmatchngap, matchcgap = matchcgap, identities=identities + [subst] , matches=matches)
                             matches.update(newtags)
@@ -640,5 +640,5 @@ class blast_tags:
                 if cgap_fixed==True:
                     break
 
-        return sequence, ngap, cgap
+        return sequence, np.round(ngap,4), np.round(cgap,4)
 

@@ -18,8 +18,31 @@ for rec in recs:
 
 db = sqlite3.connect(sys.argv[2])
 cursor = db.cursor()
-cursor.execute("CREATE TABLE IF NOT EXISTS tags (scanid TEXT, tagid TEXT, seqstr TEXT, rec BYTEA, source TEXT, UNIQUE( tagid, seqstr, source ) )")
+#cursor.execute("CREATE TABLE IF NOT EXISTS tags (scanid TEXT, tagid TEXT, seqstr TEXT, rec BYTEA, source TEXT, UNIQUE( tagid, seqstr, source ) )")
+
+cursor.execute("CREATE TABLE IF NOT EXISTS tags (scanid TEXT, tagid TEXT, seqstr TEXT, rec BYTEA, source TEXT );")
+
 db.commit()   # This creates table, makes sure that tagid, seqstr and source are unique
+
+sql = ("DROP INDEX IF EXISTS index_seqs;")
+cursor.execute(sql)
+db.commit()
+
+sql = ("DROP INDEX IF EXISTS index_tagids;")
+cursor.execute(sql)
+db.commit()
+
+sql = ("DROP INDEX IF EXISTS index_tagids_seqs;")
+cursor.execute(sql)
+db.commit()
+
+sql = ("DROP INDEX IF EXISTS index_scanids;")
+cursor.execute(sql)
+db.commit()
+
+sql = "INSERT INTO tags VALUES(?, ?, ?, ?, ?)"
+cursor.executemany(sql, load )
+db.commit()
 
 sql = ("CREATE INDEX IF NOT EXISTS index_seqs ON tags (seqstr);")
 cursor.execute(sql)
@@ -29,12 +52,10 @@ sql = ("CREATE INDEX IF NOT EXISTS index_tagids ON tags (tagid);")
 cursor.execute(sql)
 db.commit()
 
-sql = ("CREATE INDEX IF NOT EXISTS index_scanids ON tags (scanid);")
+sql = ("CREATE INDEX IF NOT EXISTS index_tagids_seqs ON tags (tagid, seqstr);")
 cursor.execute(sql)
 db.commit()
 
-sql = "INSERT OR IGNORE INTO tags VALUES(?, ?, ?, ?, ?)"
-cursor.executemany(sql, load )
+sql = ("CREATE INDEX IF NOT EXISTS index_scanids ON tags (scanid);")
+cursor.execute(sql)
 db.commit()
-    
-
