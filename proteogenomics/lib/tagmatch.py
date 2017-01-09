@@ -202,29 +202,45 @@ class TagMatch:
     def nterms(self, pos):
         nterm = pos
         nterms=[]
-        valid_gaps=True
-        limit = self.maxngap + self.gap_tol
-        while valid_gaps==True:
-            amino_gap = self.target[nterm:pos]
-            gaps = peptide_mass(amino_gap, fixed_modifications=self.fixed_modifications, variable_modifications=self.variable_modifications, nterm=False, cterm=False)
-            self.gap_mass_dict[amino_gap].update(gaps)
-            validated=False
-            for gap in gaps:
-                diff_gaps = set([(abs(i-gap) < self.gap_tol) for i in self.gaps[0]])
-                if True in diff_gaps:
-                    validated=True
+        
+        if (self.specificity=='specific') and (self.max_missed_cleavages==0) and (self.enzyme=='Trypsin'):
+            valid_gaps=True
+            while valid_gaps==True:
+                if nterm == 0:
+                    nterms.append(nterm)
+                    return nterms
+                else: 
+                    current_amino = self.target[nterm]
+                    previous_amino = self.target[nterm-0]
+                    if (current_amino != 'P') and (previous_amino in {'R', 'K'}):
+                        nterms.append(nterm)
+                        return nterms
+                    nterm -= 1
+                    assert nterm >= 0
+        else:
+            valid_gaps=True
+            limit = self.maxngap + self.gap_tol
+            while valid_gaps==True:
+                amino_gap = self.target[nterm:pos]
+                validated=False
+                gaps = peptide_mass(amino_gap, fixed_modifications=self.fixed_modifications, variable_modifications=self.variable_modifications, nterm=False, cterm=False)
+                self.gap_mass_dict[amino_gap].update(gaps)
+                for gap in gaps:
+                    diff_gaps = set([(abs(i-gap) < self.gap_tol) for i in self.gaps[0]])
+                    if True in diff_gaps:
+                        validated=True
 
-            if nterm == 0:
-                if validated == True:
-                    nterms.append(nterm)
-                return nterms
-            else: 
-                if validated == True:
-                    nterms.append(nterm)
-                nterm -= 1
-                assert nterm >= 0
-            if min(gaps) > limit:
-                return nterms
+                if nterm == 0:
+                    if validated == True:
+                        nterms.append(nterm)
+                    return nterms
+                else: 
+                    if validated == True:
+                        nterms.append(nterm)
+                    nterm -= 1
+                    assert nterm >= 0
+                if min(gaps) > limit:
+                    return nterms
 
     def cterms(self, pos):
         cterm = pos
