@@ -96,10 +96,11 @@ class TagMatch:
         
         self.gap_mass_dict = defaultdict(set)
 
-        self.gaps = self.gaps()
-        self.max_gaps = (max(self.gaps[0]), max(self.gaps[1]))
-        self.maxngap = self.max_gaps[0]
-        self.maxcgap = self.max_gaps[1]
+        if not ((self.specificity=='specific') and (self.enzymes==['Trypsin'])):
+            self.gaps = self.gaps()
+            self.max_gaps = (max(self.gaps[0]), max(self.gaps[1]))
+            self.maxngap = self.max_gaps[0]
+            self.maxcgap = self.max_gaps[1]
 
         self.query=query
         self.query_length = len(query)
@@ -143,13 +144,17 @@ class TagMatch:
                         for amino_gaps in self.amino_gaps[target_peptide]:
                             nterm_gap_match=False
                             cterm_gap_match=False
-
-                            nterm_amino_gaps = self.gap_mass_dict[amino_gaps[0]]
+                            if not amino_gaps[0] in self.gap_mass_dict:
+                                nterm_amino_gaps = peptide_mass(amino_gaps[0], nterm=False, cterm=False, fixed_modifications=self.fixed_modifications, variable_modifications = self.variable_modifications)
+                            else:
+                                nterm_amino_gaps = self.gap_mass_dict[amino_gaps[0]]
                             for nterm_amino_gap in nterm_amino_gaps:
                                 if abs(nterm_amino_gap - nterm_mass_gap) < self.gap_tol:
                                     nterm_gap_match=True
-
-                            cterm_amino_gaps = self.gap_mass_dict[amino_gaps[1]]
+                            if not amino_gaps[1] in self.gap_mass_dict:
+                                cterm_amino_gaps = peptide_mass(amino_gaps[1], nterm=False, cterm=False, fixed_modifications = self.fixed_modifications, variable_modifications=self.variable_modifications)
+                            else:
+                                cterm_amino_gaps = self.gap_mass_dict[amino_gaps[1]]
                             for cterm_amino_gap in cterm_amino_gaps:
                                 if abs(cterm_amino_gap - cterm_mass_gap) < self.gap_tol:
                                     cterm_gap_match=True
@@ -185,6 +190,7 @@ class TagMatch:
         for coord in self.query_positions:
             nterms = self.nterms(coord[0])
             cterms = self.cterms(coord[1]-1)
+
             for nterm in nterms:
                 for cterm in cterms:
                     amino_acid_before = self.target[nterm -1: nterm]
@@ -203,18 +209,21 @@ class TagMatch:
         nterm = pos
         nterms=[]
         
-        if (self.specificity=='specific') and (self.max_missed_cleavages==0) and (self.enzyme=='Trypsin'):
+        if ((self.specificity=='specific') and (self.enzymes==['Trypsin'])):
             valid_gaps=True
+            missed=0
             while valid_gaps==True:
                 if nterm == 0:
                     nterms.append(nterm)
                     return nterms
                 else: 
                     current_amino = self.target[nterm]
-                    previous_amino = self.target[nterm-0]
+                    previous_amino = self.target[nterm-1]
                     if (current_amino != 'P') and (previous_amino in {'R', 'K'}):
                         nterms.append(nterm)
-                        return nterms
+                        missed += 1
+                        if missed > self.max_missed_cleavages:
+                            return nterms
                     nterm -= 1
                     assert nterm >= 0
         else:
@@ -245,30 +254,52 @@ class TagMatch:
     def cterms(self, pos):
         cterm = pos
         cterms=[]
-        valid_gaps =True
-        limit = self.maxcgap + self.gap_tol
-        while valid_gaps ==True:
-            amino_gap = self.target[pos +1:cterm+1]
-            gaps = peptide_mass(amino_gap, fixed_modifications=self.fixed_modifications, variable_modifications=self.variable_modifications, nterm=False, cterm=False)
-            self.gap_mass_dict[amino_gap].update(gaps)
-            validated=False
-            
-            for gap in gaps:
-                diff_gaps = set([(abs(i-gap) < self.gap_tol) for i in self.gaps[1]])
-                if True in diff_gaps:
-                    validated=True
+        
+        if ((self.specificity=='specific') and (self.enzymes==['Trypsin'])):
+            valid_gaps =True
+            missed=0
+            while valid_gaps ==True:
+                amino_gap = self.target[pos +1:cterm+1]
 
-            if cterm == self.target_length-1:
-                if validated == True:
+                if cterm == self.target_length-1:
                     cterms.append(cterm + 1)
-                return cterms
-            else: 
-                if validated == True:
-                    cterms.append(cterm + 1)
-                cterm += 1
-                assert cterm <= self.target_length -1
-            if min(gaps) > limit:
-                return cterms
+                    return cterms
+                else: 
+                    current_amino = self.target[cterm]
+                    next_amino = self.target[cterm +1]
+                    if (next_amino != 'P') and (current_amino in {'R', 'K'}):
+                        cterms.append(cterm + 1)
+                        missed += 1
+                        if missed > self.max_missed_cleavages:
+                            return cterms
+                    cterm += 1
+                    assert cterm <= self.target_length -1
+
+        else:
+            valid_gaps =True
+            limit = self.maxcgap + self.gap_tol
+            while valid_gaps ==True:
+                amino_gap = self.target[pos +1:cterm+1]
+                gaps = peptide_mass(amino_gap, fixed_modifications=self.fixed_modifications, variable_modifications=self.variable_modifications, nterm=False, cterm=False)
+                self.gap_mass_dict[amino_gap].update(gaps)
+                validated=False
+                
+                for gap in gaps:
+                    diff_gaps = set([(abs(i-gap) < self.gap_tol) for i in self.gaps[1]])
+                    if True in diff_gaps:
+                        validated=True
+
+                if cterm == self.target_length-1:
+                    if validated == True:
+                        cterms.append(cterm + 1)
+                    return cterms
+                else: 
+                    if validated == True:
+                        cterms.append(cterm + 1)
+                    cterm += 1
+                    assert cterm <= self.target_length -1
+                if min(gaps) > limit:
+                    return cterms
 
     def gaps(self):
         ngaps = []
