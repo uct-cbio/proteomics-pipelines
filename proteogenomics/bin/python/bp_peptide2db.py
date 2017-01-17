@@ -37,9 +37,9 @@ variable_modifications = [i for i in sys.argv[8].split(';') if i != '']
 sqldb = sqlite3.connect(sys.argv[11])
 cursor = sqldb.cursor()
 
-#tag_df = pd.read_sql("SELECT DISTINCT tagid, seqstr from tags", sqldb, columns=['tagid', 'seqstr'])
-#tag_df = tag_df.drop_duplicates()
-#tagids = defaultdict(set)
+tag_df = pd.read_sql("SELECT DISTINCT tagid, seqstr from tags", sqldb, columns=['tagid', 'seqstr'])
+tag_df = tag_df.drop_duplicates()
+tagids = defaultdict(set)
 
 def create_dct(table):
     global tagids
@@ -47,8 +47,8 @@ def create_dct(table):
     seq = table['seqstr']
     tagids[seq].add(tid)
 
-#tag_df.apply(create_dct, axis=1)
-#del tag_df
+tag_df.apply(create_dct, axis=1)
+del tag_df
 
 Trie = pickle.load(open(sys.argv[9],'rb'))
 print('loaded trie')
@@ -66,6 +66,7 @@ accession = []
 samples = [] 
 
 for rec in db:
+    #print(rec.format('fasta'))
     qrec = str(rec.seq)
     rec_peps = set()
     rec_pep_ids = set()
@@ -75,10 +76,12 @@ for rec in db:
     for pepstr in peptides_mapped:
         #trec = pepdict[pepstr]
         
-        cursor.execute("select DISTINCT tagid from tags where seqstr=?",(pepstr,))
-        ids = set([i[0] for i in cursor.fetchall()])
-        
-        #ids = tagids[pepstr]
+        #print('getting ids')
+        #cursor.execute("select tagid from tags where seqstr=?",(pepstr,))
+        #ids = set([i[0] for i in cursor.fetchall()])
+        #print(ids)
+
+        ids = tagids[pepstr]
 
         #print(ids)
         #tseq = str(trec.seq)

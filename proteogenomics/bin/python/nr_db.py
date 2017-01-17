@@ -7,6 +7,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 db = list(SeqIO.parse(sys.argv[1],'fasta'))
+tag = sys.argv[2]
 
 seqdct = defaultdict(set)
 for rec in db:
@@ -16,10 +17,10 @@ count = 1
 newrecs = []
 
 for seq in list(seqdct.keys()):
-    id = 'generic|recno{}|'.format(str(count)) 
+    id = 'generic|{}{}|'.format(tag, str(count)) 
     description = '; '.join(seqdct[seq])
     newrec = SeqRecord(seq=Seq(seq), id=id, description = description)
     newrecs.append(newrec)
     count += 1
 
-SeqIO.write( newrecs, sys.argv[1].split('.fasta')[0] + '_nr.fasta' , 'fasta')
+SeqIO.write( newrecs, sys.argv[3] , 'fasta')

@@ -37,16 +37,27 @@ function ps_prepare {
 
     cp ${target_fasta} ${fasta_folder}
     cp ${contaminant_fasta} ${fasta_folder}
-    cp ${spectrum_files}/*.mgf $mgf_folder
     
+    cp ${spectrum_files}/*.mgf $mgf_folder
+
     contaminant=$(basename $contaminant_fasta)
     target=$(basename $target_fasta)
+    
+    target_fasta=${fasta_folder}/${target}
+    contaminant_fasta=${fasta_folder}/${contaminant}
+
+    nr_db.py ${target_fasta} 'TARGET' ${target_fasta%.fasta}_nr.fasta
+    nr_db.py ${contaminant_fasta} 'CONTAMINANT' ${contaminant_fasta%.fasta}_nr.fasta
+    
+    target_fasta=${fasta_folder}/${target%.fasta}_nr.fasta
+    contaminant_fasta=${fasta_folder}/${contaminant%.fasta}_nr.fasta
 
     contaminant=${contaminant%.fasta}
     target=${target%.fasta}
 
-    fasta=${fasta_folder}/${target}_${contaminant}.fasta
-    cat ${target_fasta} <(annotateContaminantUniprotFasta.py ${contaminant_fasta}) > ${fasta}
+    fasta=${fasta_folder}/${target}_${contaminant}_nr.fasta
+    #cat ${target_fasta} <(annotateContaminantUniprotFasta.py ${contaminant_fasta}) > ${fasta}
+    cat ${target_fasta} ${contaminant_fasta} > ${fasta}
     #fasta=${fasta_folder}/${target}.fasta 
 
     unvalidated_folder=${output_folder}"/unvalidated"
@@ -78,6 +89,12 @@ function ps_prepare {
     wait
     # Set Enzyme
     java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -id_params ${output_folder}/identification.par -out ${output_folder}/identification.par -enzyme "${enzyme}" 
+    wait
+    # Set Specificity
+    java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -id_params ${output_folder}/identification.par -out ${output_folder}/identification.par -specificity "${specificity}" 
+    wait
+    # Set Digestion
+    java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -id_params ${output_folder}/identification.par -out ${output_folder}/identification.par -digestion "${digestion}" 
     wait
     # Set Modifications
     java $JVM_ARGS -cp ${output_folder}/sg/SearchGUI-*.jar eu.isas.searchgui.cmd.IdentificationParametersCLI -id_params ${output_folder}/identification.par -out ${output_folder}/identification.par -fixed_mods "${fixed_mods}" -variable_mods "${variable_mods}"

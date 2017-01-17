@@ -8,9 +8,9 @@ options(bitmapType='cairo')
 option_list = list(
  make_option(c("-i", "--indir"), type="character", default=NULL, 
               help="Directory of mzIdentML files for global FDR control", metavar="character"),
-	make_option(c("-v", "--fdr_value"), type="integer", default=1, 
+ make_option(c("-v", "--fdr_value"), type="integer", default=1, 
               help="Percentage value to control the FDR", metavar="character"),
-	make_option(c("-l","--fdr_level"), type="character", default='accession',
+ make_option(c("-l","--fdr_level"), type="character", default='accession',
               help="The level to control the FDR ('PSM', 'peptide' or 'accession')", metavar="character"))
 
 opt_parser = OptionParser(option_list=option_list);
@@ -152,12 +152,19 @@ ggplot(repCount, aes(x=unf.pepSeq.repcount, y=Freq, fill=isDecoy)) + geom_bar(st
 dev.off()
 
 # PSM condifence (converted to PEP scores) 
-msnid$`PeptideShaker PSM confidence` <- as.numeric(msnid$`PeptideShaker PSM confidence`)
-msnid$PEP <- 1.0 - msnid$`PeptideShaker PSM confidence`/100.0 
+#msnid$`PeptideShaker PSM confidence` <- as.numeric(msnid$`PeptideShaker PSM confidence`)
+#msnid$PEP <- 1.0 - msnid$`PeptideShaker PSM confidence`/100.0 
 
-jpeg(paste(outdir,'/qc/psm_PEP.jpeg',sep=''))
-params <- psms(msnid)[,c("PEP","isDecoy")]
-ggplot(params) + geom_density(aes(x = PEP, color = isDecoy, ..count..))
+#jpeg(paste(outdir,'/qc/psm_PEP.jpeg',sep=''))
+#params <- psms(msnid)[,c("PEP","isDecoy")]
+#ggplot(params) + geom_density(aes(x = PEP, color = isDecoy, ..count..))
+#dev.off()
+
+# PSM confidence  
+msnid$`PeptideShaker PSM confidence` <- as.numeric(msnid$`PeptideShaker PSM confidence`)
+jpeg(paste(outdir,'/qc/psm_confidence.jpeg',sep=''))
+params <- psms(msnid)[,c("PeptideShaker PSM confidence","isDecoy")]
+ggplot(params) + geom_density(aes(x="PeptideShaker PSM confidence", color = isDecoy, ..count..))
 dev.off()
 
 # PSM mass error - parent
@@ -186,15 +193,16 @@ unfiltered <- msnid
 msnid$minPepLength <- msnid$PepLength
 
 print('Creating MSnIDFilter object:')
+msnid$PeptideShakerPSMconfidence <- msnid$`PeptideShaker PSM confidence`
 
 filtObj <- MSnIDFilter(msnid)
 
-filtObj$absParentMassErrorPPM <- list(comparison="<", threshold=10.0)
-filtObj$PEP <- list(comparison="<", threshold=0.01)
-filtObj$PepLength <- list(comparison="<=", threshold=35)
-filtObj$minPepLength <- list(comparison=">=", threshold=6)
-filtObj$numMissCleavages <- list(comparison="<=", threshold=2)
-filtObj$numIrregCleavages <- list(comparison="<=", threshold=2)
+filtObj$absParentMassErrorPPM <- list(comparison="<", threshold=10.000)
+filtObj$PeptideShakerPSMconfidence  <- list(comparison=">", threshold=80.000)
+filtObj$PepLength <- list(comparison="<", threshold=35)
+filtObj$minPepLength <- list(comparison=">", threshold=6)
+filtObj$numMissCleavages <- list(comparison="<", threshold=2)
+filtObj$numIrregCleavages <- list(comparison="<", threshold=2)
 
 #filtObj$unf.pepSeq.repcount <- list(comparison=">=", threshold=1)
 
@@ -218,14 +226,12 @@ cat('\n')
 show(filtObj.nm)
 show(apply_filter(msnid, filtObj.nm))
 
-
 print('Optimizing MSnIDFilter.NM object with "Simulated-Annealing" method:')
 filtObj.sa <- optimize_filter(filtObj.nm, msnid, fdr.max=fdr_value, method="SANN",level=fdr_level, n.iter=1000) 
 cat('\n')
 
 print('Filter msnid object using the MSnIDFilter.SANN:')
 msnid <- apply_filter(msnid, filtObj.sa)
-
 
 show(filtObj.sa)
 show(msnid)
@@ -281,9 +287,15 @@ ggplot(repCount, aes(x=filt.pepSeq.repcount, y=Freq, fill=isDecoy)) + geom_bar(s
 dev.off()
 
 # PSM condifence (converted to PEP scores) 
-jpeg(paste(outdir,'/filtered/psm_PEP.jpeg',sep=''))
-params <- psms(msnid)[,c("PEP","isDecoy")]
-ggplot(params) + geom_density(aes(x = PEP, color = isDecoy, ..count..))
+#jpeg(paste(outdir,'/filtered/psm_PEP.jpeg',sep=''))
+#params <- psms(msnid)[,c("PEP","isDecoy")]
+#ggplot(params) + geom_density(aes(x = PEP, color = isDecoy, ..count..))
+#dev.off()
+
+# PSM condifence 
+jpeg(paste(outdir,'/filtered/psm_confidence.jpeg',sep=''))
+params <- psms(msnid)[,c("PeptideShaker PSM confidence","isDecoy")]
+ggplot(params) + geom_density(aes(x = "PeptideShaker PSM confidence", color = isDecoy, ..count..))
 dev.off()
 
 # PSM mass error - parent
@@ -313,7 +325,7 @@ save(processed.msnid, file=paste(outdir,'/msnid_processed.Rdata',sep=''))
 decoy <- apply_filter(msnid, "isDecoy == TRUE")
 
 msnid <- apply_filter(msnid, "isDecoy == FALSE")
-contaminants <- apply_filter(msnid, "grepl('CONTAMINANT',description)")
+contaminants <- apply_filter(msnid, "grepl('CONTAMINANT',accession)")
 #msnid <- apply_filter(msnid, "!grepl('CONTAMINANT',description)")
 
 contaminant.df <- psms(contaminants)
@@ -339,8 +351,6 @@ accession.df <- add_rownames(accession.df, "Row")
 
 unfiltered.df <- psms(unfiltered)
 unfiltered.df <- add_rownames(unfiltered.df, "Row")
-
-
 
 table_dir <- paste(outdir, '/tables',sep='')
 dir.create(table_dir, showWarnings=TRUE,recursive=FALSE,mode='0777')
