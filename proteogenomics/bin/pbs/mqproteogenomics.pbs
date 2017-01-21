@@ -48,8 +48,12 @@ python2ve=$HOME/ve273   # interproscan needs python 2 (Create one with virtualen
 #############################
 # Identification Statistics #
 #############################
+#mq_basestats.py $config $outpath
 
-mq_basestats.py $config $outpath
+#################
+# GBROWSE DATA  #
+#################
+
 
 
 ##################
