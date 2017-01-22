@@ -1,0 +1,6 @@
+version: '2'
+services:
+  gbrowse2:
+    image: cbio/gbrowse2:latest
+    network_mode: "host"
+
