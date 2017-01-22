@@ -43,7 +43,6 @@ python2ve=$HOME/ve273   # interproscan needs python 2 (Create one with virtualen
 #mq_peptide_to_protein.py $config $outpath
 #mq_export_tables.py $config $outpath
 
-# Differential abundance analysis
 
 #############################
 # Identification Statistics #
@@ -53,8 +52,7 @@ python2ve=$HOME/ve273   # interproscan needs python 2 (Create one with virtualen
 #################
 # GBROWSE DATA  #
 #################
-
-
+mq_peptide_features.py $config $outpath
 
 ##################
 # IPS Enrichment #
@@ -63,6 +61,9 @@ python2ve=$HOME/ve273   # interproscan needs python 2 (Create one with virtualen
 #mq_annotate.py $outpath
 #mq_genesets.R --outdir $outpath --keggid $kegg_id
 
+###################################
+# Differential abundance analysis #
+###################################
 #mq_experimental_design.py $config $outpath
 #rm -rf ${outpath}/diff
 #mq_differential_abundance.R -d ${outpath}/experimental_design.R -p ${outpath}/combined.csv -o ${outpath}/diff

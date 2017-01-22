@@ -659,7 +659,7 @@ class peptides2genome:
                     first_codon = orf_nucs[nuc_pos:nuc_pos + 3]
                     first_amino = orf_trans[first_pos]
                     if (first_amino == 'M') or (first_codon in self.start_codons):
-                        pep_positions.append(first_pos)
+                        pep_positions.append(first_pos )
                         #position_aminos[first_pos].append('M')
                         self.peptide2orf["M" + metpep].append(orf_id)
 
@@ -674,10 +674,11 @@ class peptides2genome:
             #if most_upstream_codon_pos/3 in non_met_position_aminos:
             #    most_upstream_aminos += non_met_position_aminos[most_upstream_codon_pos/3]
             
-            return most_upstream_codon_pos
+            return most_upstream_codon_pos + 1
+
     def most_upstream_codon(self, df):
         upstream_start = df['Most_Upstream_Inferred_Start']
-        nuc_pos = int(upstream_start)
+        nuc_pos = int(upstream_start) - 1
         orf_sequence = df['ORF_sequence']
         upstream_codon = orf_sequence[nuc_pos : nuc_pos + 3]
         return upstream_codon
@@ -686,7 +687,7 @@ class peptides2genome:
         upstream_start = df['Most_Upstream_Inferred_Start']
         upstream_codon = df['Most_Upstream_Inferred_Codon']
         orf_trans = df['ORF_translation']
-        most_upstream = orf_trans[int(upstream_start/3):]
+        most_upstream = orf_trans[(int(upstream_start)-1)/3:]
         return most_upstream        
 
     def ORF_set_count(self):
