@@ -43,7 +43,7 @@ def gff3_peptide_export(df):
     Peptide_starts = [(int(i)-1) * 3 for i in df['Peptide_starts'].split(';')]
     ORF_translation = df['ORF_translation']
     Peptide_sequence = df['Peptide_sequence']
-    recno = 'recno_' + df['ORF_id'].split('|')[1].split('recno_')[1]
+    #recno = 'recno_' + df['ORF_id'].split('|')[1].split('recno_')[1]
     ORF_id = df['ORF_id'].split('|')[1]
 
     ORF_sequence = df['ORF_sequence']
@@ -69,16 +69,18 @@ def gff3_peptide_export(df):
     Peptide_inferred_translated_sequence_specific = df['Peptide_inferred_translated_sequence_specific']
     Peptide_genome_ORF_count = df['Peptide_genome_ORF_count']
     Strain_identified = df['Strain_identified']
-    mapped_up = ','.join(pep2entry[Peptide_sequence]) 
+    mapped_up = ' '.join(pep2entry[Peptide_sequence]) 
     
     try:
-        mapped_ref = ','.join(pep2reference[Peptide_sequence]) 
+        mapped_ref = ' '.join(pep2reference[Peptide_sequence]) 
     except:
         mapped_ref= 'None'
 
-    #attributes = 'ID=peptide-{};Name={};Note=ORF id: {}%0APeptide sequence: {}%0ATryptic N-terminal: {}%0ATryptic C-terminal: {}%0APrevious codon: {}%0AFirst codon: {}%0AAmino acid before: {}%0AFirst amino acid: {}%0ALast amino acid: {}%0AAmino acid after: {}%0ASpecific: {}%0APeptide ORF count: {}%0AIdentified in strain: {}%0AMapped reference proteins {}: {}%0AMapped taxon proteins (TaxID {}): {}'.format(recno, Peptide_sequence, ORF_id, Peptide_sequence, Peptide_tryptic_nterm, Peptide_tryptic_cterm, Peptide_previous_codon, Peptide_first_codon, Peptide_amino_acid_before, Peptide_amino_acid_first, Peptide_amino_acid_last, Peptide_amino_acid_after, Peptide_inferred_translated_sequence_specific, Peptide_genome_ORF_count, Strain_identified, config.reference_proteome_id, mapped_ref, config.group_taxid, mapped_up)
+    attributes1 = 'ID=peptide-{};Name={};Note=ORF id {},%0APeptide sequence {}'.format(ORF_id, ORF_id, ORF_id, Peptide_sequence)
     
-    attributes = 'ID=peptide-{};Name={};Note=ORF id {}, Peptide sequence {}, Mapped reference proteins ({}) {}, Mapped taxon proteins (TaxID {}) {}'.format(recno, Peptide_sequence, ORF_id, Peptide_sequence, config.reference_proteome_id, mapped_ref, config.group_taxid, mapped_up)
+    attributes2 = 'Name={};Note=ORF id {},%0APeptide sequence {},%0ATryptic N-terminal {},%0ATryptic C-terminal {},%0APrevious codon {},%0AFirst codon {},%0AAmino acid before {},%0AFirst amino acid {},%0ALast amino acid {},%0AAmino acid after {},%0ASpecific {},%0APeptide ORF count {},%0AIdentified in strain {},%0AMapped reference proteins (Proteome ID {}) {},%0AMapped taxon proteins (TaxID {}) {}'.format(Peptide_sequence, ORF_id, Peptide_sequence, Peptide_tryptic_nterm, Peptide_tryptic_cterm, Peptide_previous_codon, Peptide_first_codon, Peptide_amino_acid_before, Peptide_amino_acid_first, Peptide_amino_acid_last, Peptide_amino_acid_after, Peptide_inferred_translated_sequence_specific, Peptide_genome_ORF_count, Strain_identified, config.reference_proteome_id, mapped_ref, config.group_taxid, mapped_up)
+    #attributes1 = 'ID=peptide-{};Name={};Note=ORF id {};Peptide sequence {};Mapped reference proteins ({}) {}, Mapped taxon proteins (TaxID {}) {}'.format(ORF_id, Peptide_sequence, ORF_id, Peptide_sequence, config.reference_proteome_id, mapped_ref, config.group_taxid, mapped_up)
+    
     for i in range(len(Peptide_starts)):
         pstart = Peptide_starts[i]
         pend   = Peptide_ends[i]
@@ -98,7 +100,11 @@ def gff3_peptide_export(df):
             assert len(str(nucs)) % 3 == 0
             trans = str(translate(nucs, table=11, cds=False)) 
             assert trans[1:] == Peptide_sequence[1:]
-        row = reference_sequence +'\t' + source +'\t' + type + '\t' + str(gstart) + '\t' + str(gend) + '\t' + score + '\t' + strand + '\t' + phase + '\t' + attributes
+
+        row = reference_sequence +'\t' + 'match' +'\t' + type + '\t' + str(gstart) + '\t' + str(gend) + '\t' + score + '\t' + strand + '\t' + phase + '\t' + attributes1
+        peptide_columns.append(row)
+        
+        row = reference_sequence +'\t' + source +'\t' + type + '\t' + str(gstart) + '\t' + str(gend) + '\t' + score + '\t' + strand + '\t' + phase + '\t' + attributes2
         peptide_columns.append(row)
 
 def gff3_orf_export(df):
@@ -165,6 +171,7 @@ for strain in config.strains:
     for rec in genome:
         id = rec.id.split('|')[0]
         gdict[id] = rec
+    
     #strain_identified = strain_identified.head()
     orfs_identified = strain_identified.drop_duplicates('ORF_id')
     orfs_identified.apply(gff3_orf_export,axis=1)

@@ -17,8 +17,8 @@ hostname
 # This script is based on the txt output of maxquant
 # The output directory gets deleted per run
 set -e
-config='/home/ptgmat003/cbio-pipelines/proteogenomics/bin/config/mq_proteogeomics_example_config.py'
-outpath=/researchdata/fhgfs/ptgmat003/hexout/hypohyper/mq
+config='/Users/thyspotgieter/repos/cbio-pipelines/proteogenomics/bin/config/mq_proteogeomics_example_config.py'
+outpath=/Users/thyspotgieter/bio/mtb/mq
 kegg_id='mtu'
 python2ve=$HOME/ve273   # interproscan needs python 2 (Create one with virtualenv)
 
@@ -52,7 +52,10 @@ python2ve=$HOME/ve273   # interproscan needs python 2 (Create one with virtualen
 #################
 # GBROWSE DATA  #
 #################
-mq_peptide_features.py $config $outpath
+#mq_peptide_features.py $config $outpath
+#mq_domain_features.py $config $outpath
+#mq_contig_heatmaps.py $config $outpath
+mq_wiggle_features.py $config $outpath
 
 ##################
 # IPS Enrichment #

@@ -28,7 +28,7 @@ RUN apt-get -y install postgresql libdbd-pg-perl sudo
 RUN apt-get -y install libdigest-sha-perl libssl-dev libmath-bigint-gmp-perl \
   libnet-openid-consumer-perl libnet-smtp-ssl-perl libauthen-sasl-perl libcrypt-ssleay-perl
 
-RUN git clone https://github.com/bioperl/bioperl-live.git
+RUN GIT_TRACE=1 git clone https://github.com/bioperl/bioperl-live.git
 RUN cd bioperl-live  && git checkout bioperl-release-1-6-901 && yes | perl Build.PL && yes | ./Build installdeps && ./Build install
 
 
@@ -78,8 +78,8 @@ RUN cd /root/GBrowse && su user && ./Build install
 # install mugsy
 ENV MUGSY_INSTALL "/root/mugsy_x86-64-v1r2.3"
 # below is just if sourceforge blocks you 
-COPY mugsy_x86-64-v1r2.3.tgz /root/download
-#RUN cd /root && wget https://sourceforge.net/projects/mugsy/files/mugsy_x86-64-v1r2.3.tgz/download
+#COPY mugsy_x86-64-v1r2.3.tgz /root/download
+RUN cd /root && wget https://sourceforge.net/projects/mugsy/files/mugsy_x86-64-v1r2.3.tgz/download
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 RUN cd /root && tar xvzf download && cd mugsy* && echo "export PATH=$PATH::"`pwd` >> ~/.bashrc && echo "source "`pwd`"/mugsyenv.sh" >> ~/.bashrc
 
@@ -99,8 +99,6 @@ COPY syntenydata.py /root/syntenydata.py
 COPY mugsyenv.sh $MUGSY_INSTALL
 
 RUN cd /var/www && ln -s ../tmp
-RUN mkdir /var/www/tmp
-RUN mkdir /var/www/tmp/gbrowse2
 RUN chmod 777 /var/www/tmp/gbrowse2
 
 # Remove proxy
