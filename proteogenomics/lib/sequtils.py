@@ -29,12 +29,20 @@ import concurrent.futures
 import sys
 import algo
 
-def alt_starts_recs(records, starts = ['ATG','GTG','TTG']):
+def alt_starts_recs(records, starts = ['ATG','GTG','TTG'], peptide_length=20):
     all= []
     for seq in records:
         alt_seqs = alt_tss(seq, starts = starts)
         all += alt_seqs
-    return all
+    
+    newall = []
+
+    for rec in all:
+        temp = str(rec.seq)
+        if len(temp) >= peptide_length:
+            newall.append(rec)
+    
+    return newall
 
 def Three_Frames(sequence): # All three frames on the forward strand (returns three sequences and includes possible stop codons)
     sequence_length = len(sequence)
