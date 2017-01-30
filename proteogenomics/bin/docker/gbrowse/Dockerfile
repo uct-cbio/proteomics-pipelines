@@ -31,7 +31,6 @@ RUN apt-get -y install libdigest-sha-perl libssl-dev libmath-bigint-gmp-perl \
 RUN GIT_TRACE=1 git clone https://github.com/bioperl/bioperl-live.git
 RUN cd bioperl-live  && git checkout bioperl-release-1-6-901 && yes | perl Build.PL && yes | ./Build installdeps && ./Build install
 
-
 #MySql
 RUN echo "mysql-server mysql-server/root_password password gbrowse2" | sudo debconf-set-selections
 RUN echo "mysql-server mysql-server/root_password_again password gbrowse2" | sudo debconf-set-selections
@@ -73,7 +72,6 @@ RUN adduser user
 RUN adduser user user
 RUN echo 'user:user' | chpasswd
 RUN cd /root/GBrowse && su user && ./Build install
-
 
 # install mugsy
 ENV MUGSY_INSTALL "/root/mugsy_x86-64-v1r2.3"
