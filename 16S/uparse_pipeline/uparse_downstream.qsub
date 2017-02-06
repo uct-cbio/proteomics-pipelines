@@ -16,7 +16,7 @@ cat $inDir/*filtered_3.fasta > $outDir/filtered_all.fa # Katie added some primer
 #derep fullength workaround:
 cat $outDir/filtered_all.fa | grep -v "^>" | grep -v [^ACGTacgt] | sort -d | uniq -c | while read abundance sequence ; do hash=$(printf "${sequence}" | sha1sum); hash=${hash:0:40};printf ">%s;size=%d;\n%s\n" "${hash}" "${abundance}" "${sequence}"; done > $outDir/filtered_all.uniques.fa 2> $outDir/filtered_all.uniques.fa.e
 
-usearch9 -sortbysize $outDir/filtered_all.uniques.fa -output $outDir/filtered_all.uniques.sorted.fa -minsize 2
+usearch9 -sortbysize $outDir/filtered_all.uniques.fa -fastaout $outDir/filtered_all.uniques.sorted.fa -minsize 2
 usearch9 -cluster_otus $outDir/filtered_all.uniques.sorted.fa -otu_radius_pct 3.0 -otus $outDir/otus_raw.fa
 usearch9 -uchime2_ref $outDir/otus_raw.fa -db /scratch/DB/bio/qiime/uchime/gold.fa -mode high_confidence -strand plus -notmatched $outDir/otus_chimOUT.fa
 fasta_number.py $outDir/otus_chimOUT.fa OTU_ > $outDir/otus_repsetOUT.fa
