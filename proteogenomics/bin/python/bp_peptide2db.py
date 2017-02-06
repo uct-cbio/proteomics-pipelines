@@ -12,25 +12,49 @@ import algo
 import re
 import tagmatch
 import proteomics
+import pickle
+import numpy as np
+import sqlite3
 
 db = SeqIO.parse(sys.argv[1],'fasta')
 print('loaded db')
 
-peprecs = SeqIO.parse(sys.argv[2], 'fasta')
+#pepdict = pickle.load(open(sys.argv[2], 'rb'))
+#print('loaded peptide dict')
 
-pepdict = {}
-for peprec in peprecs:
-    pepdict[str(peprec.seq)]=peprec
+#Trie = algo.Trie(list(pepdict.keys()))
 
-del peprecs
+prectol = float(sys.argv[2])
 
-print('created peptide dict')
+specificity=sys.argv[3]
 
-Trie = algo.Trie(list(pepdict.keys()))
-print('created trie')
+enzymes = [i for i in sys.argv[4].split(';') if i != '']
+max_missed_cleavages = int(sys.argv[5])
+gap_tol = float(sys.argv[6])
+fixed_modifications = [i for i in sys.argv[7].split(';') if i != '']
+variable_modifications = [i for i in sys.argv[8].split(';') if i != '']
 
-fragtol = float(sys.argv[3])
-out = sys.argv[4] + '/' + sys.argv[1].split('/')[-1] +'.csv'
+sqldb = sqlite3.connect(sys.argv[11])
+cursor = sqldb.cursor()
+
+tag_df = pd.read_sql("SELECT DISTINCT tagid, seqstr from tags", sqldb, columns=['tagid', 'seqstr'])
+tag_df = tag_df.drop_duplicates()
+tagids = defaultdict(set)
+
+def create_dct(table):
+    global tagids
+    tid = table['tagid']
+    seq = table['seqstr']
+    tagids[seq].add(tid)
+
+tag_df.apply(create_dct, axis=1)
+del tag_df
+
+Trie = pickle.load(open(sys.argv[9],'rb'))
+print('loaded trie')
+
+out = sys.argv[10] + '/' + sys.argv[1].split('/')[-1] +'.csv'
+
 cv = []
 scounts = []
 length = []
@@ -42,30 +66,42 @@ accession = []
 samples = [] 
 
 for rec in db:
+    #print(rec.format('fasta'))
     qrec = str(rec.seq)
     rec_peps = set()
     rec_pep_ids = set()
     TrieMatch=algo.TrieMatch(Trie, qrec)
     peptides_mapped=TrieMatch.trie_export()
     covered = []
-
     for pepstr in peptides_mapped:
-        trec = pepdict[pepstr]
-        tseq = str(trec.seq)
-        ids = trec.description.split('scans=')[1].split('|')
+        #trec = pepdict[pepstr]
+        
+        #print('getting ids')
+        #cursor.execute("select tagid from tags where seqstr=?",(pepstr,))
+        #ids = set([i[0] for i in cursor.fetchall()])
+        #print(ids)
+
+        ids = tagids[pepstr]
+
+        #print(ids)
+        #tseq = str(trec.seq)
+        tseq = pepstr
+        #ids = trec.description.split('scans=')[1].split('|')
         prec_ions = defaultdict(set)
         
         for id in ids:
             _ = id.split(';')
-            mz = float(_[-2])
-            charge = int(_[-1][0])
-            mw = tagmatch.mz2mw(mz, charge)
-            prec_ions[mw].add(id)
+            scan = _[0] + ';' + _[1]
+            mw = np.round(float(_[2].split('mw=')[1]),4)
+            ngap = np.round(float(_[3].split('ngap=')[1]),4)
+            cgap = np.round(float(_[4].split('cgap=')[1]),4)
+            prec_ions[(ngap, mw, cgap)].add(scan)
         
         prec_array = list(prec_ions.keys())
-        tm  = tagmatch.TagMatch(pepstr, prec_array, qrec, tol = fragtol)
+        #print(pepstr, prec_array, qrec, prectol, specificity)
+        tm  = tagmatch.TagMatch(pepstr, prec_array, qrec, prec_tol = prectol, specificity=specificity, enzymes=enzymes, max_missed_cleavages=max_missed_cleavages, gap_tol=gap_tol , fixed_modifications=fixed_modifications, variable_modifications=variable_modifications)
         rec_peps.update(tm.validated_peptides)
-        
+
         for _ in tm.validated_precursor:
             validated_scans = prec_ions[_]
             rec_pep_ids.update(validated_scans)

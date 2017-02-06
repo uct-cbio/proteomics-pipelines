@@ -17,8 +17,8 @@ hostname
 # This script is based on the txt output of maxquant
 # The output directory gets deleted per run
 set -e
-config='/home/ptgmat003/cbio-pipelines/proteogenomics/bin/config/mq_proteogeomics_example_config.py'
-outpath=/researchdata/fhgfs/ptgmat003/hexout/hypohyper/mq
+config='/Users/thyspotgieter/repos/cbio-pipelines/proteogenomics/bin/config/mq_proteogeomics_example_config.py'
+outpath=/Users/thyspotgieter/bio/mtb/mq
 kegg_id='mtu'
 python2ve=$HOME/ve273   # interproscan needs python 2 (Create one with virtualenv)
 
@@ -43,14 +43,19 @@ python2ve=$HOME/ve273   # interproscan needs python 2 (Create one with virtualen
 #mq_peptide_to_protein.py $config $outpath
 #mq_export_tables.py $config $outpath
 
-# Differential abundance analysis
 
 #############################
 # Identification Statistics #
 #############################
+#mq_basestats.py $config $outpath
 
-mq_basestats.py $config $outpath
-
+#################
+# GBROWSE DATA  #
+#################
+#mq_peptide_features.py $config $outpath
+#mq_domain_features.py $config $outpath
+#mq_contig_heatmaps.py $config $outpath
+mq_wiggle_features.py $config $outpath
 
 ##################
 # IPS Enrichment #
@@ -59,6 +64,9 @@ mq_basestats.py $config $outpath
 #mq_annotate.py $outpath
 #mq_genesets.R --outdir $outpath --keggid $kegg_id
 
+###################################
+# Differential abundance analysis #
+###################################
 #mq_experimental_design.py $config $outpath
 #rm -rf ${outpath}/diff
 #mq_differential_abundance.R -d ${outpath}/experimental_design.R -p ${outpath}/combined.csv -o ${outpath}/diff

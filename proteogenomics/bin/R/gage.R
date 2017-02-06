@@ -1,26 +1,20 @@
 library(gage)
 library(limma)
+library(pathview)
 
 path <- '/Users/thys/Desktop/mq/mq/'
-
 
 source(paste( path, 'experimental_design.R',sep=''))
 
 species='mtu'
 
-######################
-# GENE SETS ##########
-######################
-
+# GENE SETS 
 load(paste(path,'gsea/bpset.Rdata',sep=''))
 load(paste(path,'gsea/mfset.Rdata',sep=''))
 load(paste(path,'gsea/ccset.Rdata',sep=''))
 load(paste(path,'gsea/keggset.Rdata',sep=''))
 
-
-######################
-# Samples ############
-######################
+# Samples 
 cols <- c("iBAQ.507_ST_2", 
           "iBAQ.507_ST_1",
           
@@ -94,41 +88,65 @@ process <- function(table , ref, samp, outpath, refdata, samedir) {
   setwd(outpath)
   ref.d <- refdata[, samp]-rowMeans(refdata[, ref])
   res <- analyse(table, kegg.set, ref, samp, TRUE)
+  
   ls <- less(res)
-  write.table(ls, paste(outpath, '/KEGG.down.csv',sep=''))
+  if (length(row.names(ls)) > 0) {
+    write.csv(ls, paste(outpath, '/KEGG.down.csv',sep=''))
+  }
   less_ids <- row.names(ls)
   pv.out.list <- sapply(less_ids, function(pid) pathview(gene.data = ref.d,kegg.native = T, out.suffix = 'keggViewDownregulated', same.layer = F, pathway.id = paste(species, pid, sep=''), species = species))
   pv.out.list <- sapply(less_ids, function(pid) pathview(gene.data = ref.d,kegg.native = F, out.suffix = 'graphvizViewDownregulated', split.group = T, same.layer = F, pathway.id = paste(species, pid, sep=''), species = species))
+  
   gt <- greater(res)
-  write.table(gt, paste(outpath, '/KEGG.up.csv',sep=''))
+  if (length(row.names(gt)) > 0) {
+    write.csv(gt, paste(outpath, '/KEGG.up.csv',sep=''))
+  }
+  
   greater_ids <- row.names(gt)
   pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = 'keggViewUpregulated', same.layer = F, pathway.id = paste(species, pid, sep=''), species = species))
   pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ref.d, kegg.native = F, out.suffix = 'graphvizViewUpregulated', split.group = T, same.layer = F, pathway.id = paste(species, pid, sep=''), species = species))
   
   res <- analyse(table, kegg.set, ref, samp, FALSE)
   gt <- greater(res)
-  write.table(gt, paste(outpath, '/KEGG.both.csv',sep=''))
+  if (length(row.names(gt)) > 0) {
+    write.csv(gt, paste(outpath, '/KEGG.both.csv',sep=''))
+  }
   greater_ids <- row.names(gt)
   pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = 'keggViewBoth', same.layer = F, pathway.id = paste(species, pid, sep=''), species = species))
   pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ref.d, kegg.native = F, out.suffix = 'graphvizViewBoth', split.group = T, same.layer = F, pathway.id = paste(species, pid, sep=''), species = species))
   
+  # BP
   res <- analyse(table, bp.set, ref, samp, TRUE)
   gt <- greater(res)
-  write.table(gt, paste(outpath, '/BP.up.csv',sep=''))
+  if (length(row.names(gt)) > 0) {
+    write.csv(gt, paste(outpath, '/BP.up.csv',sep=''))
+  }
   ls <- less(res)
-  write.table(ls, paste(outpath, '/BP.down.csv',sep=''))
-  
+  if (length(row.names(ls)) > 0) {
+    write.csv(ls, paste(outpath, '/BP.down.csv',sep=''))
+  }
+ 
+  # MF
   res <- analyse(table, mf.set, ref, samp, TRUE)
   gt <- greater(res)
-  write.table(gt, paste(outpath, '/MF.up.csv',sep=''))
+  if (length(row.names(gt)) > 0) {
+    write.csv(gt, paste(outpath, '/MF.up.csv',sep=''))
+  }
   ls <- less(res)
-  write.table(ls, paste(outpath, '/MF.down.csv',sep=''))
-
+  if (length(row.names(ls)) > 0) {
+    write.csv(ls, paste(outpath, '/MF.down.csv',sep=''))
+  }
+ 
+  # CC
   res <- analyse(table, cc.set, ref, samp, TRUE)
   gt <- greater(res)
-  write.table(gt, paste(outpath, '/CC.up.csv', sep=''))
+  if (length(row.names(gt)) > 0) {
+    write.csv(gt, paste(outpath, '/CC.up.csv', sep=''))
+  }
   ls <- less(res)
-  write.table(ls, paste(outpath, '/CC.down.csv',sep=''))
+  if (length(row.names(ls)) > 0) {
+    write.csv(ls, paste(outpath, '/CC.down.csv',sep=''))
+  }
 }
 
 # limma_S507MLexp-S5527MLexp_iBAQ 
@@ -155,16 +173,16 @@ ref = ML_507
 samp = ML_5527
 process(table, ref, samp, outpath, refdata)
 
-# limma_S507ST-S507ML     
-outpath <-paste(path,'/diff/gsea/S507ST_S507ML',sep='')
-ref = ST_507
-samp = ML_507
+# limma_S507ML-S507ST     
+outpath <-paste(path,'/diff/gsea/S507ML_S507ST',sep='')
+ref = ML_507
+samp = ST_507
 process(table, ref, samp, outpath, refdata)
 
-# S5527ST-S5527ML 
-outpath <-paste(path,'/diff/gsea/S5527ST_S5527ML',sep='')
-ref = ST_5527
-samp = ML_5527
+# S5527ML-S5527ST 
+outpath <-paste(path,'/diff/gsea/S5527ML_S5527ST',sep='')
+ref = ML_5527
+samp = ST_5527
 process(table, ref, samp, outpath, refdata)
 
 # limma_S507ML-S507MLexp 
@@ -172,3 +190,4 @@ outpath <-paste(path,'/diff/gsea/S507ML_S507MLexp',sep='')
 ref = ML_507
 samp = ML_exp_507
 process(table, ref, samp, outpath, refdata)
+

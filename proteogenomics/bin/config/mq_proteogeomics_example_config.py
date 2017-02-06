@@ -40,12 +40,12 @@ six_frame_translated ='/researchdata/fhgfs/ptgmat003/OUTPUT/S507_S5527_proteogen
 # orfs_raw: the stop-to-stop six frame nucleotide sequences
 # orfs_trans: the translated six frame sequences with alternative posible TSS sites included
 
-strains={ 'S5527' : {'sf_genome':'/researchdata/fhgfs/ptgmat003/HYPOHYPER/genomes/S5527_comb_assmbly_18_03_16.fasta',
+strains={ 'S5527' : {'sf_genome':'/Users/thyspotgieter/bio/mtb/genomes/S5527_comb_assmbly_18_03_16.fasta',
                       'variant_genome':'/researchdata/fhgfs/ptgmat003/OUTPUT/S507_S5527_proteogenomics/vcf_variants/S5527_variant.fasta',
                       'orfs_raw'  :'/researchdata/fhgfs/ptgmat003/OUTPUT/S507_S5527_proteogenomics/six_frame_databases/S5527_sixframes.fasta',
                       'orfs_trans':'/researchdata/fhgfs/ptgmat003/OUTPUT/S507_S5527_proteogenomics/six_frame_databases/S5527_allstarts_proteins.fasta'},
 
-            'S507' : {'sf_genome':'/researchdata/fhgfs/ptgmat003/HYPOHYPER/genomes/S507_comb_assmbly_18_03_16.fasta',
+            'S507' : {'sf_genome':'/Users/thyspotgieter/bio/mtb/genomes/S507_comb_assmbly_18_03_16.fasta',
                       'variant_genome':'/researchdata/fhgfs/ptgmat003/OUTPUT/S507_S5527_proteogenomics/vcf_variants/S507_variant.fasta',
                       'orfs_raw'  :'/researchdata/fhgfs/ptgmat003/OUTPUT/S507_S5527_proteogenomics/six_frame_databases/S507_sixframes.fasta',
                       'orfs_trans':'/researchdata/fhgfs/ptgmat003/OUTPUT/S507_S5527_proteogenomics/six_frame_databases/S507_allstarts_proteins.fasta'},
