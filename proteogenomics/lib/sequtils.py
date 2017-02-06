@@ -264,9 +264,11 @@ def sf_contigs(contigs, assembly_name, table=11, peptide_length = 20, codons = '
     six_frame_seqs = []
     for i in contigs:
         cid = '_'.join(i.id.split('|'))  #get the contig id
-        six = six_frame(str(i.seq),assembly_name= assembly_name, contig_name = cid, table = table, peptide_length = peptide_length, codons = codons, translated=translated, methionine_start = methionine_start)
-
+        #print(cid)
+        six = six_frame(str(i.seq).upper(),assembly_name= assembly_name, contig_name = cid, table = table, peptide_length = peptide_length, codons = codons, translated=translated, methionine_start = methionine_start)
+        
         for j in six:
+            #print(j)
             six_frame_seqs.append(j)
     return six_frame_seqs
 
@@ -287,10 +289,10 @@ def translate_start(rec, table=11, starts = ['ATG','GTG','TTG']): # list of Met-
     return newrec
 
 
-def alt_starts_recs(records, starts = ['ATG','GTG','TTG']):
+def alt_starts_recs(records, starts = ['ATG','GTG','TTG'], table=11, translated=False):
     all= []
     for seq in records:
-        alt_seqs = alt_tss(seq, starts = starts)
+        alt_seqs = alt_tss(seq, starts = starts, table=table, translated=translated)
         all += alt_seqs
     return all
 
@@ -318,7 +320,8 @@ def alt_tss(seq_record, table=11, starts = ['ATG', 'GTG', 'TTG'], translated=Tru
         codon = seq_[count:count +3]
         if codon in starts:
             alt_seq = Seq(seq_[count:])
-                
+            prev_codon =seq_[count-3:count ]
+            newdesc = 'Alternative_TSS_Sequence ' + desc_.split('=')[0] +'=' + prev_codon
             assert len(alt_seq) % 3.0 == 0
             if strand == '+':
                 new_start = start + count
@@ -327,9 +330,8 @@ def alt_tss(seq_record, table=11, starts = ['ATG', 'GTG', 'TTG'], translated=Tru
                 new_start = start
                 new_end = end - count
             new_rec = SeqRecord(id = base_id + 'recno_{}.{}|({}){}:{}'.format(str(num_), str(alt_seq_count), strand, new_start, new_end),
-                                description = desc_,
+                                description = newdesc,
                                 seq = alt_seq)
-
             alt_seqs.append(new_rec)
             alt_seq_count += 1
         count += 3

@@ -1,9 +1,4 @@
-# InterProScan
-# VERSION 0.1
-# Tracking 5.21-60.0
-# https://github.com/ebi-pf-team/interproscan/wiki/HowToDownload
-
-FROM ubuntu:xenial
+FROM cbio/bio:latest
 
 ARG http_proxy
 ARG https_proxy
