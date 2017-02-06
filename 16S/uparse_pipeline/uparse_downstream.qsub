@@ -11,7 +11,7 @@
 source /home/gerrit/activate_qiime.sh
 inDir=/scratch/researchdata/cbio/medmicbio/project08/process/team/gerrit/runs/20151002/16S/uparse/filtered_fastas/
 outDir=/scratch/researchdata/cbio/medmicbio/project08/process/team/gerrit/runs/20151002/16S/uparse/uparse_downstream/
-cat $inDir/*filtered.fasta > $outDir/filtered_all.fa
+cat $inDir/*filtered_3.fasta > $outDir/filtered_all.fa # Katie added some primer stripping and trancation steps. The output of all those steps are written to the output dir. We just need the input from the last step.
 
 #derep fullength workaround:
 cat $outDir/filtered_all.fa | grep -v "^>" | grep -v [^ACGTacgt] | sort -d | uniq -c | while read abundance sequence ; do hash=$(printf "${sequence}" | sha1sum); hash=${hash:0:40};printf ">%s;size=%d;\n%s\n" "${hash}" "${abundance}" "${sequence}"; done > $outDir/filtered_all.uniques.fa 2> $outDir/filtered_all.uniques.fa.e
