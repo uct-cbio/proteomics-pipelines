@@ -191,7 +191,7 @@ def six_frame(Genome, assembly_name, contig_name, table, peptide_length, codons 
                 if len(preceding) == 0:
                     preceding="None"
 
-                record.description = record.description + ' Preceding_codon={}.'.format(preceding)
+                record.description = record.description + ' Preceding_codon={}'.format(preceding)
 
                 Six_Frame.append(record)
                 rec_count += 1
@@ -313,7 +313,7 @@ def alt_tss(seq_record, table=11, starts = ['ATG', 'GTG', 'TTG'], translated=Tru
 
     start  = int(coords[0])
     end    = int(coords[1])
-    orig_rec = SeqRecord(seq = Seq(seq_) , id = id_, description = desc_)
+    orig_rec = SeqRecord(seq = Seq(seq_) , id = id_, description = 'Six_Frame_ORF ' + desc_)
     alt_seqs.append(orig_rec)
     count = 3
     while count <= len(seq_)-3:
@@ -694,10 +694,11 @@ class peptides2genome:
         return upstream_codon
 
     def most_upstream_translation(self, df):
-        upstream_start = df['Most_Upstream_Inferred_Start']
-        upstream_codon = df['Most_Upstream_Inferred_Codon']
+        upstream_start = int(df['Most_Upstream_Inferred_Start'])
+        aa_start  = int((upstream_start-1)/3)
+        pstream_codon = df['Most_Upstream_Inferred_Codon']
         orf_trans = df['ORF_translation']
-        most_upstream = orf_trans[(int(upstream_start)-1)/3:]
+        most_upstream = orf_trans[aa_start:]
         return most_upstream        
 
     def ORF_set_count(self):
