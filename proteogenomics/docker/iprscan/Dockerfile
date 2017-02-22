@@ -39,11 +39,20 @@ RUN \
   cd /interproscan-*/data && \
   wget ${panther_ftp} && wget ${panther_ftp}.md5
 
+RUN \
+  cd /interproscan-*/data && \
+  md5sum -c $( basename ${panther_ftp}.md5) 
+
+RUN \
+  cd /interproscan-*/data && \
+  tar -pxvzf $( basename ${panther_ftp})
+
+RUN mv /interproscan-* /interproscan
+ENV PATH ${PATH}::/interproscan
+
 #VOLUME ["/interproscan-5.21-60.0/data/"]
-
-
 #COPY ./interproscan.properties /interproscan-5.21-60.0/interproscan.properties
 #COPY ./interproscan.sh /interproscan-5.21-60.0/interproscan.sh
 
-#ENV DOCKER_JAVA_ARGS -XX:+UseParallelGC -XX:ParallelGCThreads= -XX:+AggressiveOpts -XX:+UseFastAccessorMethods -Xms128M -Xmx2048M
+ENV DOCKER_JAVA_ARGS -XX:+UseParallelGC -XX:ParallelGCThreads= -XX:+AggressiveOpts -XX:+UseFastAccessorMethods -Xms128M -Xmx2048M
 

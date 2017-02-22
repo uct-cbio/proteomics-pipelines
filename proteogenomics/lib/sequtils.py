@@ -588,6 +588,7 @@ class peptides2genome:
     '''Basic class for peptides to genome mapping - list of BioPython seqrecords for genome contigs'''
     def __init__(self, genome, assembly_name, translation_table, peptides_list, threads=1, start_codons=['ATG','GTG','TTG']):
         self.threads=threads
+        print(self.threads)
         self.translation_table = translation_table
         self.stop_codons = Stop_List(translation_table)
         self.start_codons = start_codons
@@ -600,6 +601,8 @@ class peptides2genome:
         self.peptide2orf = defaultdict(list)
 
         orfs = sf_contigs(genome, assembly_name = assembly_name, table=translation_table, codons='All', peptide_length=1, translated=False )
+        print(len(orfs))
+
         #print(orfs)
         self.orfs = orfs
 
@@ -622,22 +625,25 @@ class peptides2genome:
         
         orf_df = orf_series.reset_index()
         #orf_df['ORF_genome_count'] = orf_df['ORF_ids'].apply(lambda x : len(x.split(';')))
+        
         orf_df['ORF_translation'] = pd.Series(orf_trans_list) # DEV change the way in-sequence stops are translated (eg. use selenocysteine)
         
         orf_df['ORF_preceding_codons'] = pd.Series(preceding_codons)
+        print("Calculating cterm fragments")
         orf_df['ORF_Cterm_fragment'] = orf_df['ORF_sequence'].apply(lambda x : self.cterm_fragment(x))
+        print("Calculating neterm fragments")
         orf_df['ORF_Nterm_fragment'] = orf_df['ORF_preceding_codons'].apply(lambda x : self.nterm_fragment(x))
         orf_df['Assembly'] = assembly_name
-        
-        orf_df['Most_Upstream_Inferred_Start'] = orf_df.apply(self.most_upstream_start, axis=1)
-        
+        print("Calculating most upstream start")
+        orf_df['Most_Upstream_Inferred_Start'] = orf_df.apply(self.most_upstream_start, axis=1) 
         orf_df = orf_df[orf_df['Most_Upstream_Inferred_Start'].notnull()]
+        print("Calculating most upstream inferred codon")
         orf_df['Most_Upstream_Inferred_Codon'] = orf_df.apply(self.most_upstream_codon, axis=1)
         orf_df['Most_Upstream_Inferred_Translation'] = orf_df.apply(self.most_upstream_translation, axis=1)
 
         self.orf_df = orf_df
         self.orf_trans_list = orf_df['ORF_translation'].tolist()
-
+        print("ready to analyze the peptides")
         self.peptides = self.process_peptides(peptides_list)
     
 
@@ -683,7 +689,6 @@ class peptides2genome:
             #most_upstream_aminos = []
             #if most_upstream_codon_pos/3 in non_met_position_aminos:
             #    most_upstream_aminos += non_met_position_aminos[most_upstream_codon_pos/3]
-            
             return most_upstream_codon_pos + 1
 
     def most_upstream_codon(self, df):
@@ -833,6 +838,7 @@ class peptides2genome:
         return peptides
 
     def peptide_df(self, peptide):
+        #print(peptide)
         ids = self.peptide2orf[peptide]
         df = self.orf_df.copy()
         df = df[df['ORF_id'].isin(ids)]

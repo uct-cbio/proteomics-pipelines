@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import pandas as pd
 import importlib.machinery
@@ -11,17 +11,19 @@ import sequtils
 import shutil
 import Bio; from Bio import SeqIO
 import pickle
+import yaml
 
-loader = importlib.machinery.SourceFileLoader('config', sys.argv[1])
-config = loader.load_module()
+config = yaml.load(open(sys.argv[1]))
 output = sys.argv[2]
 
-proteome = list(SeqIO.parse(config.reference_proteome,'fasta'))
-peptides = pd.read_csv(config.mq_txt +'/peptides.txt',sep='\t')
-peptides = peptides[(peptides['Reverse']!='+') & (peptides['Potential contaminant'] !='+')]
+os.mkdir(output +'/mapping')
 
-mapped = sequtils.peptides2proteome(proteome,peptides['Sequence'].tolist(), threads=config.threads)
+proteome = list(SeqIO.parse(output+ '/uniprot/{}/{}_{}.fasta'.format(config['reference_proteome_id'], config['reference_proteome_id'], config['reference_taxid']),'fasta'))
+peptides = pd.read_csv(config['mq_txt'] +'/peptides.txt',sep='\t')
+peptides = peptides[(peptides['Reverse'].isnull()) & (peptides['Potential contaminant'].isnull())]
 
-outpath = output + '/mapping/{}_peptides.p'.format(config.reference_proteome_id)
+mapped = sequtils.peptides2proteome(proteome, peptides['Sequence'].tolist(), threads=config['threads'])
+
+outpath = output + '/mapping/{}_peptides.p'.format(config['reference_proteome_id'])
 pickle.dump( mapped.pepdict, open( outpath, "wb" ) )
 

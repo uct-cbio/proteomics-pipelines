@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
 import pickle
 import numpy as np
 import pandas as pd
@@ -25,7 +26,6 @@ fdict = {}
 for rec in fasta:
     id = rec.id.split('|')[1]
     fdict[id] = rec
-
 
 path = output
 orfs = []

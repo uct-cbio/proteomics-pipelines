@@ -6,11 +6,12 @@ FROM ubuntu:latest
 ARG http_proxy
 ARG https_proxy
 
+
 ENV http_proxy  ${http_proxy}
 ENV https_proxy ${https_proxy}
 ENV ftp_proxy ${ftp_proxy}
-
 RUN apt-get update
+
 RUN apt-get -y install wget make  
 RUN apt-get -y install gbrowse gbrowse-calign gbrowse-data libbio-samtools-perl apache2
 RUN apt-get -y remove gbrowse gbrowse-calign gbrowse-data
@@ -78,7 +79,7 @@ ENV MUGSY_INSTALL "/root/mugsy_x86-64-v1r2.3"
 # below is just if sourceforge blocks you 
 #COPY mugsy_x86-64-v1r2.3.tgz /root/download
 RUN cd /root && wget https://sourceforge.net/projects/mugsy/files/mugsy_x86-64-v1r2.3.tgz/download
-RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+
 RUN cd /root && tar xvzf download && cd mugsy* && echo "export PATH=$PATH::"`pwd` >> ~/.bashrc && echo "source "`pwd`"/mugsyenv.sh" >> ~/.bashrc
 
 #MafFilter

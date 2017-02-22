@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import pandas as pd
 import numpy as np
@@ -14,10 +14,13 @@ from Bio.Seq import Seq
 from Bio.Seq import translate
 import json
 import pickle
+import yaml
 
-loader = importlib.machinery.SourceFileLoader('config', sys.argv[1])
-config = loader.load_module()
+config = yaml.load(open(sys.argv[1]))
+
+
 output = sys.argv[2]
+os.mkdir(output + '/fasta')
 
 combined_fasta=[]
 
@@ -27,15 +30,11 @@ def export_fasta(df):
     seqrecord = SeqRecord(seq = Seq(seq), id = id)
     return seqrecord
 
-for strain in config.strains:
-    datum=output + '/{}/{}_mapped_peptides.p'.format(strain,strain)
+for strain in config['strains']:
+    datum=output + '/strains/{}/{}_mapped_peptides.p'.format(strain,strain)
     table = pickle.load(open(datum,'rb'))
     table = table[['ORF_id', 'ORF_translation']].drop_duplicates()
     recs = table.apply(export_fasta, axis=1).tolist()
     combined_fasta += recs
-try:
-    os.mkdir(output + '/fasta')
-except:
-    pass
 
 SeqIO.write(combined_fasta , output + '/fasta/combined_translated.fasta', 'fasta')
