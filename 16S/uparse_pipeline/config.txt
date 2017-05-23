@@ -40,7 +40,7 @@ mapping_file=/home/gerrit/projects/cbio-pipelines/16S/uparse_pipeline/mapping_fi
 # uparse_filter_fastq
 uparse_filter_fastq_DEBUG=0
 uparse_filter_fastq_in_dir=/scratch/DB/bio/test_data/16S/process/16S/uparse_pipeline/merged_fastqs
-uparse_filter_fastq_fastq_out_dir=/scratch/DB/bio/test_data/16S/process/16S/uparse_pipeline/filtered_fastqs
-uparse_filter_fastq_fastq_log_dir=/scratch/DB/bio/test_data/16S/process/16S/uparse_pipeline/logs
+uparse_filter_fastq_out_dir=/scratch/DB/bio/test_data/16S/process/16S/uparse_pipeline/filtered_fastqs
+uparse_filter_fastq_log_dir=/scratch/DB/bio/test_data/16S/process/16S/uparse_pipeline/logs
 uparse_filter_fastq_threads=1
 uparse_filter_fastq_walltime="1:00:00"

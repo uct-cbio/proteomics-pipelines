@@ -40,7 +40,7 @@ do
   cmds_log=$log_dir/uparse_filter_fastq.$sid.$count.cmds
 
     #KL changed to:
-  qsub="qsub -N uparse_filter_fastq.$sid.$count -o $log_dir/uparse_filter_fastq.$sid.$count.o -e $log_dir/uparse_filter_fastq.$sid.$count.e -d $out_dir -q $pbs_queue -S /bin/bash -l nodes=1:$pbs_series:ppn=$uparse_filter_fastq_fastq_threads -l walltime=$uparse_filter_fastq__walltime -v config=$config,merged_fastq=$merged_fastq,filtered_1_fastq=$filtered_1_fastq,fastq_maxee=$uparse_filter_fastq_maxee,cmds_log=$cmds_log $scripts_dir/uparse_filter_fastq.single.sh"
+  qsub="qsub -N uparse_filter_fastq.$sid.$count -o $log_dir/uparse_filter_fastq.$sid.$count.o -e $log_dir/uparse_filter_fastq.$sid.$count.e -d $out_dir -q $pbs_queue -S /bin/bash -l nodes=1:$pbs_series:ppn=$uparse_filter_fastq_threads -l walltime=$uparse_filter_fastq_walltime -v config=$config,merged_fastq=$merged_fastq,filtered_1_fastq=$filtered_1_fastq,fastq_maxee=$uparse_filter_fastq_maxee,cmds_log=$cmds_log $scripts_dir/uparse_filter_fastq.single.sh"
   echo $qsub > $log_dir/uparse_filter_fastq.$sid.$count.qsub
   cat $scripts_dir/uparse_filter_fastq.single.sh > $log_dir/uparse_filter_fastq.$sid.$count.sh
 
