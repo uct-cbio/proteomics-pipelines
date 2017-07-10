@@ -50,10 +50,11 @@ for strain in config['strains']:
             'Variant orfs strain {}'.format(strain),
             'Annotation type strain {}'.format(strain),
             'Frameshift validated strain {}'.format(strain),
-             'Frameshift evidence strain {}'.format(strain),
-             "Best orf-reference blast evalue strain {}".format(strain),
-             "Best orf-reference blast match {}".format(strain),
+            'Frameshift evidence strain {}'.format(strain),
+            "Best orf-reference blast evalue strain {}".format(strain),
+            "Best orf-reference blast match {}".format(strain),
             "Reference BLAST strain {}".format(strain)]
+    
     strain_dir = output +'/strains/' + strain
     strain_cols = [col for col in cols if col in combined.columns]
     strain_df = combined[strain_cols]

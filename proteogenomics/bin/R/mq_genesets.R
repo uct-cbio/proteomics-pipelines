@@ -73,7 +73,9 @@ save(mf.set, file=paste(outpath, '/gsea/mfset.Rdata', sep=''))
 keggpath <- paste(outpath,'/gsea/kegg2proteingroups.csv', sep='') 
 ktab <- read.csv(keggpath, colClasses=c("character","character"))
 ktab <- data.frame(lapply(ktab, as.character), stringsAsFactors=FALSE)
+
 #ktab$ID<- with(ktab, paste0(kegg_id, KEGG_ID))
+
 ktab$ID <- ktab$KEGG_ID
 ktab$GENES <- lapply(ktab$GENES, vct)
 
@@ -81,3 +83,19 @@ kegg.set <- as.list(ktab$GENES)
 names(kegg.set) <- as.list(ktab$ID)
 save(kegg.set, file=paste(outpath, '/gsea/keggset.Rdata', sep=''))
 
+#################
+#    OPERONS    #
+#################
+
+operonpath <- paste(outpath,'/gsea/operons2proteingroups.csv', sep='') 
+operontab <- read.csv(operonpath, colClasses=c("character","character"))
+operontab <- data.frame(lapply(operontab, as.character), stringsAsFactors=FALSE)
+
+#ktab$ID<- with(ktab, paste0(kegg_id, KEGG_ID))
+
+operontab$ID <- operontab$OPERON_ID
+operontab$GENES <- lapply(operontab$GENES, vct)
+
+operon.set <- as.list(operontab$GENES)
+names(operon.set) <- as.list(operontab$ID)
+save(operon.set, file=paste(outpath, '/gsea/operonset.Rdata', sep=''))

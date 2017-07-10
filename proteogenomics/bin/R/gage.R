@@ -1,193 +1,254 @@
-library(gage)
-library(limma)
-library(pathview)
+#!/usr/bin/env Rscript
 
-path <- '/Users/thys/Desktop/mq/mq/'
+library('gage')
+library('limma')
+library('pathview')
+library('optparse')
 
-source(paste( path, 'experimental_design.R',sep=''))
 
-species='mtu'
+option_list = list(
+make_option(c("-o", "--outdir"),
+       type="character",
+       default=NULL,
+       help="Directory containing MQ proteogenomics pipeline output files",
+        metavar="character"),
+make_option(c("-k", "--keggid"),
+        type="character",
+        default=NULL,
+        help="Directory containing MQ proteogenomics pipeline output files",
+        metavar="character"))
+
+opt_parser = OptionParser(option_list=option_list);
+opt = parse_args(opt_parser);
+
+path = opt$outdir
+species = opt$keggid
+     
+source(paste( path, '/experimental_design.R',sep=''))
 
 # GENE SETS 
-load(paste(path,'gsea/bpset.Rdata',sep=''))
-load(paste(path,'gsea/mfset.Rdata',sep=''))
-load(paste(path,'gsea/ccset.Rdata',sep=''))
-load(paste(path,'gsea/keggset.Rdata',sep=''))
+load(paste(path,'/gsea/bpset.Rdata',sep=''))
+load(paste(path,'/gsea/mfset.Rdata',sep=''))
+load(paste(path,'/gsea/ccset.Rdata',sep=''))
+load(paste(path,'/gsea/keggset.Rdata',sep=''))
+load(paste(path,'/gsea/operonset.Rdata',sep=''))
 
-# Samples 
-cols <- c("iBAQ.507_ST_2", 
-          "iBAQ.507_ST_1",
-          
-          "iBAQ.507_ML_2",
-          "iBAQ.507_ML_1",
-          "iBAQ.507_ML_3",
-          
-          "iBAQ.5527_MLexp_3",
-          "iBAQ.5527_MLexp_1",
-          
-          "iBAQ.5527_ST_1",
-          "iBAQ.5527_ST_2",
-          
-          "iBAQ.507_MLexp_1",
-          "iBAQ.507_MLexp_2", 
-          "iBAQ.507_MLexp_3",
-          
-          "iBAQ.5527_ML_2",
-          "iBAQ.5527_ML_3",
-          "iBAQ.5527_ML_1")
 
-ST_507       <- c(1,2)
-ML_507       <- c(3,4,5)
-ML_exp_5527  <- c(6,7)
-ST_5527      <- c(8,9)
-ML_exp_507   <- c(10,11,12)
-ML_5527      <- c(13,14,15)
+table_path <- paste(path, '/diff/msnbase/imputed.csv', sep='')
+table <- read.csv(table_path)
 
-mapping <- read.csv('/Users/thys/Desktop/mq/mq/mapping.tsv',sep='\t')
-
-f <- 'diff/limma/limma_S507MLexp-S5527MLexp_iBAQ.csv'
-table <- read.csv(paste(path,f,sep=''), sep='\t')
 row.names(table) <- table$Row.names
 
-print(length(row.names(table)))
-newtable <- merge(x = table, y = mapping, by.x = "reference.entries.mapped", by.y ='From')
+# i
 
-refdata <- newtable[!duplicated(newtable$To), ]
-ref <-refdata$To
+
+# GI table
+gi_table <- cbind(table)
+
+rownames(gi_table) <- gi_table$Identifier
+
+#print(head(gi_table))
+#quit()
+
+s <- strsplit(as.character(gi_table$GeneID), split = ";")
+
+newtable <- data.frame( Identifier = rep(gi_table$Identifier, sapply(s, length)), gi = unlist(s))
+
+refdata <- merge( table, newtable, by="Identifier", all.y = TRUE)
+
+#refdata$gi <- as.numeric(refdata$gi)
+
+refdata <- refdata[!duplicated(refdata$gi), ]
+
+ref <- refdata$gi
 refdata <- refdata[,cols]
 
-rownames(refdata) <- ref
+row.names(refdata) <-ref
+#print(head((refdata))
+
+#print(rownames(refdata))
+
 ids <- table$Identifier
+
 table <- table[,cols]
+
 row.names(table) <- ids
 
-outpath <-paste(path,'/diff/gsea/',sep='')
-dir.create(outpath, showWarnings = FALSE)
 
-analyse <- function(data, gset, ref, samp, samedir) {
-  cnts.p <- gage(data, gsets = gset, ref = ref, samp = samp, compare ="unpaired", samedir= samedir)
+#outpath <-paste(path,'/gsea/comparisons',sep='')
+#dir.create(outpath, showWarnings = FALSE)
+
+analyse <- function(data, gset, refcols, sampcols, samedir) {
+  cnts.p <- gage(data, gsets = gset, ref = refcols, samp = sampcols, compare ="unpaired", samedir= samedir)  
   return(cnts.p)
 }
 
-less <- function(res) {
+less <- function(res, samp, ref) {
   less <- as.data.frame(res$less)
   less <- less[!is.na(less$`p.val`),]
-  less <- less[less$`p.val` <= 0.05, ]
+  #less <- less[less$`p.val` <= 0.05, ]
+  less$Exposed <- samp
+  less$Control <- ref
+  less$RowName <- as.character(row.names(less))
+  less$Coregulated <- "Down"
+  #print(head(less))
   return(less)
 }
 
-greater <- function(res) {
+greater <- function(res, samp, ref) {
   greater <- as.data.frame(res$greater)
   greater <- greater[!is.na(greater$`p.val`),]
-  greater <- greater[greater$`p.val` <= 0.05, ]
+  #greater <- greater[greater$`p.val` <= 0.05, ]
+  greater$RowName <- as.character(row.names(greater))
+  greater$Exposed <- samp
+  greater$Control <- ref
+  greater$Coregulated <- "Up"
+  #print(head(greater))
   return(greater)
 }
 
-process <- function(table , ref, samp, outpath, refdata, samedir) {
+process <- function(table , refcols, sampcols, outpath, refdata, samp, ref) {
+  print("KEGG")
   dir.create(outpath, showWarnings = FALSE)
   setwd(outpath)
-  ref.d <- refdata[, samp]-rowMeans(refdata[, ref])
-  res <- analyse(table, kegg.set, ref, samp, TRUE)
   
-  ls <- less(res)
+  ref.d <- refdata[, sampcols]-rowMeans(refdata[, refcols])
+  
+  res <- analyse(table, kegg.set, refcols, sampcols, TRUE)
+
+  ls <- less(res, samp, ref)
+
   if (length(row.names(ls)) > 0) {
+    ls$SameDir <- "True"
+    
+    ls$RowName = paste(species, ls$RowName,sep = "")
+
     write.csv(ls, paste(outpath, '/KEGG.down.csv',sep=''))
   }
-  less_ids <- row.names(ls)
-  pv.out.list <- sapply(less_ids, function(pid) pathview(gene.data = ref.d,kegg.native = T, out.suffix = 'keggViewDownregulated', same.layer = F, pathway.id = paste(species, pid, sep=''), species = species))
-  pv.out.list <- sapply(less_ids, function(pid) pathview(gene.data = ref.d,kegg.native = F, out.suffix = 'graphvizViewDownregulated', split.group = T, same.layer = F, pathway.id = paste(species, pid, sep=''), species = species))
+  less_ids <- row.names(ls) 
+
+  pv.out.list <- sapply(less_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = 'keggViewDownregulated', same.layer = F, pathway.id = paste(species, pid, sep=''), species = species))
   
-  gt <- greater(res)
+  pv.out.list <- sapply(less_ids, function(pid) pathview(gene.data = ref.d, kegg.native = F, out.suffix = 'graphvizViewDownregulated', split.group = T, same.layer = F, pathway.id = paste(species, pid, sep=''), species = species))
+  
+  gt <- greater(res, samp, ref)
   if (length(row.names(gt)) > 0) {
+    gt$SameDir <- "True"
+    gt$RowName = paste(species, gt$RowName,sep = "")
     write.csv(gt, paste(outpath, '/KEGG.up.csv',sep=''))
   }
   
   greater_ids <- row.names(gt)
+  
   pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = 'keggViewUpregulated', same.layer = F, pathway.id = paste(species, pid, sep=''), species = species))
+  
   pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ref.d, kegg.native = F, out.suffix = 'graphvizViewUpregulated', split.group = T, same.layer = F, pathway.id = paste(species, pid, sep=''), species = species))
   
-  res <- analyse(table, kegg.set, ref, samp, FALSE)
-  gt <- greater(res)
+  res <- analyse(table, kegg.set, refcols, sampcols, FALSE)
+  gt <- greater(res, samp, ref)
+
+  ls <- less(res, samp, ref)
+  print(str(res))
+
   if (length(row.names(gt)) > 0) {
-    write.csv(gt, paste(outpath, '/KEGG.both.csv',sep=''))
+    gt$SameDir <- "False"
+    gt$RowName = paste(species, gt$RowName,sep = "")
+    write.csv(gt, paste(outpath, '/KEGG.up.both.csv',sep=''))
   }
   greater_ids <- row.names(gt)
-  pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = 'keggViewBoth', same.layer = F, pathway.id = paste(species, pid, sep=''), species = species))
-  pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ref.d, kegg.native = F, out.suffix = 'graphvizViewBoth', split.group = T, same.layer = F, pathway.id = paste(species, pid, sep=''), species = species))
+  #pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = 'keggViewUpBoth', same.layer = F, pathway.id = paste(species, pid, sep=''), species = species))
+  #pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ref.d, kegg.native = F, out.suffix = 'graphvizViewUpBoth', split.group = T, same.layer = F, pathway.id = paste(species, pid, sep=''), species = species))
+  
+  if (length(row.names(ls)) > 0) {
+    ls$SameDir <- "False"
+    ls$RowName = paste(species, ls$RowName,sep = "")
+    write.csv(ls, paste(outpath, '/KEGG.down.both.csv',sep=''))
+  }
+  
+  lesser_ids <- row.names(ls)
+  #pv.out.list <- sapply(lesser_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = 'keggViewDownBoth', same.layer = F, pathway.id = paste(species, pid, sep=''), species = species))
+  #pv.out.list <- sapply(lesser_ids, function(pid) pathview(gene.data = ref.d, kegg.native = F, out.suffix = 'graphvizViewDownBoth', split.group = T, same.layer = F, pathway.id = paste(species, pid, sep=''), species = species))
+
+
   
   # BP
-  res <- analyse(table, bp.set, ref, samp, TRUE)
-  gt <- greater(res)
+  print("BP")
+  res <- analyse(table, bp.set, refcols, sampcols, TRUE)
+  gt <- greater(res, samp, ref)
   if (length(row.names(gt)) > 0) {
-    write.csv(gt, paste(outpath, '/BP.up.csv',sep=''))
+      gt$SameDir <- "True"
+      write.csv(gt, paste(outpath, '/BP.up.csv',sep=''))
   }
-  ls <- less(res)
+  ls <- less(res, samp, ref)
   if (length(row.names(ls)) > 0) {
+    ls$SameDir <- "True"
     write.csv(ls, paste(outpath, '/BP.down.csv',sep=''))
   }
  
   # MF
-  res <- analyse(table, mf.set, ref, samp, TRUE)
-  gt <- greater(res)
+  print("MF")
+  res <- analyse(table, mf.set, refcols, sampcols, TRUE)
+  gt <- greater(res, samp, ref)
   if (length(row.names(gt)) > 0) {
+    gt$SameDir <- "True"
     write.csv(gt, paste(outpath, '/MF.up.csv',sep=''))
   }
-  ls <- less(res)
+  ls <- less(res, samp, ref)
   if (length(row.names(ls)) > 0) {
+    ls$SameDir <- "True"
     write.csv(ls, paste(outpath, '/MF.down.csv',sep=''))
   }
  
   # CC
-  res <- analyse(table, cc.set, ref, samp, TRUE)
-  gt <- greater(res)
+  print("CC")
+  res <- analyse(table, cc.set, refcols, sampcols, TRUE)
+  gt <- greater(res, samp, ref)
   if (length(row.names(gt)) > 0) {
+    gt$SameDir <- "True"
     write.csv(gt, paste(outpath, '/CC.up.csv', sep=''))
   }
-  ls <- less(res)
+  ls <- less(res, samp, ref)
   if (length(row.names(ls)) > 0) {
+    ls$SameDir <- "True"
     write.csv(ls, paste(outpath, '/CC.down.csv',sep=''))
+  }
+
+  # OPERONS
+  print("OPERONS")
+  
+  #operon_table <- table[row.names(table) %in% operon.set,]
+  
+  res <- analyse(table, operon.set, refcols, sampcols, TRUE)
+  gt <- greater(res, samp, ref)
+  if (length(row.names(gt)) > 0) {
+    gt$SameDir <- "True"
+    write.csv(gt, paste(outpath, '/OPERON.up.csv', sep=''))
+  }
+  ls <- less(res, samp, ref)
+  if (length(row.names(ls)) > 0) {
+    ls$SameDir <- "True"
+    write.csv(ls, paste(outpath, '/OPERON.down.csv',sep=''))
   }
 }
 
-# limma_S507MLexp-S5527MLexp_iBAQ 
-outpath <-paste(path,'/diff/gsea/S507MLexp_S5527MLexp',sep='')
-ref = ML_exp_507
-samp = ML_exp_5527
-process(table, ref, samp, outpath, refdata)
+# Samples 
+cols <- cols # Defined in experimental design template
+f <- f # Defined in experimental design template
+refmap <- data.frame(f, cols)
+comparisons <- colnames(contrast.matrix)
 
-# limma_S5527ML-S5527MLexp_iBAQ.csv 
-outpath <-paste(path,'/diff/gsea/S5527ML_S5527MLexp',sep='')
-ref = ML_5527
-samp = ML_exp_5527
-process(table, ref, samp, outpath, refdata)
+for ( comp in comparisons){
+    vals <- strsplit(comp,'-')
+    # Get the reference cols
+    ref  = as.character(vals[[1]][2])
+    refdf <- refmap[refmap$f==ref,]
+    #refcols <- as.character(refdf$cols)
+    refcols <- as.numeric(rownames(refdf))
+    
+    # Get the sample cols
+    samp = as.character(vals[[1]][1])
+    sampdf <- refmap[refmap$f==samp,]
+    sampcols <- as.numeric(rownames(sampdf))
 
-# S507ST-S5527ST 
-outpath <-paste(path,'/diff/gsea/S507ST_S5527ST',sep='')
-ref = ST_507
-samp = ST_5527
-process(table, ref, samp, outpath, refdata)
-
-# S507ML-S5527ML 
-outpath <-paste(path,'/diff/gsea/S507ML_S5527ML',sep='')
-ref = ML_507
-samp = ML_5527
-process(table, ref, samp, outpath, refdata)
-
-# limma_S507ML-S507ST     
-outpath <-paste(path,'/diff/gsea/S507ML_S507ST',sep='')
-ref = ML_507
-samp = ST_507
-process(table, ref, samp, outpath, refdata)
-
-# S5527ML-S5527ST 
-outpath <-paste(path,'/diff/gsea/S5527ML_S5527ST',sep='')
-ref = ML_5527
-samp = ST_5527
-process(table, ref, samp, outpath, refdata)
-
-# limma_S507ML-S507MLexp 
-outpath <-paste(path,'/diff/gsea/S507ML_S507MLexp',sep='')
-ref = ML_507
-samp = ML_exp_507
-process(table, ref, samp, outpath, refdata)
-
+    outpath <-paste( path, '/gsea/', samp, '_', ref ,sep='' ) 
+    process(table, refcols, sampcols, outpath, refdata, samp, ref) }

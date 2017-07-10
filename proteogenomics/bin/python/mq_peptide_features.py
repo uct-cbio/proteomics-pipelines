@@ -174,6 +174,7 @@ for strain in config['strains']:
     peptides = pickle.load(open(output+ '/strains/' + strain + '/{}_mapped_peptides.p'.format(strain), 'rb'))
     strain_identified = peptides[(peptides['Strain_identified']=='+') ]
     genome = list(SeqIO.parse(config['strains'][strain]['sf_genome'],'fasta'))
+    
     gff3_contig_export(genome)
 
     gdict = {}
@@ -194,6 +195,10 @@ for strain in config['strains']:
     gff3 = '\n'.join(gff3_list)
     if strain in config['reference_strains']:
         gff3 = gff3 +'\n' + ref_gff3
+
+    if not os.path.exists(output + '/strains/' + strain):
+        os.mkdir(output + '/strains/' + strain
+    
     w =open(output+ '/strains/' + strain + '/{}_features.gff3'.format(strain), 'w')
     w.write(gff3)
     w.close()

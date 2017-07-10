@@ -61,18 +61,24 @@ for strain in config['strains']:
         genome = list(SeqIO.parse(paths['sf_genome'],'fasta'))
 
         g2p = sequtils.peptides2genome(genome, assembly_name = str(strain), translation_table=config['translation_table'], peptides_list=all_peptides, threads=config['threads'])
+        
         speps = g2p.peptides
+        
         speps['Strain_identified'] = speps['Peptide_sequence'].apply(lambda x : check_identified(x, strain_peptides))
+        
         strainpath=output +'/strains/' + strain
+        
         try:
             shutil.rmtree(strainpath)
             os.mkdir(strainpath)
         except:
             os.mkdir(strainpath)    
         
-        outpath=strainpath + '/' + '{}_mapped_peptides.p'.format(str(strain))   
-        #speps.to_csv(strainpath + '/' + '{}_mapped_peptides.csv'.format(str(strain)))
-        pickle.dump( speps, open( outpath, "wb" ) )
+        #outpath=strainpath + '/' + '{}_mapped_peptides.p'.format(str(strain))   
+        
+        speps.to_csv(strainpath + '/' + '{}_mapped_peptides.csv'.format(str(strain)))
+        
+        #pickle.dump( speps, open( outpath, "wb" ) )
     
 
 

@@ -19,17 +19,16 @@ import subprocess
 
 config = yaml.load(open(sys.argv[1]))
 
-
 output = sys.argv[2]
 
 ref = output + '/uniprot/{}/{}_{}.fasta'.format(config['reference_proteome_id'], config['reference_proteome_id'], config['reference_taxid'])
-new=output+'/blast/{}/{}_{}.fasta'.format(config['reference_proteome_id'], config['reference_proteome_id'],config['reference_taxid'])
+new=output+'/blast/orfs2proteins/{}/{}_{}.fasta'.format(config['reference_proteome_id'], config['reference_proteome_id'],config['reference_taxid'])
 
-newfolder=output+'/blast/{}/'.format(config['reference_proteome_id'])
+newfolder=output+'/blast/orfs2proteins/{}/'.format(config['reference_proteome_id'])
 
 ref_id = config['reference_proteome_id']
 
-os.mkdir(output +'/blast/{}'.format(config['reference_proteome_id']))
+os.mkdir(output +'/blast/orfs2proteins/{}'.format(config['reference_proteome_id']))
 
 cmd="cp {} {} && cd {} && makeblastdb -in {} -dbtype 'prot' -out {}".format(ref, newfolder, newfolder, new, ref_id )
 
@@ -39,25 +38,34 @@ assert process.returncode == 0
                  
 query=output + '/fasta/nr_translated_pg_orfs.fasta'
 outfmt=5
-out=output + '/blast/{}.xml'.format(config['reference_proteome_id'])
+
+out=output + '/blast/orfs2proteins/{}.xml'.format(config['reference_proteome_id'])
+
 db = newfolder + '/{}'.format(config['reference_proteome_id'])
+
 num_threads=10
 
-cmd="blastp -query {} -outfmt {} -out {} -db {} -max_target_seqs 1 -max_hsps 1 -num_threads {}".format(query, outfmt, out, db, num_threads)
+cmd="blastp -query {} -outfmt {} -out {} -db {} -max_target_seqs 500 -max_hsps 1 -num_threads {} -evalue 0.0001".format(query, outfmt, out, db, num_threads)
+
 process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+
 process.wait()
+
 assert process.returncode == 0
 
 cmd="blast_XML_to_csv.py {} {} {} {}".format(out, query, out +'.csv', 500)
+
 process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+
 process.wait()
+
 assert process.returncode == 0
 
 data = pd.read_csv(out+'.csv')
 
 data = data[(data['_alignment_rank']==1) & (data['_hsp_rank']==1)]
 
-mp = {}
+mp = defaultdict(list)
 
 def get_mapping(df):
     global mp
@@ -66,11 +74,13 @@ def get_mapping(df):
     for i in ids:
         i = i.split('|')[1]
         if evalue < 0.0001:
-            mp[i] = df['_alignment.entry']
+            mp[i].append(df['_alignment.entry'])
+
 data.apply(get_mapping, axis=1)
+
 mp = json.dumps(mp)
 
-w= open(output +'/blast/{}_mapping.json'.format(config['reference_proteome_id']),'w')
+w= open(output +'/blast/orfs2proteins/{}_mapping.json'.format(config['reference_proteome_id']),'w')
 w.write(mp)
 w.close()
 

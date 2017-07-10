@@ -1,6 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import Bio
+import numpy as np
+import os
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
@@ -9,7 +11,11 @@ from Bio.Blast.Applications import NcbiblastnCommandline
 from Bio.Blast import NCBIXML
 import tempfile
 import shutil
-import urllib2
+import urllib3
+import re
+import subprocess
+from collections import defaultdict
+from natsort import natsorted
 
 def pblast(seqstr, db, threshold = 0.04, path = '/home/thys/biotools/blast/', outfmt = 5):
     dbpath = path + db
@@ -148,4 +154,105 @@ def bparse(rec, threshold = 0.04):
                 output = '\n'.join(output)
                 output_list.append(output)
     return output_list
+
+class blast2genome:
+    def __init__(self, fasta_id, query_seq, match_seq, hit_seq, hit_from, hit_to, hit_strand, amino_offset=0):
+        #amino offset is the position in hit_seq from which to start searching for match segments (ie peptide alignment to ORF protein. all seqs must be amino acids, hit_from and hit_to are genomics coords, and query_from and query_to are amino acid coords (1 based).
+        self.fasta_id = fasta_id
+        self.query_seq = query_seq
+        self.match_seq = match_seq
+        self.hit_seq = hit_seq
+        self.hit_to = hit_to
+        self.hit_from = hit_from
+        self.segments = self.match_seq.replace('+',' ').split()
+        target = self.hit_seq.replace('-','')
+        self.records = []
+        amino_offset = 0
+        self.hit_strand= hit_strand
+        self.alignment_start = np.inf
+        self.alignment_end = 0
+
+        for segment in self.segments: 
+            newstart, newend, newoffset = self.evaluate_start(segment, self.hit_seq, self.hit_from, self.hit_to, self.hit_strand, amino_offset)
+            start_position = newstart
+            end_position = newend
+            
+            if start_position < self.alignment_start:
+                self.alignment_start = start_position
+            if end_position > self.alignment_end:
+                self.alignment_end = end_position
+
+            strand=self.hit_strand
+            record = (segment, start_position, end_position, strand)
+            self.records.append(record)
+            amino_offset = newoffset
+
+    def evaluate_start(self, segment, hit_seq, hit_start, hit_end, hit_strand, hit_amino_offset):
+        starts = [m.start() for m in re.finditer('(?={})'.format(segment), hit_seq)]
+        assert hit_amino_offset % 1 == 0
+        starts =  [ i for i in starts if i >= hit_amino_offset ]
+        start = starts[0]
+        end = start + len(segment)
+        new_hit_amino_offset = end
+        if hit_strand=='+':
+            newstart = ((start ) * 3) + hit_start
+            newend   = (((end-start )* 3) + newstart )-1
+            return newstart, newend, new_hit_amino_offset
+        elif hit_strand=='-':
+            newend = hit_end - ((start ) * 3) 
+            newstart   = newend - (((end-start )* 3) ) + 1
+            return newstart, newend, new_hit_amino_offset
+
+class pblast_mult:
+    def __init__(self, query_recs, target_recs, outdir, evalue=0.0001, num_threads=10, max_target_seqs=500, max_hsps=1, matrix='BLOSUM62', gapopen=11, word_size=3, gapextend=1, comp_based_stats=2, window_size=15, threshold=11, seg='no'):
+        
+        self.query_recs = query_recs
+        self.target_recs = target_recs
+        self.outdir = outdir
+        self.num_threads = num_threads
+        self.evalue = evalue
+        self.max_target_seqs = max_target_seqs
+        self.max_hsps = max_hsps
+        self.matrix = matrix
+        self.gapopen = gapopen
+        self.word_size =  word_size
+        self.gapextend = gapextend
+        self.comp_based_stats = comp_based_stats
+        self.window_size = window_size
+        self.threshold = threshold
+        self.seg = seg
+        
+        blastdir = outdir + '/db'
+        self.outfile = outdir + '/results.xml'
+        os.mkdir(blastdir)
+        SeqIO.write( target_recs, blastdir + '/target.fasta','fasta')
+        cmd="cd {} && makeblastdb -in target.fasta -dbtype 'prot' -out 'target'".format(blastdir)
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        process.wait()
+        assert process.returncode == 0
+        cmd ="cd {} && blastp -query target.fasta -db target -out={} -outfmt 5 -max_target_seqs {} -max_hsps {} -num_threads {} -evalue {} -matrix {} -gapopen {} -word_size {} -gapextend {} -comp_based_stats {} -window_size {} -threshold {} -seg {}".format(blastdir, self.outfile, self.max_target_seqs, self.max_hsps, self.num_threads, self.evalue, self.matrix, self.gapopen, self.word_size, self.gapextend, self.comp_based_stats, self.window_size, self.threshold, self.seg)
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE) 
+        process.wait()
+        assert process.returncode == 0
+        result_handle = open(self.outfile)
+        self.blast_records = list(NCBIXML.parse(result_handle))
+        result_handle.close() 
+        self.aln_dict = defaultdict(set)
+        for rec in self.blast_records:
+            for aln in rec.alignments:
+                self.aln_dict[rec.query.split()[0]].add(aln.hit_def.split()[0])
+
+        self.sorted_map = {}
+        for rec in self.aln_dict:
+            recs = natsorted(list(self.aln_dict[rec]))
+            self.aln_dict[rec] = recs
+            recs = ';'.join(recs)
+            self.sorted_map[rec] = recs
+
+
+
+
+
+
+
 

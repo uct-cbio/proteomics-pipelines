@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 config=$1
 outpath=$2
 kegg_id=$3 #'mtu'
@@ -22,7 +24,13 @@ if [ ! -d $outpath/strains ] ; then
     mq_genome_to_peptide.py $config $outpath #|| rm -rf $outpath/strains
 fi
 
+mq_consensus_blast.py $config $outpath
+
 #uniprot_peptide2db.py $config $outpath
+
+################
+# Interproscan #
+################
 
 if [ ! -d $outpath/mapping ] ; then
     mq_peptide_to_referencedb.py $config $outpath || rm -rf $outpath/mapping
@@ -36,54 +44,110 @@ if [ ! -f $outpath/fasta/id_mapping.p ] ; then
     ips_fasta.py $outpath/fasta/combined_translated.fasta $outpath/fasta || rm -rf $outpath/fasta/id_mapping.p
 fi
 
+if [ ! -f $outpath/fasta/nr_translated_pg_orfs.fasta.gff3 ] ; then
+    ips.sh $outpath/fasta/nr_translated_pg_orfs.fasta $outpath/fasta $python2ve || rm -rf $outpath/fasta/nr_translated_pg_orfs.fasta.gff3
+fi
+
+#########
+# BLAST #
+#########
+
 if [ ! -d $outpath/blast ] ; then
     mkdir $outpath/blast
-    mq_blast2ref.py $config $outpath  || rm -rf $outpath/blast 
 fi
 
-#if [ ! -f $outpath/fasta/nr_translated_pg_orfs.fasta.gff3 ] ; then
-#    ips.sh $outpath/fasta/nr_translated_pg_orfs.fasta $outpath/fasta $python2ve
+if [ ! -d $outpath/blast/orfs2proteins ] ; then
+    mkdir $outpath/blast/orfs2proteins
+    mq_blast_orfs2refproteome.py $config $outpath  || rm -rf $outpath/blast/orfs2proteins
+fi
+
+if [ ! -d $outpath/blast/orfs2genome ] ; then
+    mkdir $outpath/blast/orfs2genome
+    mq_blast_orfs2refgenome.py $config $outpath  || rm -rf $outpath/blast/orfs2genome
+fi
+
+#if [ ! -d $outpath/blast/peptides2genome ] ; then
+#    mkdir $outpath/blast/peptides2genome
+#    mq_blast_peptides2refgenome.py $config $outpath  || rm -rf $outpath/blast/peptides2genome
 #fi
 
-if [ ! -f $outpath/combined.csv ] ; then
-    mq_peptide_to_protein.py $config $outpath || rm -rf $outpath/combined.csv
+if [ ! -d $outpath/blast/peptides2orfs ] ; then
+    mkdir $outpath/blast/peptides2orfs
+    mq_blast_peptides2reforfs.py $config $outpath  || rm -rf $outpath/blast/peptides2orfs
 fi
 
-if [ ! -d $outpath/tables ] ;  then      
-    mq_export_tables.py $config $outpath || rm -rf $outpath/tables
+
+if [ ! -d $outpath/jbrowse ] ; then
+    mkdir $outpath/jbrowse
+    mq_strains2ref_peptides.py $config $outpath  || rm -rf $outpath/jbrowse
+    mq_strains2ref_orfs.py $config $outpath      || rm -rf $outpath/jbrowse
+    mq_jbrowse_upload_script.py $config $outpath || rm -rf $outpath/jbrowse
 fi
 
-#############################
-# Identification Statistics #
-#############################
 
-if [ ! -d $outpath/stats ] ; then
-    mq_basestats.py $config $outpath || rm -rf $outpath/stats
-fi
-
-#################
-# GBROWSE DATA  #
-#################
-mq_peptide_features.py $config $outpath
+#mq_peptide_features.py $config $outpath
 #mq_domain_features.py $config $outpath
 #mq_contig_heatmaps.py $config $outpath
 #mq_wiggle_features.py $config $outpath
 
+
+
 ##################
-# IPS Enrichment #
+# Operon Mapping #
 ##################
-#ips_gsea.py $outpath 
-#mq_annotate.py $outpath
-#mq_genesets.R --outdir $outpath --keggid $kegg_id
+
+if [ ! -f $outpath/mapping/operons.json ] ; then
+    door2_operon_map.py $config $outpath || rm -rf $outpath/mapping/operons.json
+fi
+
+##################
+# Combined table #
+##################
+
+if [ ! -f $outpath/combined.csv ] ; then
+    mq_peptide_to_protein.py $config $outpath || rm -rf $outpath/combined.csv ; exit 1
+fi
+
+#if [ ! -d $outpath/tables ] ;  then      
+#    mq_export_tables.py $config $outpath || rm -rf $outpath/tables
+#fi
+
+#############################
+# Identification Statistics #
+#############################
+#if [ ! -d $outpath/stats ] ; then
+#    mq_basestats.py $config $outpath || rm -rf $outpath/stats
+#fi
+
+
+###################### 
+# PEP score analysis #
+######################
+
+#mq_PEP_MSMS.py $config $outpath
+
 
 ###################################
 # Differential abundance analysis #
 ###################################
-#mq_experimental_design.py $config $outpath
-#rm -rf ${outpath}/diff
-#mq_differential_abundance.R -d ${outpath}/experimental_design.R -p ${outpath}/combined.csv -o ${outpath}/diff
+if [ ! -f $outpath/experimental_design.R ] ; then
+    mq_experimental_design.py $config $outpath || rm -rf $outpath/experimental_design.R
+fi
+
+if [ ! -d $outpath/diff ] ; then
+    mq_differential_abundance.R -d ${outpath}/experimental_design.R -p ${outpath}/combined.csv -o ${outpath}/diff # || rm -rf ${outpath}/diff
+fi
+
+##################
+# IPS Enrichment #
+##################
+if [ ! -d $outpath/gsea ] ; then
+    ips_gsea.py $outpath  && mq_annotate.py $outpath && mq_genesets.R --outdir $outpath --keggid $kegg_id || rm -rf $outpath/gsea
+fi
 
 
+#mq_differential_abundance.R -d ${outpath}/experimental_design.R -p ${outpath}/combined.csv -o ${outpath}/diff # || rm -rf ${outpath}/diff
+#gage.R --outdir $outpath --keggid $kegg_id
 
 
 
