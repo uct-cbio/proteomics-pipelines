@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import numpy as np
 import scipy as sp
@@ -110,11 +110,11 @@ eb.fit.mult <- function(dat, design){
   return(results.eb.mult)
 }'''
 
-def boxplot(df, columns , xval, yval, jpeg): # groups is a dict to group values by
+def boxplot(df, columns , xval, yval, png): # groups is a dict to group values by
     df_ = df[columns]
     rdf =pandas2ri.py2ri(df_)
     ro.globalenv['data'] = rdf
-    c = "jpeg('{}',width = 12, height = 8, units = 'in', res = 300)".format(jpeg); ro.r(c)
+    c = "png('{}',width = 12, height = 8, units = 'in', res = 300)".format(png); ro.r(c)
     c = 'print(boxplot(data, las = 2)); dev.off()'; ro.r(c)
 
 def list_density(data, title, outpath):
@@ -124,7 +124,7 @@ def list_density(data, title, outpath):
     c = "library(ggplot2)"; ro.r(c)
     c = "p <- ggplot(aes(x=PEP, colour=Type), data=data)"; ro.r(c)
     c = "pl1 <- p + geom_density()+xlab('Posterior error probability (PEP) score')+ggtitle('{}')".format(title); ro.r(c)
-    c = "jpeg('{}',width = 12, height = 8, units = 'in', res = 300)".format(outpath); ro.r(c)
+    c = "png('{}',width = 12, height = 8, units = 'in', res = 300)".format(outpath); ro.r(c)
     c = "print(plot(pl1)); dev.off()"; ro.r(c)
 
 def qval(dataframe, pval):   # pandas df, treated columns, control columns
@@ -156,7 +156,7 @@ def spearman_plot(df_, col1, col2, path):   # pandas df, treated columns, contro
     ro.globalenv['data'] = rdf
     c = "attach(data)"; ro.r(c)
     c = "my.cor=cor.test({},{},method='spearman',use='pairwise.complete.obs')".format(col1_, col2_);ro.r(c)
-    c = "jpeg('{}')".format(path+'spearman.jpeg'); ro.r(c)
+    c = "png('{}')".format(path+'spearman.png'); ro.r(c)
     c = "print(plot({}, {}, xlab='{}', ylab='{}', pch=21)); dev.off()".format(col1_, col2_, col1_,col2_,col2_,col1_); ro.r(c)
 
 
@@ -188,7 +188,7 @@ def pearson_plot(df_, col1, col2, path):   # pandas df, treated columns, control
     ro.globalenv['data'] = rdf
     c = "attach(data)"; ro.r(c)
     c = "my.cor=cor.test({},{},method='pearson',use='pairwise.complete.obs')".format(col1_, col2_);ro.r(c)
-    c = "jpeg('{}')".format(path+'pearson.jpeg'); ro.r(c)
+    c = "png('{}')".format(path+'pearson.png'); ro.r(c)
     c = "print(plot({}, {}, xlab='{}', ylab='{}', pch=21)); dev.off()".format(col1_, col2_, col1_,col2_,col2_,col1_); ro.r(c)
 
 
@@ -218,19 +218,9 @@ def list_kw_dunn(names, lists, dep_var, dep_fac, outpath):
     df1 = pd.concat(dfs).reset_index()
     del df1['index']
 
-    dfs = []
-    for item in range(len(names_)):
-        _ = pd.DataFrame()
-        _[dep_var] = pd.Series(lists_[item])
-        _[dep_fac] = names_[item]
-        dfs.append(_)
-    df2 = pd.concat(dfs).reset_index()
-    del df2['index']
-
     assert len(df1[df1['PEP'] < 0]) == 0
-    assert len(df2[df2['PEP'] < 0]) == 0
 
-    KW_DUNN(df1, df2, dep_var, dep_fac, outpath)
+    data = KW_DUNN(df1, dep_var, dep_fac, outpath)
 
 
 def mwu(dataframe, group1, group2):
@@ -242,7 +232,7 @@ def mwu(dataframe, group1, group2):
     c = "print(test)";ro.r(c)
 
     c = "stat = as.list(test$statistic[1])[1]"; ro.r(c)
-    print
+    #print
     c    = 'stat$W'
     stat = robjects.r(c)[0]
 
@@ -277,7 +267,7 @@ def ANOVA_RM(dataframe, val, var, subject):   # pandas df, col to do anova on
     except:
         fligner = np.nan
 
-    print bartlett, fligner
+    #print bartlett, fligner
     try:
         c = "your.lme =  lme({} ~ {}, data=data,random=~1|{}/{})".format(val, var, subject, var); ro.r(c)
         c = "your.anova = anova(your.lme)"; ro.r(c)
@@ -299,53 +289,35 @@ def ANOVA_RM(dataframe, val, var, subject):   # pandas df, col to do anova on
 
     return df
 
-def KW_DUNN(dataframe, dep_var, dep_fac):   # pandas df, col to do anova on
-    #c = "sink('{}')".format(outpath); ro.r(c)
+def KW_DUNN(dataframe, dep_var, dep_fac, outpath):   # pandas df, col to do anova on
+    c = "sink('{}')".format(outpath); ro.r(c)
     c = "library('FSA')"; ro.r(c)
     rdf =pandas2ri.py2ri(dataframe); ro.globalenv['data'] = rdf
     c = "library(plyr)";ro.r(c)
     c = "your.kw = kruskal.test(data${} ~ data${})".format(dep_var, dep_fac); ro.r(c)
-    try:
-        c = "your.bartlett = bartlett.test(data${}~data${})".format(dep_var, dep_fac); ro.r(c)
-        c = "print(your.bartlett)";ro.r(c)
-    except:
-        pass
-
-    try:
-        c = "your.fligner = fligner.test(data${}~data${})".format(dep_var, dep_fac); ro.r(c)
-        c = "print(your.fligner)";ro.r(c)
-    except:
-        pass
-
-
     kw_p = robjects.r('your.kw$p.value')[0]
     kw_statistic = robjects.r('your.kw$statistic')[0]
     kw_parameter = robjects.r('your.kw$parameter')[0]
 
-    try:
-        c = "your.dunn = dunnTest(data${}, data${}, kw=TRUE, two.sided = TRUE, method='bh')".format(dep_var,dep_fac);ro.r(c)
-        c = "print(str(your.dunn))"; ro.r(c)
-        dunn_correction = robjects.r('your.dunn$method')[0]
-        c = "your.table = your.dunn$res"; ro.r(c)
-        c = 'your.table'
-        df = pandas2ri.ri2py(ro.r[c])
-    except:
-        dunn_correction = np.nan
-        df = pd.DataFrame()
+    c = "your.dunn = dunnTest(data${}, data${}, kw=TRUE, two.sided = TRUE, method='bh')".format(dep_var,dep_fac);ro.r(c)
+    c = "print(str(your.dunn))"; ro.r(c)
+    dunn_correction = robjects.r('your.dunn$method')[0]
+    c = "your.table = your.dunn$res"; ro.r(c)
+    ro.r('print(your.table)')
+    
+    #df = pandas2ri.ri2py(ro.r[c])
 
     data = pd.DataFrame()
     data.loc[0, 'Dunn correction']       = dunn_correction
     data.loc[0, 'Kruskal-Wallis p-value'] = kw_p
     data.loc[0, 'Kruskal-Wallis statistic'] = kw_statistic
     data.loc[0, 'Kruskal-Wallis parameter'] = kw_parameter
-
     try:
         comp_dct = df.set_index('Comparison')['P.adj'].to_dict()
         for val in comp_dct:
             data.loc[0, val +' Dunn-test P.adj'] = comp_dct[val]
     except:
         pass
-
     return data
 
 
@@ -375,11 +347,11 @@ def limma(df1, treated, control):   # pandas df, treated columns, control column
     ctot = ct + tr
     rdf =pandas2ri.py2ri(df)
     ro.globalenv['data'] = rdf
-    c="str(data)"; print ro.r(c)
+    c="str(data)"; #print ro.r(c)
     c= "data[ is.na(data) ] <- NA"; ro.r(c)
-    c="tr <- c{}".format(tuple(tr)); ro.r(c); print c
-    c="ct <- c{}".format(tuple(ct)); ro.r(c); print c
-    c= "str(ct)"; print ro.r(c)
+    c="tr <- c{}".format(tuple(tr)); ro.r(c); #print c
+    c="ct <- c{}".format(tuple(ct)); ro.r(c); #print c
+    c= "str(ct)"; #print ro.r(c)
     #c='''source("http://www.biostat.jhsph.edu/~kkammers/software/eupa/source.functions.r")'''
     #c='''source("source.functions.r.txt")'''
     ro.r(functions)
@@ -388,9 +360,9 @@ def limma(df1, treated, control):   # pandas df, treated columns, control column
     [design.append(2) for i in tr]
     [design.append(1) for i in ct]
     c="design <- model.matrix(~factor(c{}))".format(tuple(design))
-    print c
+    #print c
     ro.r(c)
-    print ro.r('str(data)')
+    #print ro.r('str(data)')
     c='''colnames(design) <- c("Intercept", "Diff")'''
     ro.r(c)
     c='res.eb <- eb.fit(data[, c(tr,ct)], design)'
@@ -431,11 +403,11 @@ def trt(df1,treated, control):   # pandas df, treated columns, control columns
     ctot = ct + tr
     rdf =pandas2ri.py2ri(df)
     ro.globalenv['data'] = rdf
-    c="str(data)"; print ro.r(c)
+    c="str(data)"; #print ro.r(c)
     c= "data[ is.na(data) ] <- NA"; ro.r(c)
-    c="tr <- c{}".format(tuple(tr)); ro.r(c); print c
-    c="ct <- c{}".format(tuple(ct)); ro.r(c); print c
-    c= "str(ct)"; print ro.r(c)
+    c="tr <- c{}".format(tuple(tr)); ro.r(c); #print c
+    c="ct <- c{}".format(tuple(ct)); ro.r(c); #print c
+    c= "str(ct)"; #print ro.r(c)
     #c='''source("http://www.biostat.jhsph.edu/~kkammers/software/eupa/source.functions.r")'''
     c='''source("source.functions.r.txt")'''
     ro.r(c)
@@ -444,9 +416,9 @@ def trt(df1,treated, control):   # pandas df, treated columns, control columns
     [design.append(2) for i in tr]
     [design.append(1) for i in ct]
     c="design <- model.matrix(~factor(c{}))".format(tuple(design))
-    print c
+    #print c
     ro.r(c)
-    print ro.r('str(data)')
+    #print ro.r('str(data)')
     c='''colnames(design) <- c("Intercept", "Diff")'''
     ro.r(c)
     c='res.eb <- trt.fit(data[, c(tr,ct)], design)'

@@ -31,10 +31,11 @@ def export_fasta(df):
     return seqrecord
 
 for strain in config['strains']:
-    datum=output + '/strains/{}/{}_mapped_peptides.p'.format(strain,strain)
-    table = pickle.load(open(datum,'rb'))
-    table = table[['ORF_id', 'ORF_translation']].drop_duplicates()
-    recs = table.apply(export_fasta, axis=1).tolist()
-    combined_fasta += recs
+    if config['strains'][strain]['sf_genome'] != None:
+        datum=output + '/strains/{}/{}_mapped_peptides.p'.format(strain,strain)
+        table = pickle.load(open(datum,'rb'))
+        table = table[['ORF_id', 'ORF_translation']].drop_duplicates()
+        recs = table.apply(export_fasta, axis=1).tolist()
+        combined_fasta += recs
 
 SeqIO.write(combined_fasta , output + '/fasta/combined_translated.fasta', 'fasta')

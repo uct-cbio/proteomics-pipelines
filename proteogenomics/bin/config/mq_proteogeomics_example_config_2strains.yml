@@ -1,5 +1,6 @@
 # MQ proteogenomics configuration
 threads: 10
+
 translation_table: 11
 
 # Reference genome
@@ -61,10 +62,6 @@ strains:
         sf_genome: '/root/genomes/S5527.fasta'
     S507: 
         sf_genome: '/root/genomes/S507.fasta'
-    H37Rv_WT1:
-        sf_genome: '/root/genomes/H37Rv.fasta'
-    H37Rv_1a1:
-        sf_genome:
 
 files:
     S507:
@@ -76,14 +73,6 @@ files:
       - '150715_SF_507_ML(2)' 
       - '150715_SF_507_ML+(2)'
       - '150715_SF_507_ST(1)_150729014451'
-    H37Rv_WT1: 
-      - '141010_AG_WT1-2_50nguL'
-      - '141010_AG_WT1-3_50nguL'
-      - '141010_AG_WT1-1_50nguL' 
-    H37Rv_1a1:  
-      - '141010_AG_1a1-2_50nguL'
-      - '141010_AG_1a1-3_50nguL' 
-      - '141010_AG_1a1-1_50nguL'
     S5527:
       - '150715_SF_5527_ST(1)_150729170158'
       - '150715_SF_5527_ML+(1)_150730003103'
@@ -139,34 +128,16 @@ samples:
     5527_ST_2:  
          STRAIN: 'S5527'
          STRAIN_GROUP: 'S5527ST'
-    H37Rv_1a1_1:
-        STRAIN: 'H37Rv_1a1'
-        STRAIN_GROUP: 'H37Rv_1a1'
-    H37Rv_1a1_2:
-        STRAIN: 'H37Rv_1a1'
-        STRAIN_GROUP: 'H37Rv_1a1'
-    H37Rv_1a1_3:
-        STRAIN: 'H37Rv_1a1'
-        STRAIN_GROUP: 'H37Rv_1a1'
-    H37Rv_WT1_1:
-        STRAIN: 'H37Rv_WT1'
-        STRAIN_GROUP: 'H37Rv_WT1'
-    H37Rv_WT1_2:
-        STRAIN: 'H37Rv_WT1'
-        STRAIN_GROUP: 'H37Rv_WT1'
-    H37Rv_WT1_3:
-        STRAIN: 'H37Rv_WT1'
-        STRAIN_GROUP: 'H37Rv_WT1'
 
 # Decide on the comparisons based on LFQ and give the order eg. ['B','A']. FC will be calculated log2(B/A). A list of tuples is required.
- # LIMMA will be used for LFQ, edgeR will be used for spectral counts
+ # LIMMA will be used for LFQ, edgeR will be used for spectral counts, sample, reference
 comparisons:
-    - !!python/tuple ['S507ML','S507MLexp']
+    - !!python/tuple ['S507MLexp','S507ML']
     - !!python/tuple ['S507ML','S5527ML']
-    - !!python/tuple ['S5527ML','S5527MLexp']
+    - !!python/tuple ['S5527MLexp','S5527ML']
     - !!python/tuple ['S507MLexp','S5527MLexp']
-    - !!python/tuple ['S507ML','S507ST']
-    - !!python/tuple ['S5527ML','S5527ST']
+    - !!python/tuple ['S507ST','S507ML']
+    - !!python/tuple ['S5527ST','S5527ML']
     - !!python/tuple ['S507ST','S5527ST']
 
 

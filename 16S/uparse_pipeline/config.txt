@@ -30,10 +30,17 @@ uparse_filter_out_dir=/scratch/DB/bio/test_data/16S/process/16S/uparse_pipeline/
 uparse_filter_log_dir=/scratch/DB/bio/test_data/16S/process/16S/uparse_pipeline/logs
 uparse_filter_threads=1
 uparse_filter_walltime="1:00:00"
-#uparse_filter_fastq_trunclen=300 not used anymore
 min_len=250 #is the minimum sequence length (discards reads shorter than this)
 max_len=260 #is the maximum sequence length (discards reads longer than this)
 target_len=250 #is target length truncation
 uparse_filter_fastq_maxee=0.1
 #KV added
 mapping_file=/home/gerrit/projects/cbio-pipelines/16S/uparse_pipeline/mapping_file.txt
+
+# uparse_filter_fastq
+uparse_filter_fastq_DEBUG=0
+uparse_filter_fastq_in_dir=/scratch/DB/bio/test_data/16S/process/16S/uparse_pipeline/merged_fastqs
+uparse_filter_fastq_out_dir=/scratch/DB/bio/test_data/16S/process/16S/uparse_pipeline/filtered_fastqs
+uparse_filter_fastq_log_dir=/scratch/DB/bio/test_data/16S/process/16S/uparse_pipeline/logs
+uparse_filter_fastq_threads=1
+uparse_filter_fastq_walltime="1:00:00"

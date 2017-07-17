@@ -28,6 +28,7 @@ import contextlib
 import concurrent.futures
 import sys
 import algo
+import blast
 
 def alt_starts_recs(records, starts = ['ATG','GTG','TTG'], peptide_length=20):
     all= []
@@ -586,13 +587,16 @@ def sam_parse(sam):
 
 class peptides2genome:
     '''Basic class for peptides to genome mapping - list of BioPython seqrecords for genome contigs'''
-    def __init__(self, genome, assembly_name, translation_table, peptides_list, threads=1, start_codons=['ATG','GTG','TTG']):
+    def __init__(self, genome, assembly_name, translation_table, peptides_list, outdir, threads=1, start_codons=['ATG','GTG','TTG']):
         self.threads=threads
-        print(self.threads)
         self.translation_table = translation_table
         self.stop_codons = Stop_List(translation_table)
         self.start_codons = start_codons
+        self.outdir = outdir
         
+        os.mkdir(self.outdir +'/sixframe_blast')
+        #os.mkdir(self.outdir +'/sixframe_blast')
+
         mstart_peps=[i[1:] for i in peptides_list if i.startswith('M')]
         non_mstart_peps=[i for i in peptides_list if not i.startswith('M')]
 
@@ -601,16 +605,23 @@ class peptides2genome:
         self.peptide2orf = defaultdict(list)
 
         orfs = sf_contigs(genome, assembly_name = assembly_name, table=translation_table, codons='All', peptide_length=1, translated=False )
-        print(len(orfs))
-
-        #print(orfs)
+        
         self.orfs = orfs
 
         orf_counts = defaultdict(list)  # This baby is to hold the values of the id's of ORFs that occur one or more times in the genome
         preceding_codon = defaultdict() 
         
         orf_seq_list= [str(rec.seq) for rec in orfs]
-        orf_trans_list = [str(translate(rec.seq, table=self.translation_table, cds=False)) for rec in orfs]
+        #orf_trans_list = [str(translate(rec.seq, table=self.translation_table, cds=False)) for rec in orfs]
+
+        self.trans_orfs = []
+        orf_trans_list = []
+
+        for orf in self.orfs:
+            newrec = SeqRecord(id=orf.id, seq = translate(orf.seq, table = self.translation_table, cds=False))
+            self.trans_orfs.append(newrec)
+            orf_trans_list.append(str(newrec.seq))
+
         orf_id_list = [rec.id for rec in orfs]
 
         preceding_codons = [rec.description.split('Preceding_codon=')[1].split('.')[0] for rec in orfs]
@@ -618,16 +629,13 @@ class peptides2genome:
         most_upstream_peptide_pos=[]
         trie_peptide_dict = []
 
-
         orf_series = pd.Series(orf_id_list, name='ORF_id')
         orf_series.index=orf_seq_list
         orf_series.index.name = 'ORF_sequence'
         
         orf_df = orf_series.reset_index()
         #orf_df['ORF_genome_count'] = orf_df['ORF_ids'].apply(lambda x : len(x.split(';')))
-        
         orf_df['ORF_translation'] = pd.Series(orf_trans_list) # DEV change the way in-sequence stops are translated (eg. use selenocysteine)
-        
         orf_df['ORF_preceding_codons'] = pd.Series(preceding_codons)
         print("Calculating cterm fragments")
         orf_df['ORF_Cterm_fragment'] = orf_df['ORF_sequence'].apply(lambda x : self.cterm_fragment(x))
@@ -640,13 +648,19 @@ class peptides2genome:
         print("Calculating most upstream inferred codon")
         orf_df['Most_Upstream_Inferred_Codon'] = orf_df.apply(self.most_upstream_codon, axis=1)
         orf_df['Most_Upstream_Inferred_Translation'] = orf_df.apply(self.most_upstream_translation, axis=1)
+        
+        self.mapped_orfs =  [ orf  for orf in self.orfs if orf.id in list(orf_df['ORF_id']) ]
+        self.mapped_trans_orfs =  [ orf  for orf in self.trans_orfs if orf.id in list(orf_df['ORF_id']) ]
+        
+        blasted_orfs = blast.pblast_mult(self.mapped_trans_orfs, self.trans_orfs, self.outdir + '/sixframe_blast')
+        orf_df['Orthologous_ORFs'] = orf_df['ORF_id'].apply(lambda x : blasted_orfs.sorted_map[x])
+        orf_df['Orthologous_ORFs_Cluster_Size'] = orf_df['ORF_id'].apply(lambda x : len(blasted_orfs.aln_dict[x]))
 
-        self.orf_df = orf_df
         self.orf_trans_list = orf_df['ORF_translation'].tolist()
+        self.orf_df = orf_df
         print("ready to analyze the peptides")
         self.peptides = self.process_peptides(peptides_list)
     
-
     def most_upstream_start(self, df):
         
         pep_positions = []
@@ -1023,13 +1037,13 @@ class pairwise_blast:
                         if (matchpos >= 0) and (matchpos < len(match)):
                             if match[matchpos] == '+':
                                 positions.append(location)
-                                var_dict[location]='{}->{}'
-                                var='{}->{}'.format(str(query.seq)[i], str(target.seq)[i+diff])
+                                var='{}->{}'.format(str(target.seq)[i+diff], str(query.seq)[i])
                                 var_dict[location]=var
                         elif (location >= 1) and (location <= len(str(target.seq))):
-                            positions.append(location)
-                            var='{}->{}'.format(str(query.seq)[i], str(target.seq)[i+diff])
-                            var_dict[location]=var
+                            if str(target.seq)[i+diff] != str(query.seq)[i]:
+                                positions.append(location)
+                                var='{}->{}'.format(str(target.seq)[i+diff], str(query.seq)[i])
+                                var_dict[location]=var
                     results.append(h)
                 break
 
@@ -1229,18 +1243,16 @@ class proteogenomics:
     def __init__(self, peptides, orf, reference, n_term_acetylated=[], table=11, start_codons=['ATG','GTG','TTG'], cleavage_aminos=['R','K']): #SeqRecord xx|xx|(+)123:1231 orf, ref entry, as BioPython SeqRecord
         self.peptides = peptides
 
-
-
         for pep in n_term_acetylated:
             assert pep in peptides
         
         self.table=table
-        
         self.orf = orf
         self.orf_sequence = str(orf.seq)
         self.translated_orf_sequence = str(translate(orf.seq, table=self.table, cds=False))
         self.orf_id = self.orf.id
         self.translated_orf_rec = SeqRecord(id = self.orf_id, seq = Seq(self.translated_orf_sequence))
+        
         #print(self.translated_orf_rec.format('fasta'))
 
         self.orf_contig = self.orf_id.split('|')[0]
@@ -1252,36 +1264,55 @@ class proteogenomics:
         
         
         temp_dir = tempfile.mkdtemp()
+        
         self.pairwise_blast = pairwise_blast(self.translated_orf_rec, self.reference, temp_dir)
+        
         os.removedirs(temp_dir)
 
         self.start_codons = start_codons
+        
         self.cleavage_aminos = cleavage_aminos
 
         self.annotated_peptides = [pep for pep in peptides if pep in self.reference_sequence]
+        
         self.novel_peptides = [pep for pep in peptides if not pep in self.annotated_peptides]
 
         self.acetylated = n_term_acetylated
+        
         self.orf_strand, self.orf_start, self.orf_end = self.get_coords()
 
         pep_starts = []
+        
         positions = defaultdict(set)        
+        
         tss_validation_type = defaultdict(list)
         
         self.annotation_type = []
+        
         self.tss_peptides = []
+        
         self.validated_tss_sequences = []
+        
         self.met_ap_peptides = []
+        
         self.identified_tss_sites = set()
+        
         self.variant_sequences = []
         
         self.other_peptidase_sites = []
+        
         self.other_peptidase_type = defaultdict(list)
+        
         self.other_peptidase = []
+        
         self.other_peptidase_sequences = []
+        
         self.upstream_inferred_tss_sequences = []
+        
         self.variant_sequences_trie = []
+        
         self.mapped_peptides = []
+        
         self.unmapped_peptides = []
 
         for peptide in self.peptides:
@@ -1317,17 +1348,21 @@ class proteogenomics:
             if peptide.startswith('M'):
                 pepstart = (self.translated_orf_sequence.find(peptide[1:]) - 1) # 0 based
             else:
-                pepstart = self.translated_orf_sequence.find(peptide)
-            
+                pepstart = self.translated_orf_sequence.find(peptide) 
+    
             if pepstart == orf_ref_pos:
                 relative = 'at annotated TSS site'
+            
             elif pepstart > orf_ref_pos:
                 relative = 'downstream of annotated TSS site'
+            
             elif pepstart < orf_ref_pos:
                 relative = 'upstream of annotated TSS site'
 
             
             first_codon = self.orf_sequence[pepstart * 3: pepstart * 3 + 3]
+            
+
             first_amino = str(translate(Seq(first_codon),table=11, cds= False))
             previous_codon = self.orf_sequence[pepstart * 3-3: pepstart * 3 ]
             previous_amino = str(translate(Seq(previous_codon),table=11, cds=False))
@@ -1337,13 +1372,14 @@ class proteogenomics:
             if peptide[0] =='M' and (first_codon in self.start_codons) and (first_codon != 'ATG'):
                 met_init = True
             if first_codon in self.start_codons:
-                stat_site = True
+                start_site = True
             if (first_amino != 'M') and (previous_codon in self.start_codons):
                 met_cleaved = True
             if peptide in self.acetylated:
                 nterm_acetyl = True
             
             # Check if peptide at TSS
+
             if (nterm_acetyl == True) and (start_site == True) and (peptide[0] == 'M'):
                 self.tss_peptides.append(peptide)
                 self.identified_tss_sites.add(pepstart)
@@ -1366,14 +1402,12 @@ class proteogenomics:
 
             elif (nterm_acetyl == True) or (enzymatic == False):
                 other_peptidase_message = []
-                
                 if nterm_acetyl == True:
                     self.other_peptidase_type[pepstart].append('N-term acetylated peptide {} {}'.format(peptide, relative))
                 if enzymatic == False:
                     self.other_peptidase_type[pepstart].append('Non-enzymatic N-terminus peptide {} {}'.format(peptide, relative))
                 self.other_peptidase.append(peptide)
                 self.other_peptidase_sites.append(pepstart)
-
 
             positions[pepstart].update(peptide[0])
             pep_starts.append(pepstart)
@@ -1399,60 +1433,49 @@ class proteogenomics:
                 upstream_start = False
 
         variant_count = 1
-
         if upstream_start == True:
             current_pos = most_upstream 
             current_orf_start = current_pos * 3
             #current_codon = self.orf_sequence[current_pos * 3: current_pos * 3 + 3 ]
             current_codon = None 
             previous_codon = self.orf_sequence[(current_pos -1)* 3 : (current_pos-1) * 3 + 3]
-            
             while (current_codon not in start_codons) and (previous_codon != ''):
-                
                 current_pos -= 1
                 current_orf_start = current_pos * 3
                 current_codon = self.orf_sequence[current_orf_start: current_orf_start + 3 ]
                 previous_codon = self.orf_sequence[(current_pos -1)* 3 : (current_pos-1) * 3 + 3]
-
             if current_orf_start > 0:
                 new_rec = self.get_var_rec(current_orf_start, variant_count, cds = True, variant_description="(Next upstream TSS of peptide identified upstream of mapped annotated sequence TSS)")
                 self.annotation_type.append('Putative upstream TSS (upstream non-TSS peptide)')
             else:
                 new_rec = self.get_var_rec(current_orf_start, variant_count, cds = False, variant_description= "(No upstream ORF TSS of peptide identified upstream of mapped annotated sequence TSS)")
                 self.annotation_type.append('No putative upstream TSS (upstream non-TSS peptide)')
-
             self.variant_sequences.append(new_rec)
             self.upstream_inferred_tss_sequences.append(new_rec)
-
             variant_count += 1
         
         for tss in self.identified_tss_sites:
             new_rec = self.get_var_rec(tss * 3, variant_count, cds = True, variant_description="(Identified TSS by {})".format(' (AND) '.join(tss_validation_type[tss])))
             self.variant_sequences.append(new_rec)
             self.validated_tss_sequences.append(new_rec)
-
             if tss == orf_ref_pos:
                 self.annotation_type.append('Annotated TSS validated')
             elif tss < orf_ref_pos:
                 self.annotation_type.append('Upstream TSS identified')
             elif tss > orf_ref_pos:
-                self.annotation_type.append('Downstream TSS identified')
-            
+                self.annotation_type.append('Downstream TSS identified') 
             variant_count += 1
         
         for other in self.other_peptidase_sites:
             new_rec = self.get_var_rec(other * 3, variant_count, cds = False, variant_description="(Other peptidase site identified by {})".format(' (AND) '.join(self.other_peptidase_type[other])))
             self.variant_sequences.append(new_rec)
             self.other_peptidase_sequences.append(new_rec)
-            
             if other == orf_ref_pos:
                 self.annotation_type.append('Annotated start site non-enzymative cleavage site')
             elif other < orf_ref_pos:
                 self.annotation_type.append('Upstream non-enzymative cleavage site')
             elif other > orf_ref_pos:
                 self.annotation_type.append('Downstream non-enzymative cleavage site')
-            
-            
             variant_count += 1
         self.variant_sequences_trie += list_trie_upper(self.variant_sequences, self.peptides)
 

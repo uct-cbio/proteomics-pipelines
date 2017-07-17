@@ -7,7 +7,7 @@ echo -n "" > $cmds_log
 #Quality filter based on E scores
 if [ ! -f $filtered_1_fasta ]
 then
-  cmd="$uparse_base/usearch9 -fastq_filter $merged_fastq  -fastq_maxee $fastq_maxee -fastaout $filtered_1_fasta"
+  cmd="$uparse_base/usearch9 -threads 1 -fastq_filter $merged_fastq  -fastq_maxee $fastq_maxee -fastaout $filtered_1_fasta"
   echo $cmd >> $cmds_log
   eval $cmd
 fi

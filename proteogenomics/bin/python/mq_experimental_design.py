@@ -1,11 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys
 import importlib.machinery
 from collections import defaultdict
+import yaml
 
-loader = importlib.machinery.SourceFileLoader('config', sys.argv[1])
-config = loader.load_module()
+config = yaml.load(open(sys.argv[1]).read())
 output = sys.argv[2]
 
 vals=[]
@@ -16,7 +16,7 @@ vals.append(d)
 d = "cols <- c("
 vals.append(d)
 
-samples = config.samples
+samples = config['samples']
 experiment = defaultdict(list)
 strain_group = {}
 for sample in samples:
@@ -66,7 +66,8 @@ vals.append(d)
 inter_comps = []
 intra_comps = [] 
 comps = []
-for comparison in config.comparisons:
+
+for comparison in config['comparisons']:
     strains = []
     strains.append(strain_group[comparison[0]])
     strains.append(strain_group[comparison[1]])

@@ -103,3 +103,4 @@ RUN cd /root/muscle/ && cp muscle* /usr/local/bin/muscle
 # Python deps
 RUN pip3 install natsort 
 RUN pip3 install PyYAML
+RUN pip3 install urllib3

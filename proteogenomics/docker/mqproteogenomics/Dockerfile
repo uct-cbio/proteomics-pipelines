@@ -4,7 +4,15 @@ ENV http_proxy ${http_proxy}
 ENV https_proxy ${https_proxy}
 ENV ftp_proxy ${ftp_proxy}
 
-#RUN apt-get update
+RUN pip3 install matplotlib
+RUN pip3 install rpy2
+RUN R -e "install.packages('epitools', dependencies=TRUE, repos='http://cran.us.r-project.org')"
+RUN R -e "install.packages('plotrix', dependencies=TRUE, repos='http://cran.us.r-project.org')"
+RUN R -e "install.packages('sciplot', dependencies=TRUE, repos='http://cran.us.r-project.org')"
+RUN R -e "install.packages('dunn.test', dependencies=TRUE, repos='http://cran.us.r-project.org')"
+RUN R -e "install.packages('FSA',,'http://www.rforge.net/', dependencies=TRUE) "
+
+RUN pip3 install urllib3
 
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 

@@ -9,3 +9,7 @@ The sid.fastq.pairs.list file needs to have per line entries which contains the 
 
 ```paste -d '\t' <(for i in `ls -1 /scratch/DB/bio/test_data/16S/raw/mix/*R1_001.fastq | sort`; do basename=$(basename $i}); echo ${basename%_R*}; done) <(ls -1 /scratch/DB/bio/test_data/16S/raw/mix/*R1_001.fastq | sort) <(ls -1 /scratch/DB/bio/test_data/16S/raw/mix/*R2_001.fastq | sort) > sid.fastq_pair.list```
 
+Something extra
+
+- Currenlty the filter step creates .fasta files so that it can me stripped from primers and trimmed```. If it is however .fastq files we can then run FastQC on them and see what the effect of the UPARSE QC was. For now I've created a script that just create the .fastq files (after filtering). We later need to add the strip primer and trim steps, once that is replaced we can replace ```uparse_filter.batch.sh``` and ```uparse_filter.single.sh```. To run ```uparse_filter.fastq.batch.sh config.txt```
+

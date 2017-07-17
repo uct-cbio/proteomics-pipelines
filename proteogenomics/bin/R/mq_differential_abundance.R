@@ -57,6 +57,7 @@ dir.create(msnbase_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 
 msnpath = paste(outdir, "msnbase/cleaned.csv",sep='')
 write.csv(data, file=msnpath)
+
 ecol <- cols
 fname <- "Identifier"
 eset <- readMSnSet2(msnpath, ecol, fname)
@@ -83,27 +84,38 @@ dev.off()
 data <- ms2df(x.imputed)
 
 orig_data <- data[,cols]
+
 identifier <- data$Identifier
+
 orig_data$Identifier <- identifier 
 
-refids <- data$'X_reference.entries.mapped'
-orig_data$'reference.entries.mapped' <- refids
+refids <- data$'Gene_OrderedLocusName'
 
-orf_ids <- data$'X_combined_orf_ids'
-orig_data$'combined_orf_ids' <- orf_ids
+orig_data$'Gene_OrderedLocusName' <- refids
+orig_data$'UniProtKB_ID' <- data$"UniProtKB.ID"
+
+orf_ids <- data$"ORF.ids...all.strains" 
+orig_data$"ORF.ids...all.strains" <- orf_ids
 
 pg_ids  <- data$'Identifier'
+
 orig_data$'Identifier' <- pg_ids
+
+GI <- data$"GeneID" 
+orig_data$"GeneID" <- GI
 
 orig_data$'iBAQMean' <- rowMeans( data[,cols] )
 
 print('Removing isoform pg based on combined orf ids')
 orig_data <- orig_data[order(-orig_data$iBAQMean),] # Order by mean ibaq, ascending
-orig_data <- orig_data[!duplicated(orig_data$combined_orf_ids), ]
+
+orig_data <- orig_data[!duplicated(orig_data$"ORF.ids...all.strains" ), ]
+
+imputedpath = paste(outdir, "msnbase/imputed.csv",sep='')
+write.csv(orig_data, file= imputedpath)
+
 
 data <- data[,cols]
-
-
 
 ######################
 # Let's make a SPLOM #
@@ -119,12 +131,14 @@ splom <- function (df, valcols, labels, path, name) {
     df <- df[df$temp!= '' , ]  
     labels <- df$temp
     df <- df[, valcols]
+    
     prot_labels <- as.numeric(labels)
     prot_labels <- rev(rainbow_hcl(length(prot_labels)))[prot_labels]
     pairs(df, col = prot_labels, lower.panel = NULL, cex.labels=0.5, pch=19, cex = 0.01)
     dev.off() }
 
 splom(splomdata, cols, splomdata$Identifier, splom_path, 'all_proteins_splom.png')
+
 #splom(splomdata, cols, splomdata$Protein.families, splom_path,'all_proteins_families_splom.png')
 #splom(splomdata, cols, splomdata$Pathway, splom_path, 'all_proteins_pathways_splom.png')
 
@@ -144,9 +158,22 @@ pval_lists_0_005 <- vector("list", length(colnames(contrast.matrix)))
 
 for ( i in seq_along(colnames(contrast.matrix))) {
     cntrst = colnames(contrast.matrix)[i]
+    cntrst_ <- strsplit(cntrst, '-')
+    Exposed <- cntrst_[[1]][1]
+    Control <- cntrst_[[1]][2]
+    print(Exposed)
+    print(Control)
+    print('*') 
     table <- topTable(fit2,adjust="BH", coef=i, n=Inf)
     table <- merge(orig_data, table, by=0)
+    
+    
+    table$Exposed <- Exposed
+    table$Control <- Control
+    
     table <- setDT(table, keep.rownames = TRUE)[]
+    
+
     pval_lists[[cntrst]] <- table[ which(table$P.Value < 0.05), ]$Row.names  
     pval_lists_0_005[[cntrst]] <- table[ which(table$P.Value < 0.005), ]$Row.names  
     table <- table[with(table, order(P.Value)), ]
@@ -240,10 +267,6 @@ pcp(par_data,inter_pvals_duplicated,cols,par_data$Identifier,par_path,"str_parco
 #pcp(par_data,inter_pvals_0_005,cols,par_data$Protein.families,par_path,"str_parcoord_p_0_005_families.pdf")
 
 
-
-
-
-
 #########################################################
 # Hierarchical clustering and correlation of replicates #
 ######################################################### 
@@ -277,7 +300,6 @@ corrplot::corrplot(cophenetic_cors, "pie", "lower")
 dev.off()
 
 
-
 ############
 # Heatmaps #
 ############
@@ -305,7 +327,6 @@ hm <- function( df, heatmap_path, file,  main, xlab ) {
     col = some_col_func)
     dev.off() }
 
-
 # Heatmap of global data set
 hm(data, heatmap_path, "heatmap_iBAQ.jpeg", "Log2(iBAQ intensity) - all", "log2(iBAQ intensity")
 
@@ -328,8 +349,6 @@ title="Log2(iBAQ intensity) - cnd. comps. mult. (p < 0.05)"
 hm(cnd_pval_dup_data, heatmap_path, "heatmap_cnd_05_mult_iBAQ.png", title, "log2(iBAQ intensity")
 title="Log2(iBAQ intensity) - cnd. comps. (p < 0.005)"
 hm(cnd_pval_data_0_005, heatmap_path, "heatmap_cnd_005_iBAQ.jpeg", title, "log2(iBAQ intensity")
-
-
 
 #######
 # PCA #
