@@ -58,7 +58,7 @@ do
   then
 
     cmds_log=$log_dir/uparse_merge.$sid.$count.cmds
-    qsub="qsub -N uparse_merge.$sid.$count -M $pbs_status_mail_to -m $pbs_status_mail_events  -o $log_dir/uparse_merge.$sid.$count.o -e $log_dir/uparse_merge.$sid.$count.e -d $out_dir -q $pbs_queue -S /bin/bash -l nodes=1:$pbs_series:ppn=$uparse_merge_threads -l walltime=$uparse_merge_walltime -v config=$config,merged_fastq=$merged_fastq,fastq_r1=$fastq_r1,fastq_r2=$fastq_r2,fastq_r1_tmp=$fastq_r1_tmp,fastq_r2_tmp=$fastq_r2_tmp,fastq_r1_renamed=$fastq_r1_renamed,fastq_r2_renamed=$fastq_r2_renamed,sid=$sid,fastq_maxdiffs=$uparse_merge_fastq_maxdiffs,cmds_log=$cmds_log $scripts_dir/uparse_merge.single.sh"
+    qsub="qsub -N uparse_merge.$sid.$count -M $pbs_status_mail_to -m $pbs_status_mail_events  -o $log_dir/uparse_merge.$sid.$count.o -e $log_dir/uparse_merge.$sid.$count.e -d $out_dir -q $pbs_queue -S /bin/bash -l nodes=srvslshpc617:$pbs_series:ppn=$uparse_merge_threads -l walltime=$uparse_merge_walltime -v config=$config,merged_fastq=$merged_fastq,fastq_r1=$fastq_r1,fastq_r2=$fastq_r2,fastq_r1_tmp=$fastq_r1_tmp,fastq_r2_tmp=$fastq_r2_tmp,fastq_r1_renamed=$fastq_r1_renamed,fastq_r2_renamed=$fastq_r2_renamed,sid=$sid,fastq_maxdiffs=$uparse_merge_fastq_maxdiffs,cmds_log=$cmds_log $scripts_dir/uparse_merge.single.sh"
 
     echo $qsub > $log_dir/uparse_merge.$sid.$count.qsub
     cat $scripts_dir/uparse_merge.single.sh > $log_dir/uparse_merge.$sid.$count.sh

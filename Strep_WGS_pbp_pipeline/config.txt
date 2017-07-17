@@ -1,0 +1,28 @@
+
+
+# Directory where scripts resides. This is needed so that you can call the pipeline from any other directory
+scripts_dir=/home/kviljoen/scripts_dir/
+
+python_base=/opt/exp_soft/python-2.7.3/bin/python
+blast_base=/opt/exp_soft/ncbi-blast-2.2.28+/bin
+
+in_dir=/researchdata/fhgfs/clinton.moodley/JCVI_data_correct/strep_assemblies
+tmp_dir=/researchdata/fhgfs/clinton.moodley/JCVI_results_KL/tmp_dir
+out_dir=/researchdata/fhgfs/clinton.moodley/JCVI_results_KL/out_dir
+log_dir=/researchdata/fhgfs/clinton.moodley/JCVI_results_KL/logs
+query_list=/home/kviljoen/strep_pbp_project/query.list
+file_list=/home/kviljoen/strep_pbp_project/round2_missing_files_found_file.list
+pid_list=/home/kviljoen/strep_pbp_project/Strep_PID_table_v2.txt
+pbp_refs=/home/kviljoen/strep_pbp_project/KL_Strep_pneumoniae_NCBI_random_reference_pbp_seqs.fasta  
+#BLAST configs
+num_threads='2'
+evalue='10e-05'
+num_output='100'
+min_len='1500' #minimum sequence length to filter out partial pbp hits, i.e. the aligned part of the contig must be at least minlen
+
+
+
+
+
+
+

@@ -1,0 +1,8 @@
+#PBS -N strep_PBP_search
+#PBS -S /bin/bash
+#PBS -q UCTlong
+#PBS -l nodes=1:series600:ppn=4
+#PBS -V
+#PBS -d /researchdata/fhgfs/clinton.moodley/JCVI_results_KL/logs/ 
+
+/home/kviljoen/strep_pbp_project/automation_script_v2.sh /home/kviljoen/strep_pbp_project/config.txt
