@@ -1,0 +1,49 @@
+# InterProScan
+# VERSION 0.1
+# Tracking 5.21-60.0
+
+FROM debian:jessie
+
+ARG http_proxy
+ARG https_proxy
+
+ENV http_proxy  ${http_proxy}
+ENV https_proxy ${https_proxy}
+
+# make sure the package reposito
+
+RUN apt-get -y update
+
+#RUN apt-get -y install gbrowse gbrowse-calign gbrowse-data libbio-samtools-perl apache2
+
+#RUN apt-get -y install mysql-server
+
+#RUN apt-get -y remove gbrowse
+
+#RUN perl -MCPAN -e 'install Bio::Graphics::Browser2'
+
+#CMD /etc/init.d/apache2 start
+
+#RUN apt-get -y install gbrowse gbrowse-calign gbrowse-data libbio-samtools-perl apache2 make
+RUN apt-get -y install libbio-samtools-perl apache2 make git amap-align bedtools bioperl bioperl-run bowtie bwa infernal javascript-common kalign libace-perl libalgorithm-c3-perl libalgorithm-munkres-perl libapache-dbi-perl libapache2-mod-perl2 libapache2-reload-perl libarray-compare-perl libb-hooks-endofscope-perl libbio-asn1-entrezgene-perl libbio-graphics-perl libbio-perl-perl libbio-perl-run-perl libbio-scf-perl libbit-vector-perl libbsd-resource-perl libcarp-clan-perl libcgi-session-perl libclass-c3-perl libclass-c3-xs-perl libclass-load-perl libclass-load-xs-perl libconvert-binary-c-perl libdata-optlist-perl libdata-stag-perl libdate-calc-perl libdate-calc-xs-perl libdate-manip-perl libdbd-sqlite3-perl libdevel-globaldestruction-perl libdevel-partialdump-perl libdevel-symdump-perl libeval-closure-perl libfreezethaw-perl libgd-svg-perl libgraph-perl libgraphviz-perl libheap-perl libjcode-pm-perl libjs-prototype libjs-scriptaculous liblist-moreutils-perl libmath-derivative-perl libmath-spline-perl libmldbm-perl libmodule-runtime-perl libmoose-perl libmro-compat-perl libnamespace-clean-perl libole-storage-lite-perl libpackage-deprecationmanager-perl libpackage-stash-perl libpackage-stash-xs-perl libparams-classify-perl libparams-util-perl libparse-recdescent-perl libpostscript-perl libset-scalar-perl libsort-naturally-perl libspreadsheet-parseexcel-perl libspreadsheet-writeexcel-perl libstaden-read1 libstatistics-descriptive-perl libsub-exporter-perl libsub-identify-perl libsub-install-perl libsvg-graph-perl libsvg-perl libtree-dagnode-perl libtry-tiny-perl libunicode-map-perl libvariable-magic-perl libxml-dom-perl libxml-dom-xpath-perl libxml-filter-buffertext-perl libxml-libxml-perl libxml-libxslt-perl libxml-perl libxml-regexp-perl libxml-sax-writer-perl libxml-xpathengine-perl libyaml-syck-perl samtools sim4 wise wwwconfig-common libjson-perl libterm-readkey-perl libcapture-tiny-perl libmodule-build-perl apache2 build-essential wget
+
+RUN apt-get -y install unzip libpng-dev openssl libssl-dev apt-utils
+#RUN apt-get -y install gbrowse wget gbrowse-data
+RUN echo "ServerName localhost" | tee /etc/apache2/conf-available/fqdn.conf
+RUN a2enconf fqdn
+RUN /etc/init.d/apache2 restart
+
+#https://github.com/GMOD/GBrowse-Adaptors/tree/master/Bio-BigFile
+
+RUN wget http://hgdownload.cse.ucsc.edu/admin/jksrc.zip && unzip jksrc.zip
+RUN perl -pi -e 's/(\s+CFLAGS=)$/${1}-fPIC/' kent/src/inc/common.mk 
+RUN perl -pi -e 'if($_ =~ m/^CFLAGS/ && $_ !~ m/\-fPIC/i){chomp; s/#.+//; $_ .= " -fPIC -Wno-unused -Wno-unused-result\n"};' kent/src/htslib/Makefile 
+RUN cd $HOME/kent/src/htslib && make 
+RUN cd $HOME/kent/src/lib && export MACHTYPE=i686  && make && cd .. &&  export KENT_SRC=`pwd`
+RUN perl -MCPAN -e 'install Bio::Perl'
+#RUN perl -MCPAN -e "upgrade /(.\*)/"
+RUN cd $HOME && git clone https://github.com/GMOD/GBrowse-Adaptors.git
+RUN cd $HOME/GBrowse-Adaptors/Bio-BigFile && perl Build.PL && ./Build && ./Build test 
+#RUN git clone https://github.com/GMOD/GBrowse
+#RUN cd GBrowse && perl Build.PL 
+#RUN cd GBrowse && yes | ./Build installdeps
