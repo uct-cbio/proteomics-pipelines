@@ -24,7 +24,6 @@ import pickle
 import yaml
 
 
-
 config = yaml.load(open(sys.argv[1]))
 output = sys.argv[2]
 
@@ -45,7 +44,6 @@ for key in reference_peptides:
     break
 
 reference_proteome = SeqIO.to_dict(list(SeqIO.parse(output +'/uniprot/{}/{}_{}.fasta'.format(config['reference_proteome_id'], config['reference_proteome_id'], config['reference_taxid']),'fasta')))
-
 
 ref_entry = reference_peptides[list(reference_peptides.keys())[0]][0].split('|')[1]
 
@@ -78,6 +76,7 @@ except:
 
 global_non_specific_peptides=[]
 global_specific_peptides=[]
+global_specific_paralog_peptides = []
 
 strain_map={}
 strain_sets={}
@@ -85,10 +84,11 @@ strain_sets={}
 for strain in config['strains']:
     strain_sets[strain]=set()
     if config['strains'][strain]['sf_genome'] != None:
-        st =  pickle.load( open(output +'/strains/{}/{}_mapped_peptides.p'.format(strain, strain), 'rb')  )
+        st =  pd.read_csv(output +'/strains/{}/{}_mapped_peptides.csv'.format(strain, strain))
         peptide_map = sequtils.mapping2peptides(st, config['translation_table'])
         global_non_specific_peptides += peptide_map.non_specific()
         global_specific_peptides += peptide_map.specific()
+        global_specific_paralog_peptides += peptide_map.paralogous_specific()
         strain_map[strain]  = peptide_map
         strain_sets[strain] = set(peptide_map.mapping['Peptide_sequence'].tolist())
 
@@ -96,6 +96,8 @@ global_specific_peptides = set(global_specific_peptides) - set(global_non_specif
 global_non_tryptic_nterm = global_specific_peptides.copy()
 global_non_tryptic_cterm = global_specific_peptides.copy()
 global_non_atg_starts    = global_specific_peptides.copy()
+global_specific_paralog_peptides = set(global_specific_paralog_peptides) - set(global_non_specific_peptides)
+global_non_specific_peptides= set(global_non_specific_peptides)
 
 for strain in config['strains']:
     if config['strains'][strain]['sf_genome'] != None:
@@ -215,6 +217,9 @@ for strain in config['strains']:
     scols.append("Reference BLAST - all strains")
     strain_columns[strain] = scols
 
+#combined= pg[:100]
+pg = pg.head(100)
+
 combined = pg
 for row in combined.iterrows():
     combined_blasted = set()
@@ -225,8 +230,9 @@ for row in combined.iterrows():
     row_peps = peptides[peptides['id'].apply(str).isin(peptide_ids)]
     row_evs = evidence[evidence['id'].apply(str).isin(evidence_ids)]
 
-    all_row_peptides = row_peps['Sequence'].tolist()
-    row_specific  = set(all_row_peptides) - set(global_non_specific_peptides)  
+    all_row_peptides = set(row_peps['Sequence'].tolist())
+    row_paralog_peptides  = all_row_peptides & global_specific_paralog_peptides
+    row_specific  = (all_row_peptides - global_non_specific_peptides)  - row_paralog_peptides
     row_novel     = row_specific & novel_peptides
     row_annotated = row_specific & annotated_peptides
     row_non_tryptic_cterm = row_specific & global_non_tryptic_cterm  
@@ -236,6 +242,7 @@ for row in combined.iterrows():
     row_ref_strain_peps = set()
 
     strain_peps=defaultdict(list)
+    
     group_evs=defaultdict(list)
     
     for sample in samples:
@@ -252,10 +259,11 @@ for row in combined.iterrows():
         if strain in config['reference_strains']:
             row_ref_strain_peps.update(sample_peps)
     row_ref_strain_peps = row_ref_strain_peps & row_specific
-
     for group in group_evs:
         combined.loc[row[0],"All peptides group {}".format(group)]='\n'.join(sorted(list(set(group_evs[group]))))
-    
+    combined.loc[row[0], 'Row paralogous specific peptides'] = '\n'.join(sorted(list(row_paralog_peptides)))
+    combined.loc[row[0], 'Row non-paralogous specific peptides'] = '\n'.join(sorted(list(row_specific)))
+
     all_orfs_fasta=[]
     all_prot_fasta=[]
     fasta_holder = {}
@@ -283,7 +291,6 @@ for row in combined.iterrows():
     min_eval_ref_blast = config['eval_cutoff']
     best_eval_strain = None
     
-
     row_variant_features_ref, row_variant_blast_ref = peptide_list_blast(row_specific, refps, reference_features)
     
     row_variant_features_ref_list = []
@@ -303,11 +310,10 @@ for row in combined.iterrows():
         strain_blasted = set()
         x = []
         y = []
-        
         if strain in strain_map:
             peptide_mapping = strain_map[strain]
-            x,y = peptide_mapping.return_fasta(row_specific)
-        
+            x,y = peptide_mapping.return_fasta(row_specific | row_paralog_peptides)
+
         for rf in x:
             rf_id = rf.id.split('|')[1]
             if rf_id in blast_mapping:
@@ -316,14 +322,10 @@ for row in combined.iterrows():
                 combined_blasted.update(rfmap)
 
         st_peps = set(strain_peps[strain])        
-        
         specific_strain_peps = st_peps & row_specific
-        
         # Dict to hold the specific peptides per strain
         row_specific_strain_peps[strain] = specific_strain_peps
-
         genome_unmapped = specific_strain_peps - strain_sets[strain]
-         
         strain_exclusive_novel = specific_strain_peps & strain_sets_exclusive[strain]
         
         all_orfs_fasta += x
@@ -354,17 +356,13 @@ for row in combined.iterrows():
         if len(strain_exclusive_novel) > 0:
             strains_exclusive.append(strain)
         
-
-
         combined.loc[row[0], "All peptides strain {}".format(strain)]='\n'.join(sorted(st_peps))
         combined.loc[row[0], "Specific peptides strain {}".format(strain)]='\n'.join(sorted(specific_strain_peps))
         combined.loc[row[0], "Exclusive peptides strain {}".format(strain)]='\n'.join(sorted(strain_exclusive_novel) )       
         combined.loc[row[0], "Novel specific peptides strain {}".format(strain)]='\n'.join(sorted(specific_strain_peps - annotated_peptides))
         combined.loc[row[0], "Annotated specific peptides strain {}".format(strain)]='\n'.join(sorted(specific_strain_peps & annotated_peptides))
         combined.loc[row[0], "Reference BLAST strain {}".format(strain)]='\n'.join(strain_blasted)
-        
         variant_dict[strain] = strain_exclusive_novel
-        
         blasted = []
         features = []
         count=1
@@ -402,7 +400,6 @@ for row in combined.iterrows():
         if len(ids) > 1:
             frameshifts.append(key) 
   
-
     #####################
     # STRAIN VARIANTS   #
     #####################
@@ -417,15 +414,12 @@ for row in combined.iterrows():
             comp_peps = strain_sets[comp_strain]
             var_peps = specific_peps - comp_peps
             comp_orfs = fasta_holder['{}_prots'.format(comp_strain)]
-        
             strain_variant_features_orfs, strain_variant_blast_orfs = peptide_list_blast(var_peps, comp_orfs, orf_features)
             for pep in strain_variant_blast_orfs:
                 strain_variants.add(comp_strain)
                 strain_variant_blast_orfs_list += list(strain_variant_blast_orfs[pep].values())
-                print(strain_variant_blast_orfs_list)
                 if pep in strain_variant_features_orfs:
                     strain_variant_features_orfs_list += list(strain_variant_features_orfs[pep].values()) 
-        print(strain_variants)
         combined.loc[row[0], "Variant peptide BLAST strain {}".format(strain)]='\n'.join(strain_variant_blast_orfs_list) 
         combined.loc[row[0], "Variant peptide feature overlap strain {}".format(strain)]='\n'.join(strain_variant_features_orfs_list) 
         combined.loc[row[0], "Variant peptide strains strain {} ".format(strain)]='\n'.join(strain_variants) 

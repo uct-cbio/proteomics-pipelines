@@ -652,7 +652,7 @@ class peptides2genome:
         self.mapped_orfs =  [ orf  for orf in self.orfs if orf.id in list(orf_df['ORF_id']) ]
         self.mapped_trans_orfs =  [ orf  for orf in self.trans_orfs if orf.id in list(orf_df['ORF_id']) ]
         
-        blasted_orfs = blast.pblast_mult(self.mapped_trans_orfs, self.trans_orfs, self.outdir + '/sixframe_blast')
+        blasted_orfs = blast.pblast_mult(self.mapped_trans_orfs, self.trans_orfs, evalue=0.0000000001, outdir=self.outdir + '/sixframe_blast')
         orf_df['Orthologous_ORFs'] = orf_df['ORF_id'].apply(lambda x : blasted_orfs.sorted_map[x])
         orf_df['Orthologous_ORFs_Cluster_Size'] = orf_df['ORF_id'].apply(lambda x : len(blasted_orfs.aln_dict[x]))
 
@@ -876,6 +876,19 @@ class peptides2genome:
             elif distinct_translated_ORF_count > 1:
                 df['Peptide_inferred_translated_sequence_specific']='-'
             df['Peptide_genome_ORF_count'] = mapped_orfs 
+            
+            # paralogs
+            ortholog_df = df[df['Orthologous_ORFs_Cluster_Size'] > 0 ]
+
+            distinct_translated_ORF_cluster_count = len(ortholog_df.drop_duplicates(['Orthologous_ORFs'], keep='first'))
+
+            df['Peptide_translated_ORF_cluster_count'] = distinct_translated_ORF_cluster_count
+            
+            if (distinct_translated_ORF_cluster_count  == 1) or (mapped_orfs == 1):
+                df['Peptide_translated_ORF_cluster_specific']='+'
+            else:
+                df['Peptide_translated_ORF_cluster_specific']='-'
+            
             return df
 
 class peptides2proteome:
@@ -910,18 +923,31 @@ class mapping2peptides:
     def __init__(self, mapping, translation_table):
         self.mapping=mapping
         self.translation_table = translation_table
+    
     def non_specific(self):
         map = self.mapping 
-        ns =map[map['Peptide_inferred_translated_sequence_specific'] =='-']['Peptide_sequence'].tolist()
+        ns =map[map['Peptide_translated_ORF_cluster_specific'] =='-']['Peptide_sequence'].tolist()
         ns = set(ns)
         return ns
     
     def specific(self):
         map = self.mapping
-        s =map[map['Peptide_inferred_translated_sequence_specific'] =='+']['Peptide_sequence'].tolist()
+        s =map[map['Peptide_translated_ORF_cluster_specific'] =='+']['Peptide_sequence'].tolist()
         s = set(s)
         return s
-    
+
+    def paralogous_specific(self):
+        map = self.mapping
+        s =map[ (map['Peptide_translated_ORF_cluster_specific'] =='+') & (map['Peptide_genome_ORF_count'] > 1) ]['Peptide_sequence'].tolist()
+        s = set(s)
+        return s
+
+    def non_paralogous_specific(self):
+        map = self.mapping
+        s =map[ (map['Peptide_genome_ORF_count'] == 1) ]['Peptide_sequence'].tolist()
+        s = set(s)
+        return s
+
     def check_for_met(self, codons):
         met = False
         for codon in codons.split(';'):
@@ -1031,10 +1057,13 @@ class pairwise_blast:
                     tstart = int(hsp.sbjct_start)
                     
                     diff = tstart-qstart
+                    
+                    target_len = len(str(target.seq))
+
                     for i, letter in enumerate(str(query.seq)):
                         location = i + 1 + diff
                         matchpos= location-tstart
-                        if (matchpos >= 0) and (matchpos < len(match)):
+                        if (matchpos >= 0) and (matchpos < len(match)) and (location <= target_len):
                             if match[matchpos] == '+':
                                 positions.append(location)
                                 var='{}->{}'.format(str(target.seq)[i+diff], str(query.seq)[i])
@@ -1349,20 +1378,13 @@ class proteogenomics:
                 pepstart = (self.translated_orf_sequence.find(peptide[1:]) - 1) # 0 based
             else:
                 pepstart = self.translated_orf_sequence.find(peptide) 
-    
             if pepstart == orf_ref_pos:
                 relative = 'at annotated TSS site'
-            
             elif pepstart > orf_ref_pos:
                 relative = 'downstream of annotated TSS site'
-            
             elif pepstart < orf_ref_pos:
                 relative = 'upstream of annotated TSS site'
-
-            
             first_codon = self.orf_sequence[pepstart * 3: pepstart * 3 + 3]
-            
-
             first_amino = str(translate(Seq(first_codon),table=11, cds= False))
             previous_codon = self.orf_sequence[pepstart * 3-3: pepstart * 3 ]
             previous_amino = str(translate(Seq(previous_codon),table=11, cds=False))
@@ -1397,8 +1419,9 @@ class proteogenomics:
 
             elif (met_cleaved == True):
                 self.met_ap_peptides.append(peptide)
+                self.tss_peptides.append(peptide)
                 self.identified_tss_sites.add(pepstart - 1 )
-                tss_validation_type[pepstart-1].append('Non-tryptic N-terminus peptide {} following a {} start codon (initiator Methionine cleavage) {}'.format(peptide, previous_codon, relative))
+                tss_validation_type[pepstart-1].append('Non-tryptic N-terminus peptide {} following an {} start-codon (initiator Methionine cleavage)'.format(peptide, previous_codon))
 
             elif (nterm_acetyl == True) or (enzymatic == False):
                 other_peptidase_message = []
@@ -1455,15 +1478,19 @@ class proteogenomics:
             variant_count += 1
         
         for tss in self.identified_tss_sites:
-            new_rec = self.get_var_rec(tss * 3, variant_count, cds = True, variant_description="(Identified TSS by {})".format(' (AND) '.join(tss_validation_type[tss])))
+            desc = "Identified TSS by {}.".format('; '.join(tss_validation_type[tss]))
+            annotation_type = None
+            if tss == orf_ref_pos:
+                annotation_type = 'Annotated TSS validated'
+            elif tss < orf_ref_pos:
+                annotation_type = 'Upstream TSS identified'
+            elif tss > orf_ref_pos:
+                annotation_type = 'Downstream TSS identified'
+            desc = desc + ' {}.'.format(annotation_type)
+            new_rec = self.get_var_rec(tss * 3, variant_count, cds = True, variant_description=desc)
             self.variant_sequences.append(new_rec)
             self.validated_tss_sequences.append(new_rec)
-            if tss == orf_ref_pos:
-                self.annotation_type.append('Annotated TSS validated')
-            elif tss < orf_ref_pos:
-                self.annotation_type.append('Upstream TSS identified')
-            elif tss > orf_ref_pos:
-                self.annotation_type.append('Downstream TSS identified') 
+            self.annotation_type.append(annotation_type) 
             variant_count += 1
         
         for other in self.other_peptidase_sites:
@@ -1520,7 +1547,6 @@ def icds_blast(fasta, temp_folder, max_evalue=0.0001):
 
         for trec in tempfasta:
             tid = trec.id
-            
             datum = pairwise_blast(qrec, trec, temp_folder, max_evalue=max_evalue)
             if len(datum.hsps) == 0:
                 non_alligned.append('{}, {} (evalue cutoff {})'.format(qid, tid, str(max_evalue)))

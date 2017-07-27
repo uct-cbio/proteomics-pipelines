@@ -14,5 +14,5 @@ sudo docker run -it --rm -v ${outfolder}:/root/output \
     cbio/mqproteogenomics:latest
 
 # Load data to elasticsearch
-#cd ../csv2es && sudo ./run.sh 192.168.7.4 9210 "s507_s5527" "elastic" "changeme" ${outfolder}
+cd ../csv2es && sudo ./run.sh 192.168.7.4 9230 "s507_s5527" "elastic" "changeme" ${outfolder}
 

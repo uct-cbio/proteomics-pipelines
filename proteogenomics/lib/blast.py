@@ -204,7 +204,7 @@ class blast2genome:
             return newstart, newend, new_hit_amino_offset
 
 class pblast_mult:
-    def __init__(self, query_recs, target_recs, outdir, evalue=0.0001, num_threads=10, max_target_seqs=500, max_hsps=1, matrix='BLOSUM62', gapopen=11, word_size=3, gapextend=1, comp_based_stats=2, window_size=15, threshold=11, seg='no'):
+    def __init__(self, query_recs, target_recs, outdir, evalue=0.0000000001, num_threads=10, max_target_seqs=500, max_hsps=1, matrix='BLOSUM62', gapopen=11, word_size=3, gapextend=1, comp_based_stats=2, window_size=15, threshold=11, seg='no', pairwise=True, perc_identity_cutoff=90):
         
         self.query_recs = query_recs
         self.target_recs = target_recs
@@ -238,16 +238,28 @@ class pblast_mult:
         self.blast_records = list(NCBIXML.parse(result_handle))
         result_handle.close() 
         self.aln_dict = defaultdict(set)
+
         for rec in self.blast_records:
             for aln in rec.alignments:
-                self.aln_dict[rec.query.split()[0]].add(aln.hit_def.split()[0])
+                for hsp in aln.hsps:
+                    perc = hsp.identities/float(hsp.align_length) * 100
+                    if perc >= perc_identity_cutoff:
+                        self.aln_dict[rec.query.split()[0]].add(aln.hit_def.split()[0])
+
+        if pairwise == True:
+            new_dict = defaultdict(set)
+            for rec in self.aln_dict:
+                for match in self.aln_dict[rec]:
+                    if rec in self.aln_dict[match]:
+                        new_dict[rec].add(match)
+            self.aln_dict = new_dict
 
         self.sorted_map = {}
-        for rec in self.aln_dict:
-            recs = natsorted(list(self.aln_dict[rec]))
-            self.aln_dict[rec] = recs
+        for rec in self.query_recs:
+            recs = natsorted(list(self.aln_dict[rec.id]))
+            self.aln_dict[rec.id] = recs
             recs = ';'.join(recs)
-            self.sorted_map[rec] = recs
+            self.sorted_map[rec.id] = recs
 
 
 

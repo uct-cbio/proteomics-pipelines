@@ -59,20 +59,21 @@ for strain in config['strains']:
     if paths['sf_genome'] != None:
         print(strain)
         genome = list(SeqIO.parse(paths['sf_genome'],'fasta'))
-
-        g2p = sequtils.peptides2genome(genome, assembly_name = str(strain), translation_table=config['translation_table'], peptides_list=all_peptides, threads=config['threads'])
-        
-        speps = g2p.peptides
-        
-        speps['Strain_identified'] = speps['Peptide_sequence'].apply(lambda x : check_identified(x, strain_peptides))
         
         strainpath=output +'/strains/' + strain
-        
         try:
             shutil.rmtree(strainpath)
             os.mkdir(strainpath)
         except:
             os.mkdir(strainpath)    
+
+        g2p = sequtils.peptides2genome(genome, assembly_name = str(strain), translation_table=config['translation_table'], peptides_list=all_peptides, outdir=strainpath, threads=config['threads'])
+        
+        speps = g2p.peptides
+        
+        speps['Strain_identified'] = speps['Peptide_sequence'].apply(lambda x : check_identified(x, strain_peptides))
+        
+        
         
         #outpath=strainpath + '/' + '{}_mapped_peptides.p'.format(str(strain))   
         
