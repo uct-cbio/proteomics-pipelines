@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-peptideshaker='http://genesis.ugent.be/maven2/eu/isas/peptideshaker/PeptideShaker/1.14.6/PeptideShaker-1.14.6.zip'
+peptideshaker='http://genesis.ugent.be/maven2/eu/isas/peptideshaker/PeptideShaker/1.16.2/PeptideShaker-1.16.2.zip'
 
-searchgui='http://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/3.2.5/SearchGUI-3.2.5-mac_and_linux.tar.gz'
+searchgui='http://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/3.2.10/SearchGUI-3.2.10-mac_and_linux.tar.gz'
 
-denovogui='http://genesis.ugent.be/maven2/com/compomics/denovogui/DeNovoGUI/1.14.1/DeNovoGUI-1.14.1-mac_and_linux.tar.gz'
+denovogui='http://genesis.ugent.be/maven2/com/compomics/denovogui/DeNovoGUI/1.15.4/DeNovoGUI-1.15.4-mac_and_linux.tar.gz'
 
 ruby='https://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.5.tar.gz'
 

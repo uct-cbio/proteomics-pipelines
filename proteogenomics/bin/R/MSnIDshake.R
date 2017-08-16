@@ -199,11 +199,11 @@ filtObj <- MSnIDFilter(msnid)
 
 filtObj$absParentMassErrorPPM <- list(comparison="<", threshold=10.000)
 filtObj$PeptideShakerPSMconfidence  <- list(comparison=">", threshold=80.000)
-filtObj$PepLength <- list(comparison="<", threshold=35)
-filtObj$minPepLength <- list(comparison=">", threshold=6)
-filtObj$numMissCleavages <- list(comparison="<", threshold=2)
-filtObj$numIrregCleavages <- list(comparison="<", threshold=2)
 
+#filtObj$PepLength <- list(comparison="<", threshold=35)
+#filtObj$minPepLength <- list(comparison=">", threshold=6)
+#filtObj$numMissCleavages <- list(comparison="<", threshold=2)
+#filtObj$numIrregCleavages <- list(comparison="<", threshold=2)
 #filtObj$unf.pepSeq.repcount <- list(comparison=">=", threshold=1)
 
 show(filtObj)
