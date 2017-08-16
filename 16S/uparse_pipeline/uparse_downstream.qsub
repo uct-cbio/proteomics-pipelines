@@ -16,9 +16,9 @@ cat $inDir/*filtered_3.fasta > $outDir/filtered_all.fa # Katie added some primer
 #derep fullength workaround:
 cat $outDir/filtered_all.fa | grep -v "^>" | grep -v [^ACGTacgt] | sort -d | uniq -c | while read abundance sequence ; do hash=$(printf "${sequence}" | sha1sum); hash=${hash:0:40};printf ">%s;size=%d;\n%s\n" "${hash}" "${abundance}" "${sequence}"; done > $outDir/filtered_all.uniques.fa 2> $outDir/filtered_all.uniques.fa.e
 
-usearch7 -sortbysize $outDir/filtered_all.uniques.fa -output $outDir/filtered_all.uniques.sorted.fa -minsize 2
-usearch7 -cluster_otus $outDir/filtered_all.uniques.sorted.fa -otu_radius_pct 3.0 -otus $outDir/otus_raw.fa
-usearch7 -uchime_ref $outDir/otus_raw.fa -db /scratch/DB/bio/qiime/uchime/gold.fa -nonchimeras $outDir/otus_chimOUT.fa -strand plus
+usearch9 -sortbysize $outDir/filtered_all.uniques.fa -fastaout $outDir/filtered_all.uniques.sorted.fa -minsize 2
+usearch9 -cluster_otus $outDir/filtered_all.uniques.sorted.fa -otu_radius_pct 3.0 -otus $outDir/otus_raw.fa
+usearch9 -uchime2_ref $outDir/otus_raw.fa -db /scratch/DB/bio/qiime/uchime/gold.fa -mode high_confidence -strand plus -notmatched $outDir/otus_chimOUT.fa
 fasta_number.py $outDir/otus_chimOUT.fa OTU_ > $outDir/otus_repsetOUT.fa
 
 #usearch global workaround:
@@ -27,7 +27,7 @@ cd $outDir/split_files
 
 #In split_files, break the FASTA files into 100 equal parts:
 perl /opt/exp_soft/qiime/packages/other/fasta-splitter.pl -n-parts-total 100 $outDir/filtered_all.fa -out-dir 
-for i in $(ls $outDir/split_files/*.fa); do usearch7 -usearch_global $i -db $outDir/otus_repsetOUT.fa  -id 0.97 -strand plus -uc $i.map.uc; done 
+for i in $(ls $outDir/split_files/*.fa); do usearch9 -usearch_global $i -db $outDir/otus_repsetOUT.fa  -id 0.97 -strand plus -uc $i.map.uc; done 
 
 #And combine all the map.uc files together
 cat $outDir/split_files/*.map.uc > $outDir/otus_mappedOUT.uc
