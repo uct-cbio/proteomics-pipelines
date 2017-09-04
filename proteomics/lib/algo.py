@@ -79,11 +79,11 @@ class Trie:
 
 class TrieMatch:
     def __init__(self, Trie, Text):
-        self.trie = Trie.trie
+        trie = Trie.trie
         self.Text=Text
-        self.Text_coordinates = self.trie_coordinates()
-    
-    def prefix_trie_match(self, string, start):
+        self.Text_coordinates = self.trie_coordinates(trie)
+
+    def prefix_trie_match(self, string, start, trie):
         v = 0
         i = start
         pep = []
@@ -94,30 +94,33 @@ class TrieMatch:
             if i < len(string):
                 symbol = string[i]
                 new_child = None
-                for child in self.trie.getVertex(v).getConnections():
-                    edge = Vertex.getEdge(self.trie.getVertex(v), child)
+                for child in trie.getVertex(v).getConnections():
+                    edge = Vertex.getEdge(trie.getVertex(v), child)
                     if edge == '#':
                         last_edge = start, i
                         last_edges.append(last_edge)
-                for child in self.trie.getVertex(v).getConnections():
-                    edge = Vertex.getEdge(self.trie.getVertex(v), child)
+                for child in trie.getVertex(v).getConnections():
+                    edge = Vertex.getEdge(trie.getVertex(v), child)
                     if symbol == edge:
                         new_child = child
                         pep.append(edge)        
                         found = True
                         i += 1
+                
                 if found == True:
                     v = new_child
+
             elif i == len(string):
                 new_child = None
-                for child in self.trie.getVertex(v).getConnections():
-                    edge = Vertex.getEdge(self.trie.getVertex(v), child)
+                for child in trie.getVertex(v).getConnections():
+                    edge = Vertex.getEdge(trie.getVertex(v), child)
                     if edge == '#':
                         last_edge = start, i
                         last_edges.append(last_edge)
             if found == False:
                 break
         return last_edges
+
     def trie_matching(self):
         coordinates = self.Text_coordinates
         positions = [i[0] for i in coordinates]
@@ -137,11 +140,12 @@ class TrieMatch:
                 new_Text_list.append(self.Text[indx].upper())
         new_Text = ''.join(new_Text_list)
         return new_Text
-    def trie_coordinates(self): 
+
+    def trie_coordinates(self, trie): 
         coordinates = []
         start = 0
         while start < len(self.Text):
-            vals = self.prefix_trie_match( self.Text, start)
+            vals = self.prefix_trie_match( self.Text, start, trie)
             for val in vals:
                 coordinates.append(val)
             start += 1 
