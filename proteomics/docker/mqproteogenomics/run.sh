@@ -6,7 +6,7 @@ sudo ./build.sh
 outfolder=$HOME/bio/mtb/proteogenomics/17_3_missed
 
 sudo docker run -it --rm -v ${outfolder}:/root/output \
-    -v $HOME/repos/cbio-pipelines/proteogenomics/bin/config/mq_proteogeomics_example_config_2strains.yml:/root/config.yaml \
+    -v $HOME/repos/cbio-pipelines/proteomics/bin/config/mq_proteogeomics_example_config_2strains.yml:/root/config.yaml \
     -v $HOME/bio/gbrowse/data/gff3/Mycobacterium_tuberculosis_h37rv.ASM19595v2.34.chromosome.Chromosome.gff3:/root/features.gff3 \
     -v $HOME/bio/mtb/mq/17_3_missed/txt:/root/txt \
     -v $HOME/bio/mtb/all_genomes:/root/genomes \

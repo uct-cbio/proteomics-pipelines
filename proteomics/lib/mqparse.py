@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import matplotlib as mpl
+mpl.use('agg')
 import Bio; from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq, translate
@@ -15,6 +17,10 @@ import algo
 import time
 import blast
 import re
+import os
+import rfunc
+import subprocess
+import yaml
 
 def name_dct():
     names = {'sf_novel_m':'Six Frame Novel Only\n(M start)',
@@ -108,24 +114,123 @@ def verify(df):    #check that the unique peptide occurred in more than onerepli
     return columns
 
 class mq_txt:
-    def __init__(self, txt_path):
-        self.txt_path = txt_path
-        self.peptides = pd.read_csv(txt_path +'/peptides.txt', sep='\t')
-        self.proteingroups = pd.read_csv(txt_path +'/proteinGroups.txt', sep='\t')
-        self.msms = pd.read_csv(txt_path +'/msms.txt', sep='\t')
-
+    def __init__(self, config, exclude_contaminants=True):
+        #assert not os.path.exists(outdir)
+        self.config = yaml.load(open(config).read())
+        self.outdir = self.config['outdir']
+        self.create_folders()
+        self.txt_path = self.config['mq_txt']
+        self.peptides = pd.read_csv(self.txt_path +'/peptides.txt', sep='\t')
+        self.proteingroups = pd.read_csv(self.txt_path +'/proteinGroups.txt', sep='\t')
+        self.msms = pd.read_csv(self.txt_path +'/msms.txt', sep='\t')
+        self.summary = pd.read_csv(self.txt_path +'/summary.txt', sep='\t')
+        self.target_proteingroups = self.exclude_reverse(self.proteingroups)
         self.reverse_msms = self.get_reverse(self.msms)
         self.reverse_peptides = self.get_reverse(self.peptides)
         self.reverse_proteingroups = self.get_reverse(self.proteingroups) 
 
-        #self.contaminant_msms = self.get_contaminants(self.msms)
+        #taminant_msms = self.get_contaminants(self.msms)
         self.contaminant_peptides = self.get_contaminants(self.peptides)
+        self.contaminant_peptides_list = self.contaminant_peptides['Sequence'].tolist()
         self.contaminant_proteingroups = self.get_contaminants(self.proteingroups)
+        self.contaminant_msms = self.msms[self.msms['Sequence'].isin(self.contaminant_peptides_list)]
         
         self.target_msms = self.exclude_reverse(self.msms)
         self.target_peptides = self.exclude_reverse(self.peptides)
         self.target_proteingroups = self.exclude_reverse(self.proteingroups)
+        #if exclude_contaminants == True:
+        #self.target_peptides = self.exclude_contaminants(self.target_peptides)
+        #self.target_proteingroups = self.exclude_contaminants(self.target_proteingroups)
+       
+        self.target_peptides_list = self.target_peptides['Sequence'].tolist()
+        #self.target_msms = self.target_msms[self.target_msms['Sequence'].isin(self.target_peptides_list)]
 
+        self.reference_fasta = list(SeqIO.parse(self.config['reference_fasta'], 'fasta'))
+        self.search_fasta = list(SeqIO.parse(self.config['search_fasta'],'fasta'))
+        self.get_reference_peptides()
+
+        self.reference_peptides = self.target_peptides[self.target_peptides['Sequence'].isin(self.reference_peptides_list)]
+        self.non_reference_peptides = self.target_peptides[self.target_peptides['Sequence'].isin(self.non_reference_peptides_list)]
+        self.reference_msms = self.target_msms[self.target_msms['Sequence'].isin(self.reference_peptides_list)]
+        self.non_reference_msms = self.target_msms[self.target_msms['Sequence'].isin(self.non_reference_peptides_list)]
+    
+        self.target_msms_pep = self.target_msms['PEP'].tolist()
+        self.target_peptides_pep = self.target_peptides['PEP'].tolist()
+        self.reverse_msms_pep = self.reverse_msms['PEP'].tolist()
+        self.reverse_peptides_pep = self.reverse_peptides['PEP'].tolist()
+        self.reference_msms_pep = self.reference_msms['PEP'].tolist()
+        self.non_reference_msms_pep = self.non_reference_msms['PEP'].tolist()
+        self.reference_peptides_pep = self.reference_peptides['PEP'].tolist()
+        self.non_reference_peptides_pep = self.non_reference_peptides['PEP'].tolist()
+        self.contaminant_msms_pep = self.contaminant_msms['PEP'].tolist()
+        
+        # get PEP score statistics
+        self.contaminant_pep_median = np.median(self.contaminant_msms_pep)
+        self.contaminant_pep_stdev = np.std(self.contaminant_msms_pep)
+        self.reverse_pep_median = np.median(self.reverse_msms_pep)
+        self.reverse_pep_stdev = np.std(self.reverse_msms_pep)
+        self.reference_pep_median = np.median(self.reference_msms_pep)
+        self.reference_pep_stdev = np.std(self.reference_msms_pep)
+        self.non_reference_pep_median = np.median(self.non_reference_msms_pep)
+        self.non_reference_pep_stdev = np.std(self.non_reference_msms_pep)
+        self.target_pep_median = np.median(self.target_msms_pep)
+        self.target_pep_stdev = np.std(self.target_msms_pep)
+        
+        # create summary
+        self.create_summary()
+
+        # plot pep scores
+        self.pepfig()
+    
+        # kw analysis
+        self.pep_kw()
+
+        # peptide lists
+        self.save_peptide_lists()
+        
+        # Create peptide parameters
+        self.create_R_peptide_parameters()
+        
+        # unipept anslysis
+        self.unipept()
+        
+        # diff analusis
+        self.diff_analysis()
+
+    def create_summary(self):
+        w = open(self.outdir +'/summary.txt','w')
+        w.write('Target proteingroups: {}\n'.format(len(self.target_proteingroups)))
+        w.write('Target peptides: {}\n'.format(len(self.target_peptides)))
+        w.write('Target msms: {}\n'.format(len(self.target_msms)))
+        d = str(self.summary[-1:].stack())
+        w.write(d)
+        w.close()
+
+    def create_folders(self):
+        self.unipept_dir = self.outdir + '/unipept/'
+        self.peptide_dir = self.outdir + '/peptides/'
+        self.pep_dir = self.outdir + '/pep/'
+        self.diff_dir = self.outdir + '/diff/'
+        if not os.path.exists(self.outdir):
+            os.mkdir(self.outdir) 
+            os.mkdir(self.pep_dir)
+            os.mkdir(self.unipept_dir)
+            os.mkdir(self.peptide_dir)
+            os.mkdir(self.diff_dir)
+   
+    def get_reference_peptides(self):
+        peptides = self.exclude_contaminants(self.target_peptides)
+        seqs = peptides['Sequence'].tolist()
+        refstr = '-'.join([str(s.seq) for s in self.reference_fasta])
+        refseqs = []
+        nonrefseqs = []
+        for i in seqs:
+            if i in refstr:
+                refseqs.append(i)
+            else:
+                nonrefseqs.append(i)
+        self.reference_peptides_list = refseqs
+        self.non_reference_peptides_list = nonrefseqs
 
     def exclude_contaminants(self, df):
         df = df.copy()
@@ -147,6 +252,395 @@ class mq_txt:
         df = df[df['Reverse'] == '+' ]
         return df
 
+    def save_peptide_lists(self):
+        w = open(self.peptide_dir +'/reference_peptides_list.txt', 'w')
+        w.write('\n'.join(self.reference_peptides['Sequence'].tolist()))
+        w.close()
+
+        w = open(self.peptide_dir +'/non_reference_peptides_list.txt', 'w')
+        w.write('\n'.join(self.non_reference_peptides['Sequence'].tolist()))
+        w.close()
+
+        w = open(self.peptide_dir +'/reverse_peptides_list.txt', 'w')
+        w.write('\n'.join(self.reverse_peptides['Sequence'].tolist()))
+        w.close()
+
+        w = open(self.peptide_dir +'/contaminant_peptides_list.txt', 'w')
+        w.write('\n'.join(self.contaminant_peptides['Sequence'].tolist()))
+        w.close()
+
+        w = open(self.peptide_dir +'/target_peptides_list.txt', 'w')
+        w.write('\n'.join(self.target_peptides['Sequence']))
+        w.close()
+
+    def pepfig(self):
+        data = [self.target_msms_pep, self.contaminant_msms_pep, self.reference_msms_pep, self.non_reference_msms_pep, self.reverse_msms_pep]
+        names = ['Target', 'Contaminant', "Reference", "Non-reference", "Reverse"]
+        output = self.pep_dir
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        # Create the boxplot
+        bp = ax.boxplot(data, patch_artist=True)
+        ## change outline color, fill color and linewidth of the boxes
+        for box in bp['boxes']:
+            # change outline color
+            box.set( color='#7570b3', linewidth=1)
+            # change fill color
+            box.set( facecolor = '#1b9e77' )
+        ## change color and linewidth of the whiskers
+        for whisker in bp['whiskers']:
+            whisker.set(color='#7570b3', linewidth=1)
+        ## change color and linewidth of the caps
+        for cap in bp['caps']:
+            cap.set(color='#7570b3', linewidth=1)
+        ## change color and linewidth of the medians
+        for median in bp['medians']:
+            median.set(color='#b2df8a', linewidth=2)
+            #median.set(linewidth=2)
+        ## change the style of fliers and their fill
+        for flier in bp['fliers']:
+            flier.set(marker='.', color='#e7298a', alpha=0.5)
+        ## Custom x-axis labels
+        ax.set_xticklabels(names)
+        #ax.set_yticklabels('Posterior Error Probability (PEP)')
+        ax.set_title('PSM PEP Score distributions')
+        ## Remove top axes and right axes ticks
+        ax.get_xaxis().tick_bottom()
+        ax.get_yaxis().tick_left()
+        # Save the figure
+        fig.savefig(output + '/psm_pep_scores.png', bbox_inches='tight')
+        fig.clf()
+
+    def pep_kw(self):
+        data = [self.target_msms_pep, self.contaminant_msms_pep, self.reference_msms_pep, self.non_reference_msms_pep, self.reverse_msms_pep]
+        names = ['Target', 'Contaminant', "Reference", "Non-reference", "Reverse"]
+        outpath = self.pep_dir + '/pep_score_kw_dunn.txt'
+        if not os.path.exists(outpath):
+            rfunc.list_kw_dunn(names, data, 'PEP', 'Category', outpath)
+    
+    def unipept(self):
+        if not (os.path.exists(self.unipept_dir +'unipept.sh')):
+            w = open(self.unipept_dir + 'unipept.sh','w')
+            w.write('\ncat ../peptides/target_peptides_list.txt | prot2pept | peptfilter | tr I L | sort -u | unipept pept2lca -e -a > pept2lca.txt')
+            
+            w.write('\ncat ../peptides/target_peptides_list.txt | prot2pept | peptfilter | tr I L | sort -u | unipept pept2taxa -e -a > pept2taxa.txt')
+            w.close()
+            
+            cmd = 'cd {} && chmod 700 unipept.sh && ./unipept.sh > unipept.log 2>&1 && exit'.format(self.unipept_dir)
+            process = subprocess.Popen(cmd, shell=True)
+            process.wait()
+            assert process.returncode == 0
+
+        agg_cols = {'taxon_name':'first', 
+                    'taxon_id':'first', 
+                    'genus_name':'first', 
+                    'genus_id':'first',
+                    'species_id':'first',
+                    'species_name':'first',
+                    'family_id':'first',
+                    'family_name':'first',
+                    'phylum_name' :'first',
+                    'phylum_id':'first',
+                    'PeptideCount':sum,
+                    'MS.MS.Count': sum }
+        
+        clean_cols = ['Identifier',
+                      'PeptideCount',
+                      'MS.MS.Count',
+                      'taxon_name', 
+                      'taxon_id',
+                      'species_name', 
+                      'species_id',
+                      'genus_name', 
+                      'genus_id',
+                      'family_name',
+                      'family_id',
+                      'phylum_name',
+                      'phylum_id']
+
+        for col in self.normalized_target_peptides.columns.tolist():
+            if col.startswith('Experiment.'):
+                agg_cols[col] = np.sum
+                clean_cols.append(col)
+            elif col.startswith('Intensity.'):
+                agg_cols[col] = np.mean
+                clean_cols.append(col)
+        
+        lca_level_cutoff = 1
+
+        # pept2lca
+        self.pept2lca = pd.read_csv(self.unipept_dir + '/pept2lca.txt')
+        self.pept2lca['PeptideCount'] = 1
+        lca_peptides = pd.merge(self.normalized_target_peptides, self.pept2lca, how='inner', left_on='Sequence', right_on='peptide')
+        lca_peptides.to_csv(self.unipept_dir + '/pep2lca_peptides.csv')
+        pept2lca_taxon_sc = lca_peptides.groupby(lca_peptides.taxon_name).agg(agg_cols) 
+        pept2lca_taxon_sc = pept2lca_taxon_sc[pept2lca_taxon_sc['PeptideCount'] >= lca_level_cutoff ]
+        lca_taxon_ids = pept2lca_taxon_sc['taxon_id'].tolist()
+        pept2lca_taxon_sc = pept2lca_taxon_sc.sort_values('MS.MS.Count', ascending=False)
+        pept2lca_taxon_sc['Identifier'] = pept2lca_taxon_sc['taxon_name']
+        
+        newcols = [i for i in clean_cols if i in pept2lca_taxon_sc.columns.tolist()]
+        pept2lca_taxon_sc = pept2lca_taxon_sc[newcols]
+        
+        pept2lca_taxon_sc.to_csv(self.unipept_dir + '/pept2lca_taxon_sc.csv')
+        
+        # pept2lca species
+        pept2lca_species_sc = lca_peptides.groupby(lca_peptides.species_name).agg(agg_cols) 
+        pept2lca_species_sc = pept2lca_species_sc[pept2lca_species_sc['PeptideCount'] >=  lca_level_cutoff ]
+        lca_species_ids = pept2lca_species_sc['species_id'].tolist()
+        pept2lca_species_sc['Identifier'] = pept2lca_species_sc['species_name']
+        del pept2lca_species_sc['taxon_name']
+        del pept2lca_species_sc['taxon_id']
+        newcols = [i for i in clean_cols if i in pept2lca_species_sc.columns.tolist()]
+        pept2lca_species_sc = pept2lca_species_sc[newcols]
+        pept2lca_species_sc.to_csv(self.unipept_dir + '/pept2lca_species_sc.csv')
+        
+        # pept2lca genus
+        pept2lca_genus_sc = lca_peptides.groupby(lca_peptides.genus_name).agg(agg_cols) 
+        pept2lca_genus_sc = pept2lca_genus_sc[pept2lca_genus_sc['PeptideCount'] >= lca_level_cutoff ]
+        lca_genus_ids = pept2lca_genus_sc['genus_id'].tolist()
+        pept2lca_genus_sc['Identifier'] = pept2lca_genus_sc['genus_name']
+        del pept2lca_genus_sc['taxon_name']
+        del pept2lca_genus_sc['taxon_id']
+        del pept2lca_genus_sc['species_name']
+        del pept2lca_genus_sc['species_id']
+        
+        newcols = [i for i in clean_cols if i in pept2lca_genus_sc.columns.tolist()]
+        pept2lca_genus_sc = pept2lca_genus_sc[newcols]
+        pept2lca_genus_sc.to_csv(self.unipept_dir + '/pept2lca_genus_sc.csv')
+        
+        # pept2lca family
+        pept2lca_family_sc = lca_peptides.groupby(lca_peptides.family_name).agg(agg_cols) 
+        pept2lca_family_sc = pept2lca_family_sc[pept2lca_family_sc['PeptideCount'] >= lca_level_cutoff ]
+        lca_family_ids = pept2lca_family_sc['family_id'].tolist()
+        pept2lca_family_sc['Identifier'] = pept2lca_family_sc['family_name']
+        del pept2lca_family_sc['taxon_name']
+        del pept2lca_family_sc['taxon_id']
+        del pept2lca_family_sc['species_name']
+        del pept2lca_family_sc['species_id']
+        del pept2lca_family_sc['genus_name']
+        del pept2lca_family_sc['genus_id']
+        newcols = [i for i in clean_cols if i in pept2lca_family_sc.columns.tolist()]
+        pept2lca_famliy_sc = pept2lca_family_sc[newcols]
+        pept2lca_family_sc.to_csv(self.unipept_dir + '/pept2lca_family_sc.csv')  
+        
+        # pept2lca phylum
+        pept2lca_phylum_sc = lca_peptides.groupby(lca_peptides.phylum_name).agg(agg_cols) 
+        pept2lca_phylum_sc = pept2lca_phylum_sc[pept2lca_phylum_sc['PeptideCount'] >= lca_level_cutoff ]
+        pept2lca_phylum_sc['Identifier'] = pept2lca_phylum_sc.index
+        del pept2lca_phylum_sc['taxon_name']
+        del pept2lca_phylum_sc['taxon_id']
+        del pept2lca_phylum_sc['species_name']
+        del pept2lca_phylum_sc['species_id']
+        del pept2lca_phylum_sc['genus_name']
+        del pept2lca_phylum_sc['genus_id']
+        del pept2lca_phylum_sc['family_name']
+        del pept2lca_phylum_sc['family_id']
+        newcols = [i for i in clean_cols if i in pept2lca_phylum_sc.columns.tolist()]
+        pept2lca_phylum_sc = pept2lca_phylum_sc[newcols]
+        pept2lca_phylum_sc.to_csv(self.unipept_dir + '/pept2lca_phylum_sc.csv')
+        
+        # pept2taxa 
+        self.pept2taxa = pd.read_csv(self.unipept_dir + '/pept2taxa.txt')
+        self.pept2taxa['PeptideCount'] = 1
+        pept2taxa = self.pept2taxa[self.pept2taxa['taxon_id'].isin(lca_taxon_ids)]
+        taxa_peptides = pd.merge(self.normalized_target_peptides, pept2taxa, how='inner', left_on='Sequence', right_on='peptide')
+        pept2taxa_sc = taxa_peptides.groupby(taxa_peptides.taxon_name).agg(agg_cols)
+        pept2taxa_sc = pept2taxa_sc.sort_values('MS.MS.Count', ascending=False)
+        pept2taxa_sc['Identifier'] = pept2taxa_sc['taxon_name']
+        newcols = [i for i in clean_cols if i in pept2taxa_sc.columns.tolist()]
+        pept2taxa_sc = pept2taxa_sc[newcols]
+        pept2taxa_sc.to_csv(self.unipept_dir + '/pept2taxa_taxon_sc.csv')
+        
+        # pept2taxa species
+        pept2taxa = self.pept2taxa[self.pept2taxa['species_id'].isin(lca_species_ids)]
+        #self.pept2taxa = self.pept2taxa[['peptide','taxon_id','taxon_name', 'genus_name', 'genus_id']]
+        taxa_peptides = pd.merge(self.normalized_target_peptides, pept2taxa, how='inner', left_on='Sequence', right_on='peptide')
+        pept2taxa_sc = taxa_peptides.groupby(taxa_peptides.species_name).agg(agg_cols)
+        #pept2ltaxa_sc = pept2taxa_sc[['taxon_name','taxon_id','genus_name','genus_id','Intensity','MS/MS Count']]
+        pept2taxa_sc = pept2taxa_sc.sort_values('MS.MS.Count', ascending=False)
+        pept2taxa_sc['Identifier'] = pept2taxa_sc['species_name']
+        del pept2taxa_sc['taxon_name']
+        del pept2taxa_sc['taxon_id']
+        newcols = [i for i in clean_cols if i in pept2taxa_sc.columns.tolist()]
+        pept2taxa_sc = pept2taxa_sc[newcols]
+        pept2taxa_sc.to_csv(self.unipept_dir + '/pept2taxa_species_sc.csv')
+        
+        # pept2taxa genus sc
+        pept2taxa = self.pept2taxa[self.pept2taxa['genus_id'].isin(lca_genus_ids)]
+        taxa_peptides = pd.merge(self.normalized_target_peptides, pept2taxa, how='inner', left_on='Sequence', right_on='peptide')
+        pept2taxa_genus_sc = taxa_peptides.groupby(taxa_peptides.genus_name).agg(agg_cols)
+        #pept2taxa_genus_sc = pept2taxa_genus_sc[['taxon_name','taxon_id', 'genus_name','genus_id','Intensity','MS/MS Count']]
+        del pept2taxa_genus_sc['taxon_name']
+        del pept2taxa_genus_sc['taxon_id']
+        del pept2taxa_genus_sc['species_name']
+        del pept2taxa_genus_sc['species_id']
+        pept2taxa_genus_sc = pept2taxa_genus_sc.sort_values('MS.MS.Count', ascending=False)
+        pept2taxa_genus_sc['Identifier'] = pept2taxa_genus_sc['genus_name']
+        newcols = [i for i in clean_cols if i in pept2taxa_genus_sc.columns.tolist()]
+        pept2taxa_genus_sc = pept2taxa_genus_sc[newcols]
+        pept2taxa_genus_sc.to_csv(self.unipept_dir + '/pept2taxa_genus_sc.csv')
+
+        # pept2taxa family sc
+        pept2taxa = self.pept2taxa[self.pept2taxa['family_id'].isin(lca_family_ids)]
+        taxa_peptides = pd.merge(self.normalized_target_peptides, pept2taxa, how='inner', left_on='Sequence', right_on='peptide')
+        pept2taxa_sc = taxa_peptides.groupby(taxa_peptides.family_name).agg(agg_cols)
+        #pept2taxa_genus_sc = pept2taxa_genus_sc[['taxon_name','taxon_id', 'genus_name','genus_id','Intensity','MS/MS Count']]
+        del pept2taxa_sc['taxon_name']
+        del pept2taxa_sc['taxon_id']
+        del pept2taxa_sc['species_name']
+        del pept2taxa_sc['species_id']
+        del pept2taxa_sc['genus_name']
+        del pept2taxa_sc['genus_id']
+        pept2taxa_sc = pept2taxa_sc.sort_values('MS.MS.Count', ascending=False)
+        pept2taxa_sc['Identifier'] = pept2taxa_sc['family_name']
+        newcols = [i for i in clean_cols if i in pept2taxa_sc.columns.tolist()]
+        pept2taxa_sc = pept2taxa_sc[newcols]
+        pept2taxa_sc.to_csv(self.unipept_dir + '/pept2taxa_family_sc.csv')
+
+
+    def create_R_peptide_parameters(self):
+        config= self.config
+        vals=[]
+        d = '#!/usr/bin/env R\n\n'
+        vals.append(d)
+        d = "cols <- c("
+        vals.append(d)
+        samples = config['samples']
+        experiment = defaultdict(list)
+        for sample in samples:
+            group = samples[sample]['GROUP']
+            experiment[group].append(sample)
+        groups = []
+        reps = []
+        for group in experiment:
+            groups.append(group)
+            for sample in experiment[group]:
+                rep = "'Intensity.{}'".format(sample)
+                reps.append(rep)
+        reps = ','.join(reps)
+        d = reps
+        vals.append(d)
+        vals.append(')\n')
+        d = 'f <- factor(c('
+        vals.append(d)
+        reps = []
+        for group in groups:
+            rep = "rep('{}',{})".format(group, len(experiment[group]))
+            reps.append(rep)
+        d = ','.join(reps)
+        vals.append(d)
+        d = "),\n"
+        vals.append(d)
+        levels = ','.join(["'" +group + "'" for group in groups])
+        d ="levels=c({}))\n".format(levels)
+        vals.append(d)
+        d='design <- model.matrix(~0+f)\n'
+        vals.append(d)
+        d = 'colnames(design) <- c({})\n'.format(levels)
+        vals.append(d)
+        d = 'contrast.matrix <- makeContrasts(\n'
+        vals.append(d)
+        comps = []
+        for comparison in config['comparisons']:
+            comp = '"{}-{}"'.format(comparison[0], comparison[1])
+            comps.append(comp)
+        d = ','.join(comps)
+        vals.append(d)
+        d = ',levels=design)\n'
+        vals.append(d)
+        template = ''.join(vals)
+        w = open(self.diff_dir + '/peptide_experimental_design.R','w')
+        w.write(template)
+        w.close()
+        peptide_txt = self.peptide_dir +'target_peptides.txt'
+        self.target_peptides.to_csv(peptide_txt, sep='\t')
+        cmd = 'cd {} && mq_normalize_peptide_intensity.R -d peptide_experimental_design.R -p {} -o {} && exit'.format(self.diff_dir, peptide_txt,  self.diff_dir + 'peptide_normalization')
+        process = subprocess.Popen(cmd, shell=True)
+        process.wait()
+        assert process.returncode == 0
+        self.normalized_target_peptides = pd.read_csv(self.diff_dir + '/peptide_normalization/msnbase/imputed.csv') 
+    
+    def diff(self, exp_design, infile, outpath):
+        cmd = 'mq_diff.R -d {} -f {} -o {}'.format(exp_design, infile, outpath)
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        process.wait()
+        assert process.returncode == 0
+    
+    def diff_analysis(self):
+        # peptides
+        try:
+            peptide_exp = self.diff_dir + '/peptide_experimental_design.R'
+            peptides = self.diff_dir + '/peptide_normalization/msnbase/imputed.csv'
+            self.diff(peptide_exp, peptides, self.diff_dir + '/peptide_diff')
+        except:
+            pass
+        #pept2lca_phylum_sc
+        try:
+            peptides=self.unipept_dir + '/pept2lca_phylum_sc.csv'
+            print(len(peptides))
+            self.diff(peptide_exp, peptides, self.diff_dir + '/pept2lca_phylum')
+        except:
+            pass
+        #pept2lca_species_sc
+        try:
+            peptides=self.unipept_dir + '/pept2lca_species_sc.csv'
+            print(len(peptides))
+            self.diff(peptide_exp, peptides, self.diff_dir + '/pept2lca_species')
+        except:
+            pass
+        #pept2lca_genus_sc
+        try:
+            peptides=self.unipept_dir + '/pept2lca_genus_sc.csv'
+            print(len(peptides))
+            self.diff(peptide_exp, peptides, self.diff_dir + '/pept2lca_genus')
+        except:
+            pass
+
+        #pept2lca_genus_sc
+        try:
+            peptides=self.unipept_dir + '/pept2lca_family_sc.csv'
+            print(len(peptides))
+            self.diff(peptide_exp, peptides, self.diff_dir + '/pept2lca_family')
+        except:
+            pass
+        
+        #pept2lca_sc
+        try: 
+            peptides=self.unipept_dir + '/pept2lca_taxon_sc.csv'
+            print(len(peptides))
+            self.diff(peptide_exp, peptides, self.diff_dir + '/pept2lca_taxon')
+        except:
+            pass
+        
+        try:
+            #pept2taxa_genus_sc
+            peptides=self.unipept_dir + '/pept2taxa_genus_sc.csv'
+            self.diff(peptide_exp, peptides, self.diff_dir + '/pept2taxa_genus')
+        except:
+            pass
+
+        try:
+            #pept2taxa_sc
+            peptides=self.unipept_dir + '/pept2taxa_taxon_sc.csv'
+            self.diff(peptide_exp, peptides, self.diff_dir + '/pept2taxa_taxon')
+        except:
+            pass
+        
+        try:
+            #pept2taxa_sc
+            peptides=self.unipept_dir + '/pept2taxa_species_sc.csv'
+            self.diff(peptide_exp, peptides, self.diff_dir + '/pept2taxa_species')
+        except:
+            pass
+
+        try:
+            #pept2taxa_sc
+            peptides=self.unipept_dir + '/pept2taxa_family_sc.csv'
+            self.diff(peptide_exp, peptides, self.diff_dir + '/pept2taxa_family')
+        except:
+            pass
 
 def peptides(path):
     pep_dct = {}

@@ -45,7 +45,8 @@ data[, cols] <- lapply(data[, cols], function(x){replace(x, x == 0, NA)})
 
 data[, cols] <- log2(data[, cols])
 
-data <- data[rowSums(is.na(data[,cols])) < length(cols)/2, ]
+#exclude missing samples 
+#data <- data[rowSums(is.na(data[,cols])) < length(cols)/2, ]
 
 
 #######################################################
@@ -154,6 +155,8 @@ fit2 <- eBayes(fit2)
 limma_dir = paste(outdir,'limma/',sep='')
 dir.create(limma_dir, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 pval_lists <- vector("list", length(colnames(contrast.matrix)))
+qval_lists <- vector("list", length(colnames(contrast.matrix)))
+
 pval_lists_0_005 <- vector("list", length(colnames(contrast.matrix)))
 
 for ( i in seq_along(colnames(contrast.matrix))) {
@@ -161,9 +164,9 @@ for ( i in seq_along(colnames(contrast.matrix))) {
     cntrst_ <- strsplit(cntrst, '-')
     Exposed <- cntrst_[[1]][1]
     Control <- cntrst_[[1]][2]
-    print(Exposed)
-    print(Control)
-    print('*') 
+    #print(Exposed)
+    #print(Control)
+    #print('*') 
     table <- topTable(fit2,adjust="BH", coef=i, n=Inf)
     table <- merge(orig_data, table, by=0)
     
@@ -172,9 +175,11 @@ for ( i in seq_along(colnames(contrast.matrix))) {
     table$Control <- Control
     
     table <- setDT(table, keep.rownames = TRUE)[]
-    
+    #print(head(table)) 
 
     pval_lists[[cntrst]] <- table[ which(table$P.Value < 0.05), ]$Row.names  
+    qval_lists[[cntrst]] <- table[ which(table$adj.P.Val < 0.05), ]$Row.names  
+    #print(qval_lists) 
     pval_lists_0_005[[cntrst]] <- table[ which(table$P.Value < 0.005), ]$Row.names  
     table <- table[with(table, order(P.Value)), ]
     write.table(table, paste(limma_dir,'limma_', cntrst, '_iBAQ.csv',sep=''), sep='\t', row.names=FALSE)
@@ -187,23 +192,40 @@ num_groups = length(colnames(design))
 
 # Get the proteins that are differentially expressed between strains
 inter_pvals <- pval_lists[inter_comps]
+inter_qvals <- qval_lists[inter_comps]
+
 inter_pvals_0_005 <- pval_lists_0_005[inter_comps]
+
 inter_pvals <- unlist(inter_pvals, recursive = TRUE, use.names = FALSE)
+
+print(inter_qvals)
+inter_qvals <- unlist(inter_qvals, recursive = TRUE, use.names = FALSE)
+
+print(inter_qvals)
+
 inter_pvals_0_005  <- unlist(inter_pvals_0_005, recursive = TRUE, use.names = FALSE)
 inter_pvals_duplicated <- inter_pvals[duplicated(inter_pvals)]
 
 str_pval_data <- data[rownames(data) %in% inter_pvals, ]
+str_qval_data <- data[rownames(data) %in% inter_qvals, ]
 str_pval_dup_data <-  data[rownames(data) %in% inter_pvals_duplicated, ]
 str_pval_data_0_005 <- data[rownames(data) %in% inter_pvals_0_005, ]
 
 # Get the proteins that are differentially expressed between conditions
 intra_pvals <- pval_lists[intra_comps]
+intra_qvals <- qval_lists[intra_comps]
+
+
 intra_pvals_0_005 <- pval_lists_0_005[intra_comps]
+
 intra_pvals <- unlist(intra_pvals, recursive = TRUE, use.names = FALSE)
+intra_qvals <- unlist(intra_qvals, recursive = TRUE, use.names = FALSE)
+
 intra_pvals_0_005  <- unlist(intra_pvals_0_005, recursive = TRUE, use.names = FALSE)
 intra_pvals_duplicated <- intra_pvals[duplicated(intra_pvals)]
 
 cnd_pval_data <- data[rownames(data) %in% intra_pvals, ]
+cnd_qval_data <- data[rownames(data) %in% intra_qvals, ]
 cnd_pval_dup_data <-  data[rownames(data) %in% intra_pvals_duplicated, ]
 cnd_pval_data_0_005 <- data[rownames(data) %in% intra_pvals_0_005, ]
 
@@ -232,10 +254,10 @@ pcp <- function (df_, rows, valcols, labels, path, name) {
     
     row_labels <- df$temp
     df <- df[, valcols]
-    print(str(row_labels))
+    #print(str(row_labels))
 
     row_cols <- rev(rainbow_hcl(length(row_labels)))[as.numeric(row_labels)]
-    print(row_cols)
+    #print(row_cols)
     
     
 
@@ -305,18 +327,23 @@ dev.off()
 ############
 
 library('dendextend')
+#dend_r <- df %>% dist(method="man") %>% hclust(method="ward.D") %>% as.dendrogram %>% ladderize %>% color_branches(k=10)
+dend_c <- t(data) %>% dist(method="man") %>% hclust(method="ward.D") %>% as.dendrogram %>% ladderize%>% color_branches(k=num_groups)
+dend_r <- data %>% dist(method="man") %>% hclust(method="ward.D") %>% as.dendrogram %>% ladderize %>% color_branches(k=10)
+
 heatmap_path=paste(outdir,'heatmaps/',sep='')
+
 dir.create(heatmap_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 
-hm <- function( df, heatmap_path, file,  main, xlab ) {
+hm <- function( df, heatmap_path, file,  main, xlab, dend_c, dend_r ) {
     some_col_func<-function(n)(colorspace::diverge_hcl(n,h=c(246, 40), c = 96, l = c(65, 90)))
-    dend_r <- df %>% dist(method="man") %>% hclust(method="ward.D") %>% as.dendrogram %>% ladderize %>% color_branches(k=10)
-    dend_c <- t(df) %>% dist(method="man") %>% hclust(method="ward.D") %>% as.dendrogram %>% ladderize%>% color_branches(k=num_groups)
+    #dend_r <- df %>% dist(method="man") %>% hclust(method="ward.D") %>% as.dendrogram %>% ladderize %>% color_branches(k=10)
+    #dend_c <- t(df) %>% dist(method="man") %>% hclust(method="ward.D") %>% as.dendrogram %>% ladderize%>% color_branches(k=num_groups)
     png(paste(heatmap_path, file, sep=''), units="in", width=11, height=8.5, res=300)
     gplots::heatmap.2(as.matrix(df),
     main = main,
     srtCol = 90,
-    Rowv = dend_r,
+    #Rowv = dend_r,
     Colv = dend_c,
     trace="none",
     margins =c(10,17),
@@ -328,27 +355,32 @@ hm <- function( df, heatmap_path, file,  main, xlab ) {
     dev.off() }
 
 # Heatmap of global data set
-hm(data, heatmap_path, "heatmap_iBAQ.jpeg", "Log2(iBAQ intensity) - all", "log2(iBAQ intensity")
-
+hm(data, heatmap_path, "heatmap_iBAQ.jpeg", "Log2(iBAQ intensity) - all", "log2(iBAQ intensity", dend_c, dend_r)
 # Strain comparisons
 heatmap_path=paste(outdir,'heatmaps/strains/',sep='')
 dir.create(heatmap_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 title="Log2(iBAQ intensity) - strain comparisons (p < 0.05)"
-hm(str_pval_data, heatmap_path, "heatmap_strains_05_iBAQ.jpeg", title, "log2(iBAQ intensity")
+hm(str_pval_data, heatmap_path, "heatmap_strains_05_iBAQ.jpeg", title, "log2(iBAQ intensity", dend_c, dend_r)
 title="Log2(iBAQ intensity) - str. comps. mult. (p < 0.05)"
-hm(str_pval_dup_data, heatmap_path, "heatmap_strains_05_mult_iBAQ.jpeg", title, "log2(iBAQ intensity")
+hm(str_pval_dup_data, heatmap_path, "heatmap_strains_05_mult_iBAQ.jpeg", title, "log2(iBAQ intensity", dend_c, dend_r)
 title="Log2(iBAQ intensity) - str. comps. (p < 0.005)"
-hm(str_pval_data_0_005, heatmap_path, "heatmap_strains_005_iBAQ.jpeg", title, "log2(iBAQ intensity")
+hm(str_pval_data_0_005, heatmap_path, "heatmap_strains_005_iBAQ.jpeg", title, "log2(iBAQ intensity", dend_c, dend_r)
+
+title="Log2(iBAQ intensity) - strain comparisons (q < 0.05)"
+hm(str_qval_data, heatmap_path, "heatmap_strains_q05_iBAQ.jpeg", title, "log2(iBAQ intensity", dend_c, dend_r)
 
 # Condition comparisons
 heatmap_path=paste(outdir,'heatmaps/conditions/',sep='')
 dir.create(heatmap_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 title="Log2(iBAQ intensity) - condition comparisons (p < 0.05)"
-hm(cnd_pval_data, heatmap_path, "heatmap_cnd_05_iBAQ.png", title, "log2(iBAQ intensity")
+hm(cnd_pval_data, heatmap_path, "heatmap_cnd_05_iBAQ.png", title, "log2(iBAQ intensity", dend_c, dend_r)
 title="Log2(iBAQ intensity) - cnd. comps. mult. (p < 0.05)"
-hm(cnd_pval_dup_data, heatmap_path, "heatmap_cnd_05_mult_iBAQ.png", title, "log2(iBAQ intensity")
+hm(cnd_pval_dup_data, heatmap_path, "heatmap_cnd_05_mult_iBAQ.png", title, "log2(iBAQ intensity", dend_c, dend_r)
 title="Log2(iBAQ intensity) - cnd. comps. (p < 0.005)"
-hm(cnd_pval_data_0_005, heatmap_path, "heatmap_cnd_005_iBAQ.jpeg", title, "log2(iBAQ intensity")
+hm(cnd_pval_data_0_005, heatmap_path, "heatmap_cnd_005_iBAQ.jpeg", title, "log2(iBAQ intensity", dend_c, dend_r)
+
+title="Log2(iBAQ intensity) - condition comparisons (q < 0.05)"
+hm(cnd_qval_data, heatmap_path, "heatmap_conditions_q05_iBAQ.jpeg", title, "log2(iBAQ intensity", dend_c, dend_r)
 
 #######
 # PCA #
@@ -365,7 +397,7 @@ pc <- function( df, path, file, var.axes ) {
     g <- g + scale_color_discrete(name = '')
     g <- g + theme(legend.direction = 'horizontal',
     legend.position = 'top')
-    print(g)
+    #print(g)
     dev.off() }
 
 pc(data, pca_path, "all_identified_pca.png", FALSE)

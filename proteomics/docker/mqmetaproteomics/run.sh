@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -e
 sudo ./build.sh
-txt_folder=$1
+txt_folder=/home/thys/bio/stool_txt/txt
+#txt_folder=/home/thys/bio/stool/cns_reference
 sudo docker run -it --rm -v ${txt_folder}:/root/txt cbio/mqmetaproteomics:latest
 
 # Load data to elasticsearch

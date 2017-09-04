@@ -56,14 +56,11 @@ def check(value):
         return 'a'
 
 def pepfig(database, data, names, output): #db name, list of lists, names of lists, output dir, min reps
-    
     #create the figure instance
     #fig = plt.figure(1, figsize=(9, 6))
-
     fig = plt.figure()
     # Create an axes instance
     a = fig.add_subplot(111)
-    
     a.set_ylabel('Posterior error probability (PEP)')
     # Turn off axis lines and ticks of the big subplot
     a.spines['top'].set_color('none')
@@ -71,7 +68,6 @@ def pepfig(database, data, names, output): #db name, list of lists, names of lis
     a.spines['left'].set_color('none')
     a.spines['right'].set_color('none')
     a.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off')
-    
     ax = fig.add_subplot(121)
     # Create the boxplot
     bp = ax.boxplot(data, patch_artist=True)
@@ -81,7 +77,6 @@ def pepfig(database, data, names, output): #db name, list of lists, names of lis
         box.set( color='#7570b3', linewidth=1)
         # change fill color
         box.set( facecolor = '#1b9e77' )
-
     ## change color and linewidth of the whiskers
     for whisker in bp['whiskers']:
         whisker.set(color='#7570b3', linewidth=1)
@@ -131,10 +126,8 @@ peptides = replicates(peptides)
 
 
 for strain in config['strains']:
-    
     strain_samples = config['files'][strain]
     msms = global_msms[global_msms['Raw file'].apply(lambda x : x in strain_samples) == True ]
-    
     data_dict[strain] = {}
 
     data = []
@@ -196,10 +189,10 @@ for strain in config['strains']:
         print(len(i))
     
     outpath = kw + '{}_PEP_score_kw_dunn.txt'.format(strain)
-    rfunc.list_kw_dunn(names,data,'PEP', 'ANNOTATION',outpath)
+    
+    rfunc.list_kw_dunn(names,data,'PEP', 'ANNOTATION',outpath) 
     
     outpath = density
-    
     if not os.path.exists(outpath):
         os.makedirs(outpath)
     

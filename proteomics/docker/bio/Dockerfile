@@ -80,6 +80,14 @@ RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('dplyr',depende
 RUN apt-get install -y libcairo2-dev
 RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('gdtools',dependencies=TRUE)"
 RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('ggplot2',dependencies=TRUE)"
+RUN pip3 install matplotlib
+RUN pip3 install rpy2
+RUN R -e "install.packages('epitools', dependencies=TRUE, repos='http://cran.us.r-project.org')"
+RUN R -e "install.packages('plotrix', dependencies=TRUE, repos='http://cran.us.r-project.org')"
+RUN R -e "install.packages('sciplot', dependencies=TRUE, repos='http://cran.us.r-project.org')"
+RUN R -e "install.packages('dunn.test', dependencies=TRUE, repos='http://cran.us.r-project.org')"
+RUN R -e "install.packages('FSA',,'http://www.rforge.net/', dependencies=TRUE) "
+RUN pip3 install urllib3
 
 # Ruby and unipept
 RUN apt-get update && apt-get -y install ruby-full
@@ -103,4 +111,9 @@ RUN cd /root/muscle/ && cp muscle* /usr/local/bin/muscle
 # Python deps
 RUN pip3 install natsort 
 RUN pip3 install PyYAML
-RUN pip3 install urllib3
+RUN apt-get update
+RUN pip3 install matplotlib_venn
+RUN apt-get update
+RUN apt-get -y install python3-tk
+RUN pip3 install rpy2
+RUN pip3 install datrie

@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 # Python graph functions and algorithms
-import string
-import datrie
 
 def fibonacci( n, a=0, b=1):
     for i in range(0, n):
@@ -56,11 +54,27 @@ class Graph:
 class Trie:
     def __init__(self, lst):
         self.trie = self.trie_graph(lst)
-
     def trie_graph(self, lst):
-        trie = datrie.BaseTrie(string.ascii_uppercase)
-        for l in lst:
-            trie[l] = 0
+        assert not isinstance(lst, str)    # make sure that the items you are making a trie_gr    aph from are in list format
+        trie = Graph()
+        root=0
+        mark = 0
+        trie.addVertex(root)
+        for word in lst:
+            node = root
+            word = word.lstrip().rstrip() + '#' # separates substrings of longer strings also in list
+            for i in range(0,len(word)):
+                symbol = word[i]
+                found = False
+                for neighbour in trie.getVertex(node).getConnections():
+                    if symbol == trie.getVertex(node).getEdge(neighbour):
+                        node = neighbour
+                        found = True
+                        break
+                if found == False:
+                    mark = mark + 1
+                    trie.addEdge(node, mark, symbol)
+                    node = mark
         return trie
 
 class TrieMatch:
@@ -70,11 +84,41 @@ class TrieMatch:
         self.Text_coordinates = self.trie_coordinates(trie)
 
     def prefix_trie_match(self, string, start, trie):
+        v = 0
+        i = start
+        pep = []
+        last_edge = None
         last_edges = []
-        prefixes  = trie.prefixes(string[start:])
-        for pref in prefixes:
-            last_edge = start, start + len(pref)
-            last_edges.append(last_edge)
+        while i < len(string) + 1:
+            found = False
+            if i < len(string):
+                symbol = string[i]
+                new_child = None
+                for child in trie.getVertex(v).getConnections():
+                    edge = Vertex.getEdge(trie.getVertex(v), child)
+                    if edge == '#':
+                        last_edge = start, i
+                        last_edges.append(last_edge)
+                for child in trie.getVertex(v).getConnections():
+                    edge = Vertex.getEdge(trie.getVertex(v), child)
+                    if symbol == edge:
+                        new_child = child
+                        pep.append(edge)        
+                        found = True
+                        i += 1
+                
+                if found == True:
+                    v = new_child
+
+            elif i == len(string):
+                new_child = None
+                for child in trie.getVertex(v).getConnections():
+                    edge = Vertex.getEdge(trie.getVertex(v), child)
+                    if edge == '#':
+                        last_edge = start, i
+                        last_edges.append(last_edge)
+            if found == False:
+                break
         return last_edges
 
     def trie_matching(self):

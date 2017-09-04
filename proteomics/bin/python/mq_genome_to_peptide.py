@@ -73,8 +73,6 @@ for strain in config['strains']:
         
         speps['Strain_identified'] = speps['Peptide_sequence'].apply(lambda x : check_identified(x, strain_peptides))
         
-        
-        
         #outpath=strainpath + '/' + '{}_mapped_peptides.p'.format(str(strain))   
         
         speps.to_csv(strainpath + '/' + '{}_mapped_peptides.csv'.format(str(strain)))

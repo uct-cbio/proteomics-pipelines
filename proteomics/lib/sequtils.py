@@ -649,7 +649,7 @@ class peptides2genome:
         orf_df['Most_Upstream_Inferred_Codon'] = orf_df.apply(self.most_upstream_codon, axis=1)
         orf_df['Most_Upstream_Inferred_Translation'] = orf_df.apply(self.most_upstream_translation, axis=1)
         
-        self.mapped_orfs =  [ orf  for orf in self.orfs if orf.id in list(orf_df['ORF_id']) ]
+        self.mapped_orfs = [orf for orf in self.orfs if orf.id in list(orf_df['ORF_id']) ]
         self.mapped_trans_orfs =  [ orf  for orf in self.trans_orfs if orf.id in list(orf_df['ORF_id']) ]
         
         blasted_orfs = blast.pblast_mult(self.mapped_trans_orfs, self.trans_orfs, evalue=0.0000000001, outdir=self.outdir + '/sixframe_blast')
@@ -920,33 +920,42 @@ class peptides2proteome:
 class mapping2peptides:
     '''Basic class to export classes of peptides from peptide2genome mapping table'''
     # consider that when calculating the unique tanslated sequences, * at the end should be excluded.  
+    
     def __init__(self, mapping, translation_table):
         self.mapping=mapping
         self.translation_table = translation_table
-    
+        self.paralogous_peptides = self.paralogous()
+        self.orf_mapping = self.orf2peptides()
+
     def non_specific(self):
         map = self.mapping 
-        ns =map[map['Peptide_translated_ORF_cluster_specific'] =='-']['Peptide_sequence'].tolist()
+        ns =map[map['Peptide_translated_ORF_cluster_specific'] == '-']['Peptide_sequence'].tolist()
         ns = set(ns)
         return ns
     
     def specific(self):
         map = self.mapping
-        s =map[map['Peptide_translated_ORF_cluster_specific'] =='+']['Peptide_sequence'].tolist()
+        s =map[map['Peptide_translated_ORF_cluster_specific'] == '+']['Peptide_sequence'].tolist()
         s = set(s)
         return s
 
-    def paralogous_specific(self):
+    def paralogous(self):
         map = self.mapping
         s =map[ (map['Peptide_translated_ORF_cluster_specific'] =='+') & (map['Peptide_genome_ORF_count'] > 1) ]['Peptide_sequence'].tolist()
         s = set(s)
         return s
 
-    def non_paralogous_specific(self):
-        map = self.mapping
-        s =map[ (map['Peptide_genome_ORF_count'] == 1) ]['Peptide_sequence'].tolist()
-        s = set(s)
-        return s
+    #def specific(self):
+    #    map = self.mapping
+    #    s =map[ (map['Peptide_genome_ORF_count'] == 1) ]['Peptide_sequence'].tolist()
+    #    s = set(s)
+    #    return s
+
+    #def non_specific(self):
+    #    map = self.mapping
+    #    s =map[ (map['Peptide_genome_ORF_count'] > 1) ]['Peptide_sequence'].tolist()
+    #    s = set(s)
+    #    return s
 
     def check_for_met(self, codons):
         met = False
@@ -962,6 +971,23 @@ class mapping2peptides:
         mstarts['MetCodon'] = mstarts['Peptide_first_codon'].apply(self.check_for_met)
         nonatgm = mstarts[mstarts['MetCodon'] == False]
         return set(nonatgm['Peptide_sequence'].tolist())
+    
+    def orf2peptides(self):
+        orf_mapping = defaultdict(list)
+        #specific_map=map[map['Peptide_sequence'].isin(peptides)].copy()
+        ids = self.mapping['ORF_id'].tolist()
+        peps = self.mapping['Peptide_sequence'].tolist()
+        for i in range(len(self.mapping)):
+            _id  = ids[i]
+            _pep = peps[i]
+            orf_mapping[_id].append(_pep)
+        return orf_mapping 
+    
+    def get_peptides(self, orfs):
+        peps = []
+        for orf in orfs:
+            peps += self.orf_mapping[orf]
+        return peps
 
     def return_fasta(self, peptides):
         map = self.mapping
@@ -1469,10 +1495,10 @@ class proteogenomics:
                 previous_codon = self.orf_sequence[(current_pos -1)* 3 : (current_pos-1) * 3 + 3]
             if current_orf_start > 0:
                 new_rec = self.get_var_rec(current_orf_start, variant_count, cds = True, variant_description="(Next upstream TSS of peptide identified upstream of mapped annotated sequence TSS)")
-                self.annotation_type.append('Putative upstream TSS (upstream non-TSS peptide)')
+                self.annotation_type.append('Upstream non-TSS peptide with putative upstream TSS')
             else:
                 new_rec = self.get_var_rec(current_orf_start, variant_count, cds = False, variant_description= "(No upstream ORF TSS of peptide identified upstream of mapped annotated sequence TSS)")
-                self.annotation_type.append('No putative upstream TSS (upstream non-TSS peptide)')
+                self.annotation_type.append('Upstream non-TSS peptide with no putative upstream TSS')
             self.variant_sequences.append(new_rec)
             self.upstream_inferred_tss_sequences.append(new_rec)
             variant_count += 1

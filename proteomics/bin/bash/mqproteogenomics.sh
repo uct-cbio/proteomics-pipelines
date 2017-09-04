@@ -130,6 +130,7 @@ fi
 ###################################
 # Differential abundance analysis #
 ###################################
+
 if [ ! -f $outpath/experimental_design.R ] ; then
     mq_experimental_design.py $config $outpath || rm -rf $outpath/experimental_design.R
 fi
@@ -143,11 +144,11 @@ fi
 ##################
 if [ ! -d $outpath/gsea ] ; then
     ips_gsea.py $outpath  && mq_annotate.py $outpath && mq_genesets.R --outdir $outpath --keggid $kegg_id || rm -rf $outpath/gsea
+    gage.R --outdir $outpath --keggid $kegg_id
 fi
 
 
 #mq_differential_abundance.R -d ${outpath}/experimental_design.R -p ${outpath}/combined.csv -o ${outpath}/diff # || rm -rf ${outpath}/diff
-#gage.R --outdir $outpath --keggid $kegg_id
 
 
 
