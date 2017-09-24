@@ -11,30 +11,35 @@ JVM_ARGS="-d64 -Xms${JVM_Xms} -Xmx${JVM_Xmx} -server"
 
 mgf_file_count=$( find /root/mgf -name "*.mgf" | wc -l  )
 
+output_folder=/root/output/metanovo
+if [ ! -d ${output_folder} ] ; then
+    mkdir $output_folder
+fi
+
  # Check that config does not exist or is unchanged
-if [ ! -f /root/output/config.sh ] ; then
-    cp /root/config.sh /root/output/config.sh
+if [ ! -f ${output_folder}/config.sh ] ; then
+    cp /root/config.sh ${output_folder}/config.sh
 else
-    cmp --silent /root/config.sh /root/output/config.sh && echo "'${CONFIG_FILE}' unchanged."|| { echo "'${CONFIG_FILE}' has changed, please delete '${OUTPUT_FOLDER}' or replace '${CONFIG_FILE}' with the contents of config.sh in "${OUTPUT_FOLDER}; exit 1; }
+    cmp --silent /root/config.sh ${output_folder}/config.sh && echo "'${CONFIG_FILE}' unchanged."|| { echo "'${CONFIG_FILE}' has changed, please delete '${OUTPUT_FOLDER}' or replace '${CONFIG_FILE}' with the contents of config.sh in "${OUTPUT_FOLDER}; exit 1; }
 fi
 
 if [ "$mn_search_database" -eq "1" ] ; then
-    if [ ! -f /root/output/default_input.xml ] ; then
-        cp /root/default_input.xml /root/output/default_input.xml
-        cp /root/tandem-input-style.xsl /root/output/tandem-input-style.xsl
-        echo "Please edit X!Tandem default_input.xml and tandem-input-style.xsl in output folder and restart the pipeline" && exit 1
+    if [ ! -f ${output_folder}/default_input.xml ] ; then
+        cp /root/default_input.xml ${output_folder}/default_input.xml
+        cp /root/tandem-input-style.xsl ${output_folder}/tandem-input-style.xsl
+        echo "Please edit X!Tandem default_input.xml and tandem-input-style.xsl in OUTPUT_FOLDER/metanovo and restart the pipeline" && exit 1
     fi
 fi
 
-if [ ! -d /root/output/sg ] ; then
-    cp -R SearchGUI* /root/output/sg
+if [ ! -d ${output_folder}/sg ] ; then
+    cp -R SearchGUI* ${output_folder}/sg
 fi
 
-if [ ! -d /root/output/utilities ] ; then
-    cp -R utilities* /root/output/utilities
+if [ ! -d ${output_folder}/utilities ] ; then
+    cp -R utilities* ${output_folder}/utilities
 fi
 
-output_folder=/root/output
+
 input_fasta=/root/$(basename ${FASTA_FILE})
 
 if [ ! -d ${output_folder}/denovo ] ; then
@@ -46,8 +51,8 @@ if [ ! -d ${output_folder}/denovo ] ; then
     mkdir ${output_folder}/denovo/log
 fi
 
-if [ ! -d /root/output/denovo/dg ] ; then
-    cp -R DeNovoGUI* /root/output/denovo/dg
+if [ ! -d ${output_fodler}/denovo/dg ] ; then
+    cp -R DeNovoGUI* ${output_folder}/denovo/dg
 fi
 
 if [ ! -f ${output_folder}/identification.par ] ; then
@@ -109,13 +114,21 @@ if [ "$mn_search_database" -eq "1" ] ; then
     find ${output_folder}/mgf -name "*.xml" \
         | parallel -j${THREAD_LIMIT} "java -Xms1024m -jar /mzidlib-*/mzidlib-*.jar Tandem2mzid {} {}.mzid -outputFragmentation false -idsStartAtZero false -decoyRegex :reversed -massSpecFileFormatID MS:1001062 -databaseFileFormatID MS:1001348 && gzip --best {}"
     if [ ! -d ${output_folder}/mgf/analysis ] ; then
-        cd ${output_folder} && msgf_msnid.R -i mgf -v 1 -l "accession"  || rm -rf ${output_folder}/mgf/analysis
+        cd ${output_folder} && msgf_msnid.R -i mgf -v ${mn_search_fdr_value} -l ${mn_search_fdr_level}  || rm -rf ${output_folder}/mgf/analysis
     fi
+
     if [ ! -f ${output_folder}/mgf/analysis/pept2lca.csv ] ; then 
         cd ${output_folder}/mgf/analysis && unipept pept2lca -i peptides_cleaned.txt -e -o pept2lca.csv || \
             rm -rf ${output_folder}/mgf/analysis/pept2lca.csv
     fi
-    cd $output_folder/mgf/analysis && unipept.R
+    if [ ! -f ${output_folder}/mgf/analysis/accession_sc_pept2lca.txt  ] ; then
+        cd $output_folder/mgf/analysis && unipept.R
+    fi
+    #if [ ! -d $output_folder/lfq ] ; then
+    #   mkdir $output_folder/lfq && cp /root/mgf/*.mgf ${output_folder}/lfq || { rm -rf $output_folder/lfq/ && echo "error copying mgf files"; exit 1; } 
+    #fi
+    #cd ${output_folder} && find lfq -name "*.mgf" \
+    #    | parallel -j${THREAD_LIMIT} "msnbase.R --mgf {} --psms ${output_folder}/mgf/analysis/tables/psms.txt"
 fi
 
 

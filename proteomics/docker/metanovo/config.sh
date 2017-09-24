@@ -20,6 +20,8 @@ mn_enzymes='Trypsin'
 mn_max_missed_cleavages=3
 mn_filter_database=1
 mn_search_database=1
+mn_search_fdr_value=1  
+mn_search_fdr_level="accession"
 
 ######################
 # DeNovoGUI Settings #

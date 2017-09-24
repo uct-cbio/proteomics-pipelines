@@ -2,38 +2,29 @@
 
 library("dplyr")
 library("optparse")
+library("MSnbase")
 
 options(bitmapType='cairo')
 
+quit()
 option_list = list(
- make_option(c("-i", "--indir"), type="character", default=NULL, 
-              help="Directory of mzIdentML files for global FDR control", metavar="character"),
- make_option(c("-v", "--fdr_value"), type="integer", default=1, 
-              help="Percentage value to control the FDR", metavar="character"),
- make_option(c("-l","--fdr_level"), type="character", default='accession',
-              help="The level to control the FDR ('PSM', 'peptide' or 'accession')", metavar="character"))
+make_option(c("-m", "--mgf"), type="character", default=NULL, 
+              help="in file", metavar="character"),
+make_option(c("-p", "--psms"), type="CHARACTER", default=NULL, 
+              help="psms", metavar="character"))
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-fdr_value = opt$fdr_value/100.0   # convert percentage to ratio
-fdr_level = opt$fdr_level         
 
-if (is.null(opt$indir)){
-  print_help(opt_parser)
-  stop("At least one argument must be supplied (input directory).n", call.=FALSE)
-} 
+mgf = opt$mgf # convert percentage to ratio
 
-unlink(paste(opt$indir,"/analysis",sep=''), recursive=TRUE)
+print(mgf)
 
-dirfiles <- list.files(opt$indir, full.names=TRUE, pattern='.mzid')
+#msexp <- readMgfData(mgf)
+    #msexp <- addIdentificationData(msexp, id = identFile, verbose = FALSE)
+#         verbose = TRUE, cache = 1)
 
-
-if (is.null(opt$outdir)) {
-	outdir <- paste(opt$indir,'/analysis',sep='');
-} else { outidr <- opt$outdir} 
-
-dir.create(outdir,showWarnings=TRUE,recursive=FALSE,mode='0777')
 
 
 sink(paste(outdir, '/log.txt',sep=''))
@@ -332,8 +323,6 @@ dev.off()
 #################################
 # Save MSnID files to R objects #
 #################################
-decoy <- apply_filter(msnid, "isDecoy == TRUE")
-msnid <- apply_filter(msnid, "isDecoy == FALSE")
 processed.msnid <- msnid
 save(processed.msnid, file=paste(outdir,'/msnid_processed.Rdata',sep=''))
 
@@ -341,7 +330,9 @@ save(processed.msnid, file=paste(outdir,'/msnid_processed.Rdata',sep=''))
 ## Tables     #
 ###############
 
+decoy <- apply_filter(msnid, "isDecoy == TRUE")
 
+msnid <- apply_filter(msnid, "isDecoy == FALSE")
 contaminants <- apply_filter(msnid, "grepl('CONTAMINANT',accession)")
 #msnid <- apply_filter(msnid, "!grepl('CONTAMINANT',description)")
 
