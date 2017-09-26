@@ -13,6 +13,7 @@ RUN R -e "install.packages('dunn.test', dependencies=TRUE, repos='http://cran.us
 RUN R -e "install.packages('FSA',,'http://www.rforge.net/', dependencies=TRUE) "
 
 RUN pip3 install urllib3
+RUN pip3 install datrie
 
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 

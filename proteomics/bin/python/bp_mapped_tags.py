@@ -8,6 +8,7 @@ import tagmatch
 import os
 from collections import defaultdict
 import sqlite3
+import gzip
 
 enzymes =os.environ['mn_enzymes'].split(';')
 specificity =os.environ['mn_specificity']
@@ -17,9 +18,9 @@ f = open(sys.argv[1])
 lines = f.readlines()
 f.close()
 
-db = sqlite3.connect(sys.argv[3])
-cursor = db.cursor()
+db = sqlite3.connect(sys.argv[2], timeout=100)
 
+cursor = db.cursor()
 
 try:
     query = 'delete from proteins where File=?'
@@ -28,12 +29,12 @@ try:
 except:
     pass
 
-f = list(SeqIO.parse(sys.argv[2],'fasta'))
 seqs = {}
-for i in f:
-    acc = i.id.split('|')[1]
-    seqs[acc] = i
-del f
+f = sys.argv[1].split('.csv')[0] + '.gz'
+with gzip.open(f, "rt") as handle:
+        for i in SeqIO.parse(handle, "fasta"):
+            acc = i.id.split('|')[1]
+            seqs[acc] = i
 
 passed_tags = set()
 matched_tags = defaultdict(set)
@@ -56,18 +57,23 @@ for line in lines:
     else:
         amino_acid_before = ""
     first_amino_acid = seq[start]
-    last_amino_acid = seq[end-1]
+    
+    try:
+        last_amino_acid = seq[end-1]
+    except:
+        continue
+
     try:
         amino_acid_after = seq[end]
     except:
         amino_acid_after = ""
+    
     valid = tagmatch.valid_cleavage(amino_acid_before, first_amino_acid, last_amino_acid, amino_acid_after, enzymes, specificity)
     mc = tagmatch.missed_cleavages(peptide, enzymes)
     if (valid == True) and (mc <= max_mc):
         passed_tags.add(tag)
         matched_tags[acc].add(tag)
         matched_peptides[acc].add(peptide)
-
 passed_tags = list(passed_tags)
 cursor.execute('SELECT DISTINCT scanid, tag FROM tags WHERE tag in ({0})'.format(', '.join('?' for _ in passed_tags)), passed_tags)
 

@@ -14,7 +14,6 @@ JVM_Xms=1024M
 #######################
 # MetaNovo parameters #
 #######################
-
 mn_specificity='specific'
 mn_enzymes='Trypsin'
 mn_max_missed_cleavages=3

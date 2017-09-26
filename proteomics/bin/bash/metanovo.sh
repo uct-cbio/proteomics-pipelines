@@ -87,9 +87,11 @@ if [ ! -d ${output_folder}/db ] ; then
         bp_fasta_prepare.py ${input_fasta} ${CHUNKSIZE}  ${output_folder}/db/ \
         || { rm -rf ${output_folder}/db ; echo "Error in database splitting in analysis section";     exit 1; }
 fi
-
 find ${output_folder}/db -name "*.fasta" \
-    | parallel -j${THREAD_LIMIT} "java -cp ${output_folder}/utilities/utilities-*.jar com.compomics.util.experiment.identification.protein_inference.executable.PeptideMapping -t {} ${output_folder}/tags/tags.txt {}.csv ${output_folder}/identification.par && bp_mapped_tags.py {}.csv {} ${tagdb} && gzip --best {}"
+    | parallel -j${THREAD_LIMIT} "java -cp ${output_folder}/utilities/utilities-*.jar com.compomics.util.experiment.identification.protein_inference.executable.PeptideMapping -t {} ${output_folder}/tags/tags.txt {}.csv ${output_folder}/identification.par && gzip --best {}"
+
+find ${output_folder}/db -name "*.csv" \
+    | parallel -j${THREAD_LIMIT} "bp_mapped_tags.py {} ${tagdb} && gzip --best {}"
 
 if [ ! -f ${output_folder}/metanovo.fasta ] ; then
     bp_export_proteins.py ${tagdb} ${output_folder}

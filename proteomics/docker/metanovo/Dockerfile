@@ -56,6 +56,7 @@ COPY docker/metanovo/default_input.xml /root/default_input.xml
 COPY lib /root/lib
 COPY bin /root/bin
 COPY docker/metanovo/config.sh /root/config.sh
+COPY docker/metanovo/run.sh /root/run.sh
 
 ENV PATH="/root/bin/bash:/root/bin/python:${PATH}"
 

@@ -12,4 +12,4 @@ services:
         - ${FASTA_FILE}:/root/${FASTA_BASE}
         - ${OUTPUT_FOLDER}:/root/output
         - ${CONFIG_FILE}:/root/config.sh
-  
+ 

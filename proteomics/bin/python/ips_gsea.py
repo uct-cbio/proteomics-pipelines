@@ -9,6 +9,7 @@ import os
 
 
 outpath= sys.argv[1]
+
 if not os.path.exists(outpath +'/gsea'):
     os.mkdir(outpath +'/gsea')
 
@@ -39,11 +40,9 @@ def go(df):
             gos.add(goterm)
     except:
         pass
-
-
 merged.apply(go, axis=1)
-
 pickle.dump( id2go, open( outpath +'/gsea/id2go.p', 'wb'))
+
 
 id2kegg= defaultdict(set)
 keggs = set()
@@ -61,6 +60,21 @@ def kegg(df):
 merged.apply(kegg, axis=1)
 pickle.dump( id2kegg, open( outpath +'/gsea/id2kegg.p', 'wb'))
 
+
+id2ipr= defaultdict(set)
+iprs = set()
+def ipr(df):
+    id = df['_mapped.id']
+    try:
+        ipr = df[11] + ': ' +  df[12]
+        if ipr.startswith('IPR'):
+            id2ipr[id].add(ipr)
+            iprs.add(ipr)
+    except:
+        pass
+merged.apply(ipr, axis=1)
+pickle.dump( id2ipr, open( outpath +'/gsea/id2ipr.p', 'wb'))
+
 kegg_df = pd.DataFrame()
 kegg_vals = list(keggs)
 kegg_df['KEGG_ID'] = pd.Series(kegg_vals)
@@ -71,3 +85,7 @@ go_vals = list(gos)
 go_df['GO_ID'] = pd.Series(go_vals)
 go_df.to_csv(outpath +'/gsea/go_terms.csv')
 
+ipr_df = pd.DataFrame()
+ipr_vals = list(iprs)
+ipr_df['IPR_ID'] = pd.Series(ipr_vals)
+ipr_df.to_csv(outpath +'/gsea/ipr_terms.csv')
