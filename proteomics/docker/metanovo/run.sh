@@ -18,4 +18,4 @@ sudo docker run -it --rm -v ${MGF_FOLDER}:/root/mgf \
     -v ${OUTPUT_FOLDER}:/root/output \
     -v ${CONFIG_FILE}:/root/config.sh  \
     -e CONFIG_FILE=${CONFIG_FILE} \
-    thysp/metanovo:latest
+    cbio/metanovo:latest
