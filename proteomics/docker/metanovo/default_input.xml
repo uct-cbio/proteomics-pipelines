@@ -90,7 +90,7 @@
 	<note type="input" label="refine, maximum valid expectation value">0.1</note>
 	<note type="input" label="refine, potential N-terminus modifications"></note>
 	<note type="input" label="refine, potential C-terminus modifications"></note>
-	<note type="input" label="refine, unanticipated cleavage">yes</note>
+	<note type="input" label="refine, unanticipated cleavage">no</note>
 	<note type="input" label="refine, potential modification mass"></note>
 	<note type="input" label="refine, point mutations">yes</note>
 	<note type="input" label="refine, use potential modifications for full refinement">no</note>
@@ -107,7 +107,7 @@
 
 <note>scoring parameters</note>
 	<note type="input" label="scoring, minimum ion count">4</note>
-	<note type="input" label="scoring, maximum missed cleavage sites">1</note>
+	<note type="input" label="scoring, maximum missed cleavage sites">2</note>
 	<note type="input" label="scoring, x ions">no</note>
 	<note type="input" label="scoring, y ions">yes</note>
 	<note type="input" label="scoring, z ions">no</note>

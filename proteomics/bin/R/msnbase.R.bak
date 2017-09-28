@@ -7,38 +7,23 @@ library("MSnbase")
 options(bitmapType='cairo')
 
 option_list = list(
- make_option(c("-m", "--mgf"), type="character", default=NULL, 
-              help="Directory of mzIdentML files for global FDR control", metavar="character"),
- make_option(c("-v", "--psms"), type="character", default=1, 
-              help="Percentage value to control the FDR", metavar="character"),
- make_option(c("-l","--fdr_level"), type="character", default='accession',
-              help="The level to control the FDR ('PSM', 'peptide' or 'accession')", metavar="character"))
+make_option(c("-m", "--mgf"), type="character", default=NULL, 
+              help="in file", metavar="character"),
+make_option(c("-p", "--psms"), type="CHARACTER", default=NULL, 
+              help="psms", metavar="character"))
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-mgf = opt$mgf   # convert percentage to ratio
-identfile <- opt$psms
-msexp <- readMgfData(mgf)
-msexp <- addIdentificationData(msexp, id = identfile, verbose = TRUE )
+
+mgf <- opt$mgf # convert percentage to ratio
+
+print(mgf)
+#msexp <- readMgfData(mgf)
 quit()
+#msexp <- addIdentificationData(msexp, id = identFile, verbose = FALSE)
+#         verbose = TRUE, cache = 1
 
-
-if (is.null(opt$indir)){
-  print_help(opt_parser)
-  stop("At least one argument must be supplied (input directory).n", call.=FALSE)
-} 
-
-unlink(paste(opt$indir,"/analysis",sep=''), recursive=TRUE)
-
-dirfiles <- list.files(opt$indir, full.names=TRUE, pattern='.mzid')
-
-
-if (is.null(opt$outdir)) {
-	outdir <- paste(opt$indir,'/analysis',sep='');
-} else { outidr <- opt$outdir} 
-
-dir.create(outdir,showWarnings=TRUE,recursive=FALSE,mode='0777')
 
 
 sink(paste(outdir, '/log.txt',sep=''))
@@ -81,6 +66,12 @@ library("MSnID")
 msnid <- MSnID(".")
 msnid <- read_mzIDs(msnid, dirfiles)
 
+show(msnid)
+
+#A <- function(x) strsplit(x , " ")[[1]][1]
+#psms(msnid)[c("accession")] <- lapply(psms(msnid)[c("accession")], A)
+msnid$accession <- sub(" .*", "", msnid$accession)
+
 unprocessed.msnid <- msnid
 
 save(unprocessed.msnid, file=paste(outdir, '/msnid_unprocessed.Rdata',sep=''))
@@ -91,6 +82,7 @@ msnid <- assess_missed_cleavages(msnid, missedCleavagePattern="[KR](?=[^P$])")
 msnid$peptideSequence <- .strip_flanking_AAs(as.character(msnid$peptide))
 
 all_descriptions <- msnid$description
+
 
 #############
 #Unfiltered #
@@ -164,12 +156,15 @@ dev.off()
 #params <- psms(msnid)[,c("PEP","isDecoy")]
 #ggplot(params) + geom_density(aes(x = PEP, color = isDecoy, ..count..))
 #dev.off()
-
 # PSM confidence  
-msnid$`PeptideShaker PSM confidence` <- as.numeric(msnid$`PeptideShaker PSM confidence`)
-jpeg(paste(outdir,'/qc/psm_confidence.jpeg',sep=''))
-params <- psms(msnid)[,c("PeptideShaker PSM confidence","isDecoy")]
-ggplot(params) + geom_density(aes(x="PeptideShaker PSM confidence", color = isDecoy, ..count..))
+jpeg(paste(outdir,'/qc/xtandem_evalue.jpeg',sep=''))
+params <- psms(msnid)[,c("X\\!Tandem:expect","isDecoy")]
+ggplot(params) + geom_density(aes(x="!XTandem e-value", color = isDecoy, ..count..))
+dev.off()
+
+jpeg(paste(outdir,'/qc/xtandem_hyperscore.jpeg',sep=''))
+params <- psms(msnid)[,c("X\\!Tandem:hyperscore","isDecoy")]
+ggplot(params) + geom_density(aes(x="!XTandem hyperscore", color = isDecoy, ..count..))
 dev.off()
 
 # PSM mass error - parent
@@ -198,12 +193,14 @@ unfiltered <- msnid
 msnid$minPepLength <- msnid$PepLength
 
 print('Creating MSnIDFilter object:')
-msnid$PeptideShakerPSMconfidence <- msnid$`PeptideShaker PSM confidence`
+msnid$expect <- msnid$`X\\!Tandem:expect`
+msnid$hyperscore <- msnid$`X\\!Tandem:hyperscore`
 
 filtObj <- MSnIDFilter(msnid)
 
 filtObj$absParentMassErrorPPM <- list(comparison="<", threshold=10.000)
-filtObj$PeptideShakerPSMconfidence  <- list(comparison=">", threshold=80.000)
+filtObj$hyperscore  <- list(comparison=">", threshold=10.000)
+filtObj$expect  <- list(comparison="<", threshold=0.05)
 
 #filtObj$PepLength <- list(comparison="<", threshold=35)
 #filtObj$minPepLength <- list(comparison=">", threshold=6)
@@ -277,7 +274,6 @@ temp$isDecoy <- msnid$isDecoy
 ggplot(temp, aes(x=ppm, fill=isDecoy)) + geom_histogram(position='stack', binwidth=0.25)
 dev.off()
 
-
 # Lets count the number of replicates per peptide
 jpeg(paste(outdir,'/filtered/peptides_replicate_counts.jpeg',sep=''))
 msnid.psms <- psms(msnid)
@@ -298,9 +294,15 @@ dev.off()
 #dev.off()
 
 # PSM condifence 
-jpeg(paste(outdir,'/filtered/psm_confidence.jpeg',sep=''))
-params <- psms(msnid)[,c("PeptideShaker PSM confidence","isDecoy")]
-ggplot(params) + geom_density(aes(x = "PeptideShaker PSM confidence", color = isDecoy, ..count..))
+jpeg(paste(outdir,'/filtered/xtandem_evalue.jpeg',sep=''))
+params <- psms(msnid)[,c("expect","isDecoy")]
+ggplot(params) + geom_density(aes(x = "X!tandem e-value", color = isDecoy, ..count..))
+dev.off()
+
+# PSM condifence 
+jpeg(paste(outdir,'/filtered/xtandem_hyperscore.jpeg',sep=''))
+params <- psms(msnid)[,c("hyperscore","isDecoy")]
+ggplot(params) + geom_density(aes(x = "X!tandem hyperscore", color = isDecoy, ..count..))
 dev.off()
 
 # PSM mass error - parent
