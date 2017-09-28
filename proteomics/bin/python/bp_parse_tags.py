@@ -88,7 +88,7 @@ for f in files:
                     tags.append((ID, sequence, ngap, cgap, scan, sample, tag, "PepNovo"))
         combined_tags+=tags
 
-db = sqlite3.connect(sys.argv[3], timeout=500)
+db = sqlite3.connect(sys.argv[3], timeout=100)
 
 cursor = db.cursor()
 cursor.execute("CREATE TABLE IF NOT EXISTS tags (scanid TEXT, sequence TEXT, ngap REAL, cgap REAL, scan TEXT, sample TEXT, tag TEXT, source TEXT );")
