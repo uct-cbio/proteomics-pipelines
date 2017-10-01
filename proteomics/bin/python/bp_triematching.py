@@ -22,7 +22,6 @@ from multiprocessing import Manager
 import datrie
 
 NCORE = 8
-
 db = SeqIO.parse(sys.argv[1],'fasta')
 print('loaded db')
 
@@ -40,12 +39,14 @@ def process(q, iolock):
             break
         count += 1
         
-        if count % 1000 == 0:
+        if count % 10000 == 0:
             print(count)
-        
+     
         ID = rec.id
         SEQ = str(rec.seq)
-        res = Trie.prefixes(SEQ)
+        TrieMatch=algo.TrieMatch(Trie, SEQ)
+        peptides_mapped=TrieMatch.trie_export()
+        
         #TrieMatch=algo.TrieMatch(Trie, SEQ)
         #peptides_mapped=TrieMatch.trie_export()
 
