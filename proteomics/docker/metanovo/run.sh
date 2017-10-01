@@ -18,4 +18,4 @@ sudo docker run -it --rm -v ${MGF_FOLDER}:/root/mgf \
     -v ${OUTPUT_FOLDER}:/root/output \
     -v ${CONFIG_FILE}:/root/config.sh  \
     -e CONFIG_FILE=${CONFIG_FILE} \
-    cbio/metanovo:latest
+    cbio/metanovo:latest metanovo.sh /root/mgf /root/${FASTA_BASE} /root/output /root/config.sh 
