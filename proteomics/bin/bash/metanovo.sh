@@ -4,55 +4,59 @@ set -e
 set -a
 echo "MetaNovo version 9.0"
 res1=$(date +%s.%N)
-source /root/config.sh
-source /root/bin/bash/compomics.sh
+
+
+mgf_folder=$1
+fasta_file=$2
+output_folder=$3/metanovo
+config_file=$4
+
+source ${config_file}
+
+source compomics.sh
 
 JVM_ARGS="-d64 -Xms${JVM_Xms} -Xmx${JVM_Xmx} -server"
-
-mgf_file_count=$( find /root/mgf -name "*.mgf" | wc -l  )
-
-output_folder=/root/output/metanovo
+mgf_file_count=$( find ${mgf_folder} -name "*.mgf" | wc -l  )
 if [ ! -d ${output_folder} ] ; then
     mkdir $output_folder
 fi
-
  # Check that config does not exist or is unchanged
 if [ ! -f ${output_folder}/config.sh ] ; then
-    cp /root/config.sh ${output_folder}/config.sh
+    cp ${config_file} ${output_folder}/config.sh
 else
-    cmp --silent /root/config.sh ${output_folder}/config.sh && echo "'${CONFIG_FILE}' unchanged."|| { echo "'${CONFIG_FILE}' has changed, please delete '${OUTPUT_FOLDER}' or replace '${CONFIG_FILE}' with the contents of config.sh in "${OUTPUT_FOLDER}; exit 1; }
+    cmp --silent ${config_file} ${output_folder}/config.sh && echo "'${CONFIG_FILE}' unchanged."|| { echo "'${CONFIG_FILE}' has changed, please delete '${OUTPUT_FOLDER}' or replace '${CONFIG_FILE}' with the contents of config.sh in "${OUTPUT_FOLDER}; exit 1; }
 fi
 
 if [ "$mn_search_database" -eq "1" ] ; then
     if [ ! -f ${output_folder}/default_input.xml ] ; then
-        cp /root/default_input.xml ${output_folder}/default_input.xml
-        cp /root/tandem-input-style.xsl ${output_folder}/tandem-input-style.xsl
+        cp ${TANDEM_DEFAULT_INPUT_PATH} ${output_folder}/default_input.xml
+        cp ${TANDEM_INPUT_STYLE_PATH} ${output_folder}/tandem-input-style.xsl
         echo "Please edit X!Tandem default_input.xml and tandem-input-style.xsl in OUTPUT_FOLDER/metanovo and restart the pipeline" && exit 1
     fi
 fi
 
 if [ ! -d ${output_folder}/sg ] ; then
-    cp -R SearchGUI* ${output_folder}/sg
+    cp -R ${SG_PATH} ${output_folder}/sg
 fi
 
 if [ ! -d ${output_folder}/utilities ] ; then
-    cp -R utilities* ${output_folder}/utilities
+    cp -R ${CU_PATH} ${output_folder}/utilities
 fi
 
 
-input_fasta=/root/$(basename ${FASTA_FILE})
+input_fasta=$2
 
 if [ ! -d ${output_folder}/denovo ] ; then
     mkdir ${output_folder}/denovo
     mkdir ${output_folder}/denovo/mgf 
-    cp /root/mgf/*.mgf ${output_folder}/denovo/mgf
+    cp ${mgf_folder}/*.mgf ${output_folder}/denovo/mgf
     mkdir ${output_folder}/denovo/runs
     mkdir ${output_folder}/denovo/temp
     mkdir ${output_folder}/denovo/log
 fi
 
 if [ ! -d ${output_fodler}/denovo/dg ] ; then
-    cp -R DeNovoGUI* ${output_folder}/denovo/dg
+    cp -R ${DG_PATH} ${output_folder}/denovo/dg
 fi
 
 if [ ! -f ${output_folder}/identification.par ] ; then
@@ -70,7 +74,7 @@ tagdb=$output_folder/sqlite3.db
 #export -f denovogui
 
 find ${output_folder}/denovo/mgf -name "*.mgf" \
-    | parallel denovogui ${output_folder}/denovo {} ${output_folder}/identification.par $tagdb || exit 1
+    | parallel -j${THREAD_LIMIT} denovogui ${output_folder}/denovo {} ${output_folder}/identification.par $tagdb || exit 1
 
 find ${output_folder}/denovo/mgf -name "*.gz"
 if [ ! -d $output_folder/tags ] ; then
@@ -108,13 +112,13 @@ fi
 
 if [ "$mn_search_database" -eq "1" ] ; then
     if [ ! -d $output_folder/mgf ] ; then
-       mkdir $output_folder/mgf && cp /root/mgf/*.mgf ${output_folder}/mgf || { rm -rf $output_folder/mgf/ && echo "error copying mgf files"; exit 1; } 
+       mkdir $output_folder/mgf && cp ${mgf_folder}/*.mgf ${output_folder}/mgf || { rm -rf $output_folder/mgf/ && echo "error copying mgf files"; exit 1; } 
     fi
     find ${output_folder}/mgf -name "*.mgf" \
         | parallel -j${THREAD_LIMIT} "rm -rf {}.*.xml && xtandem.R --mgf {} --fasta $input_fasta --input_xml $output_folder/default_input.xml --input_xsl $output_folder/tandem-input-style.xsl --output_xml {}.xml && gzip --best {}"
     
     find ${output_folder}/mgf -name "*.xml" \
-        | parallel -j${THREAD_LIMIT} "java -Xms1024m -jar /mzidlib-*/mzidlib-*.jar Tandem2mzid {} {}.mzid -outputFragmentation false -idsStartAtZero false -decoyRegex :reversed -massSpecFileFormatID MS:1001062 -databaseFileFormatID MS:1001348 && gzip --best {}"
+        | parallel -j${THREAD_LIMIT} "java -Xms1024m -jar ${MZIDLIB_PATH}/mzidlib-*.jar Tandem2mzid {} {}.mzid -outputFragmentation false -idsStartAtZero false -decoyRegex :reversed -massSpecFileFormatID MS:1001062 -databaseFileFormatID MS:1001348 && gzip --best {}"
     if [ ! -d ${output_folder}/mgf/analysis ] ; then
         cd ${output_folder} && msgf_msnid.R -i mgf -v ${mn_search_fdr_value} -l ${mn_search_fdr_level}  || rm -rf ${output_folder}/mgf/analysis
     fi

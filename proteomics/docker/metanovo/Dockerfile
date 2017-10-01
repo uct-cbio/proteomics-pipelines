@@ -49,6 +49,12 @@ RUN wget http://www.proteoannotator.org/datasets/releases/ProteoAnnotator-1.7.86
 ENV LD_LIBRARY_PATH /openms/OpenMS-build/lib:$LD_LIBRARY_PATH
 ENV PATH $PATH::/root/bin/python:/root/bin/R:/root/bin/bash:/openms/OpenMS-build/bin 
 ENV PYTHONPATH $PYTHONPATH::/root/lib
+ENV SG_PATH /SearchGUI*
+ENV DG_PATH /DeNovoGUI*
+ENV CU_PATH /utilities*
+ENV TANDEM_DEFAULT_INPUT_PATH /root/default_input.xml
+ENV TANDEM_INPUT_STYLE_PATH /root/tandem-input-style.xsl
+ENV MZIDLIB_PATH /mzidlib*
 
 COPY docker/metanovo/tandem-input-style.xsl /root/tandem-input-style.xsl
 COPY docker/metanovo/default_input.xml /root/default_input.xml
@@ -64,4 +70,4 @@ ENV PATH="/root/bin/bash:/root/bin/python:${PATH}"
 #RUN apt-get -y install mono-complete
 
 # Run denovo
-CMD /root/bin/bash/metanovo.sh  2>&1 | tee /root/output/log.txt 
+#CMD /root/bin/bash/metanovo.sh  2>&1 | tee /root/output/log.txt 
