@@ -1,0 +1,34 @@
+#PBS -P CBBI0825 
+#PBS -M matthys.potgieter@gmail.com 
+#PBS -l select=11:ncpus=24:nodetype=haswell_reg
+#PBS -l walltime=48:00:00
+#PBS -N adultstool_specific
+#PBS -q large
+#PBS -W group_list=largeq
+#PBS -m be
+
+##################
+#  MetaNovo v9   #
+##################
+
+CONFIG=${HOME}/cbio-pipelines/proteomics/bin/config/metanovo_test_config.sh
+
+#####################
+# Paths to software #
+#####################
+
+set -a
+export SG_PATH=${HOME}/software/SearchGUI/SearchGUI-3.2.20
+export DG_PATH=${HOME}/software/DeNovoGUI/DeNovoGUI-1.15.11
+export CU_PATH=${HOME}/software/utilities/utilities-4.11.19
+export TANDEM_DEFAULT_INPUT_PATH=${HOME}/cbio-pipelines/proteomics/docker/metanovo/default_input.xml
+export TANDEM_INPUT_STYLE_PATH=${HOME}/cbio-pipelines/proteomics/docker/metanovo/tandem-input-style.xsl
+export MZIDLIB_PATH=${HOME}/software/ProteoAnnotator/mzidlib-1.7
+source ${CONFIG}
+module add chpc/gnu/parallel-20160422
+metanovo.sh ${MGF_FOLDER} ${FASTA_FILE} ${OUTPUT_FOLDER} ${CONFIG} 2>&1 ${OUTPUT_FOLDER}/log.txt
+
+
+
+
+
