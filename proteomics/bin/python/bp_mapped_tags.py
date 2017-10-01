@@ -75,12 +75,21 @@ for line in lines:
         matched_tags[acc].add(tag)
         matched_peptides[acc].add(peptide)
 passed_tags = list(passed_tags)
-cursor.execute('SELECT DISTINCT scanid, tag FROM tags WHERE tag in ({0})'.format(', '.join('?' for _ in passed_tags)), passed_tags)
 
-scanids = cursor.fetchall()
 ids = defaultdict(set)
-for _ in scanids:
-    ids[_[1]].add(_[0])
+
+from itertools import zip_longest
+
+def grouper(iterable, n, fillvalue=None):
+    args = [iter(iterable)] * n
+    return zip_longest(*args, fillvalue=fillvalue)
+
+for group in grouper(passed_tags, 500):
+    t = [i for i in group if i is not None ]
+    cursor.execute('SELECT DISTINCT scanid, tag FROM tags WHERE tag in ({0})'.format(', '.join('?' for _ in t)), t)
+    scanids = cursor.fetchall()
+    for _ in scanids:
+        ids[_[1]].add(_[0])
 del scanids
 
 count = 0
