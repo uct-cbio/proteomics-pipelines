@@ -12,16 +12,12 @@ import json
 host     = sys.argv[1]
 port     = int(sys.argv[2])
 alias    = sys.argv[3]
-user     = sys.argv[4]
-password = sys.argv[5]
 
 print(host)
 print(port)
 print(alias)
-print(user)
-print(password)
 
-es = Elasticsearch([ "{}:{}".format(host, port)], http_auth="{}:{}".format(user, password))
+es = Elasticsearch([{'host': host, 'port': port}])
 
 # create our test index
 
@@ -39,7 +35,6 @@ def clean_field(val):
     val = val.split('/')
     val = [i for i in val if i != '']
     val = '_'.join(val)
-    
     return val
 
 es.indices.delete(index=alias + '*', ignore=[400, 404])
@@ -65,10 +60,9 @@ for file in files:
     data['_index'] = index
     records = data.to_json(orient='records')
     records = json.loads(records)
-    helpers.bulk(es, records)
+    helpers.bulk(es, records, chunk_size=100)
     count += 1
     print(es.count(index=index))
-
 
 # Create an index table in elasticsearch to locate the files
 indices_table = pd.DataFrame()
@@ -81,7 +75,7 @@ indices_table['_index'] = alias + '_indices'
 es.indices.create(alias + '_indices')
 records = indices_table.to_json(orient='records')
 records = json.loads(records)
-helpers.bulk(es, records)
+helpers.bulk(es, records, chunk_size=100)
 print(es.count(index=alias + '_indices'))
 
 

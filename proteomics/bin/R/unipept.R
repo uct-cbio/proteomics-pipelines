@@ -33,7 +33,10 @@ peptide_counts <- add_rownames(peptide_counts, "Row")
 write.table(peptide_counts, paste('peptide_sc_pept2lca.txt',sep=''),sep='\t', row.names=FALSE)
 
 counts.df <- data.frame(exprs(msnset.count))
+counts.df$TotalMSMS <- rowSums(counts.df)
 counts.df <- add_rownames(counts.df, "Row")
+counts.df <- counts.df[with(counts.df, order(-TotalMSMS)), ]
+
 write.table(counts.df, paste('accession_sc_pept2lca.txt',sep=''),sep='\t', row.names=FALSE)
 
 unipept.msnid <- msnid

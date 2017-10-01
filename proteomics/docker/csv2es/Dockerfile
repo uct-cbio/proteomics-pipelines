@@ -15,4 +15,4 @@ RUN mkdir /root/data
 
 COPY bin/python/csv2es.py /root/csv2es.py
 
-CMD python /root/csv2es.py ${ES_HOST} ${ES_PORT} ${ES_ALIAS} ${ES_USER} ${ES_PASSWORD} /root/data
+CMD python /root/csv2es.py ${ES_HOST} ${ES_PORT} ${ES_ALIAS} /root/data

@@ -85,6 +85,8 @@ if [ ! -d $outpath/jbrowse ] ; then
 fi
 
 
+mq_strains2ref_orfs.py $config $outpath      
+
 #mq_peptide_features.py $config $outpath
 #mq_domain_features.py $config $outpath
 #mq_contig_heatmaps.py $config $outpath
@@ -143,8 +145,9 @@ fi
 # IPS Enrichment #
 ##################
 if [ ! -d $outpath/gsea ] ; then
+    mkdir ${outpath}/gsea
     ips_gsea.py $outpath  && mq_annotate.py $outpath && mq_genesets.R --outdir $outpath --keggid $kegg_id || rm -rf $outpath/gsea
-    gage.R --outdir $outpath --keggid $kegg_id
+    gage.R --outdir $outpath --keggid $kegg_id  || rm -rf ${outpath}/gsea
 fi
 
 

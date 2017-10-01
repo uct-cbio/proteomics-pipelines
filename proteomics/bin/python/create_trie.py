@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys
 import Bio; from Bio import SeqIO
@@ -16,7 +16,10 @@ cursor.execute("select DISTINCT {} from {}".format(column, table))
 
 seqs= [i[0] for i in cursor.fetchall()]
 
+print(len(seqs))
+
 #seqs = [str(i.seq) for i in list(SeqIO.parse(sys.argv[1], 'fasta'))]
+
 Trie = algo.Trie(seqs)
 
 pickle.dump(Trie, open(sys.argv[4], 'wb'))

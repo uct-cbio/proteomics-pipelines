@@ -1,0 +1,15 @@
+version: '2'
+
+services:
+  metanovo:
+    image: cbio/metanovo
+    container_name: cbio_metanovo
+    environment:
+        - CONFIG_FILE=${CONFIG_FILE}
+    restart: "on-failure"
+    volumes:
+        - ${MGF_FOLDER}:/root/mgf
+        - ${FASTA_FILE}:/root/${FASTA_BASE}
+        - ${OUTPUT_FOLDER}:/root/output
+        - ${CONFIG_FILE}:/root/config.sh
+ 

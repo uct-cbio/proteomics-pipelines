@@ -197,9 +197,9 @@ class TagMatch:
                     first_amino_acid  = self.target[nterm]
                     last_amino_acid   = self.target[cterm -1]
                     amino_acid_after   = self.target[cterm : cterm + 1]
-                    valid = self.valid_cleavage( amino_acid_before, first_amino_acid, last_amino_acid, amino_acid_after)
+                    valid = valid_cleavage( amino_acid_before, first_amino_acid, last_amino_acid, amino_acid_after, self.enzymes, self.specificity)
                     if valid == True:
-                        mc = self.missed_cleavages(self.target[nterm:cterm])
+                        mc = missed_cleavages(self.target[nterm:cterm], self.enzymes)
                         if (mc <= self.max_missed_cleavages):
                             coords.append((nterm, cterm))
         return coords
@@ -324,71 +324,66 @@ class TagMatch:
                 amino_gap_dict[peptide].append( (nterm_gap, cterm_gap) )
         return amino_gap_dict
 
-    def valid_cleavage(self, amino_acid_before, first_amino_acid, last_amino_acid, amino_acid_after):
-        valid = False
-        nterm_valid=False
-        cterm_valid=False
-        for enzyme in self.enzymes:
-            if enzyme=='Trypsin, no P rule':
-                cleavage_aminos=['K','R']
-                if amino_acid_before == '':
-                    nterm_valid=True
-                elif amino_acid_before in cleavage_aminos:
-                    nterm_valid=True
-                if amino_acid_after =='':
-                    cterm_valid=True
-                elif last_amino_acid in cleavage_aminos:
-                    cterm_valid=True
+def valid_cleavage(amino_acid_before, first_amino_acid, last_amino_acid, amino_acid_after, enzymes, specificity):
+    valid = False
+    nterm_valid=False
+    cterm_valid=False
+    for enzyme in enzymes:
+        if enzyme=='Trypsin, no P rule':
+            cleavage_aminos=['K','R']
+            if amino_acid_before == '':
+                nterm_valid=True
+            elif amino_acid_before in cleavage_aminos:
+                nterm_valid=True
+            if amino_acid_after =='':
+                cterm_valid=True
+            elif last_amino_acid in cleavage_aminos:
+                cterm_valid=True
 
-            elif enzyme == 'Trypsin':
-                cleavage_aminos=['K','R']
-                
-                if amino_acid_before == '':
-                    nterm_valid=True
-                elif (amino_acid_before in cleavage_aminos) and (first_amino_acid != 'P'):
-                    nterm_valid=True
-                
-                if amino_acid_after =='':
-                    cterm_valid=True
-                elif last_amino_acid in cleavage_aminos:
-                    cterm_valid=True
+        elif enzyme == 'Trypsin':
+            cleavage_aminos=['K','R']
             
-            elif enzyme == 'Whole protein':
-                
-                if amino_acid_before == '':
-                    nterm_valid=True
-                
-                if amino_acid_after =='':
-                    cterm_valid=True
-        if ((nterm_valid and cterm_valid) == True) and (self.specificity == 'specific'):
-            valid = True
-        elif ((nterm_valid or cterm_valid) == True) and (self.specificity == 'semi-specific'):
-            valid = True
-        elif self.specificity == 'unspecific':
-            valid=True
-        return valid
-    
-    def missed_cleavages(self, peptide):
+            if amino_acid_before == '':
+                nterm_valid=True
+            elif (amino_acid_before in cleavage_aminos) and (first_amino_acid != 'P'):
+                nterm_valid=True
+            
+            if amino_acid_after =='':
+                cterm_valid=True
+            elif last_amino_acid in cleavage_aminos:
+                cterm_valid=True
         
-        new_peptides = [peptide]
+        elif enzyme == 'Whole protein':
+            
+            if amino_acid_before == '':
+                nterm_valid=True
+            
+            if amino_acid_after =='':
+                cterm_valid=True
+    if ((nterm_valid and cterm_valid) == True) and (specificity == 'specific'):
+        valid = True
+    elif ((nterm_valid or cterm_valid) == True) and (specificity == 'semi-specific'):
+        valid = True
+    elif specificity == 'unspecific':
+        valid=True
+    return valid
 
-        for enzyme in self.enzymes:
-            holder=[]
-            for datum in new_peptides:
-                if enzyme=='Trypsin, no P rule':
-                    peptides = re.sub(r'(?<=[RK])','\n', datum).split('\n')
-                    holder += peptides
-
-                elif enzyme == 'Trypsin':
-                    
-                    peptides = re.sub(r'(?<=[RK])(?=[^P])','\n', datum).split('\n')
-                    holder += peptides
-
-                elif enzyme == 'Whole protein':
-                    peptides = [datum]
-                    holder += peptides
-            new_peptides = holder
-        return len(new_peptides) - 1
+def missed_cleavages(peptide, enzymes):
+    new_peptides = [peptide]
+    for enzyme in enzymes:
+        holder=[]
+        for datum in new_peptides:
+            if enzyme=='Trypsin, no P rule':
+                peptides = re.sub(r'(?<=[RK])','\n', datum).split('\n')
+                holder += peptides
+            elif enzyme == 'Trypsin':
+                peptides = re.sub(r'(?<=[RK])(?=[^P])','\n', datum).split('\n')
+                holder += peptides
+            elif enzyme == 'Whole protein':
+                peptides = [datum]
+                holder += peptides
+        new_peptides = holder
+    return len(new_peptides) - 1
 
 def character_strip(sequence, character):
     started=False

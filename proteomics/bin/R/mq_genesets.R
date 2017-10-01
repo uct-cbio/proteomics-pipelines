@@ -83,6 +83,11 @@ kegg.set <- as.list(ktab$GENES)
 names(kegg.set) <- as.list(ktab$ID)
 save(kegg.set, file=paste(outpath, '/gsea/keggset.Rdata', sep=''))
 
+
+
+
+
+
 #################
 #    OPERONS    #
 #################
@@ -99,3 +104,16 @@ operontab$GENES <- lapply(operontab$GENES, vct)
 operon.set <- as.list(operontab$GENES)
 names(operon.set) <- as.list(operontab$ID)
 save(operon.set, file=paste(outpath, '/gsea/operonset.Rdata', sep=''))
+
+#################
+#    IPR        #
+#################
+iprpath <- paste(outpath,'/gsea/ipr2proteingroups.csv', sep='') 
+iprtab <- read.csv(iprpath, colClasses=c("character","character"))
+iprtab <- data.frame(lapply(iprtab, as.character), stringsAsFactors=FALSE)
+#ktab$ID<- with(ktab, paste0(kegg_id, KEGG_ID))
+iprtab$ID <- iprtab$IPR_ID
+iprtab$GENES <- lapply(iprtab$GENES, vct)
+ipr.set <- as.list(iprtab$GENES)
+names(ipr.set) <- as.list(iprtab$ID)
+save(ipr.set, file=paste(outpath, '/gsea/iprset.Rdata', sep=''))
