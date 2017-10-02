@@ -22,7 +22,6 @@ if [ ! -d ${output_folder} ] ; then
 fi
 
 CONFIG_FILE=${output_folder}/config.sh
-
  # Check that config does not exist or is unchanged
 if [ ! -f ${output_folder}/config.sh ] ; then
     cp ${config_file} ${CONFIG_FILE}
@@ -80,9 +79,9 @@ cmd="denovogui ${output_folder}/denovo {} ${output_folder}/identification.par $t
 if [ -z "${PBS_NODEFILE}" ] ; then
   find ${output_folder}/denovo/mgf -name "*.mgf" | parallel -j${THREAD_LIMIT} ${cmd}
 else
-  find ${output_folder}/denovo/mgf -name "*.mgf" | parallel -j${THREAD_LIMIT} --sshloginfile ${PBS_NODEFILE} ${cmd}
+  source `which env_parallel.bash`
+  find ${output_folder}/denovo/mgf -name "*.mgf" | env_parallel -j${THREAD_LIMIT} --sshloginfile ${PBS_NODEFILE} ${cmd}
 fi
-
 
 if [ ! -d $output_folder/tags ] ; then
     mkdir $output_folder/tags
@@ -105,7 +104,7 @@ if [ -z "${PBS_NODEFILE}" ]; then
     | parallel -j${THREAD_LIMIT} ${cmd}
 else
     find ${output_folder}/db -name "*.fasta" \
-    | parallel -j${THREAD_LIMIT} --sshloginfile ${PBS_NODEFILE} ${cmd}
+    | env_parallel -j${THREAD_LIMIT} --sshloginfile ${PBS_NODEFILE} ${cmd}
 fi
 
 cmd="bp_mapped_tags.py {} ${tagdb} && gzip --best {}"
@@ -114,7 +113,7 @@ if [ -z "${PBS_NODEFILE}" ]; then
         | parallel -j${THREAD_LIMIT} ${cmd} 
 else
     find ${output_folder}/db -name "*.csv" \
-        | parallel -j${THREAD_LIMIT} --sshloginfile ${PBS_NODEFILE} ${cmd}
+        | env_parallel -j${THREAD_LIMIT} --sshloginfile ${PBS_NODEFILE} ${cmd}
 fi
 
 if [ ! -f ${output_folder}/metanovo.fasta ] ; then
@@ -142,7 +141,7 @@ if [ "$mn_search_database" -eq "1" ] ; then
             | parallel -j${THREAD_LIMIT} ${cmd}
     else
         find ${output_folder}/mgf -name "*.mgf" \
-            | parallel -j${THREAD_LIMIT} --sshloginfile ${PBS_NODEFILE} ${cmd}
+            | env_parallel -j${THREAD_LIMIT} --sshloginfile ${PBS_NODEFILE} ${cmd}
     fi
     
     # MZID
@@ -152,7 +151,7 @@ if [ "$mn_search_database" -eq "1" ] ; then
             | parallel -j${THREAD_LIMIT} ${cmd} 
     else
         find ${output_folder}/mgf -name "*.xml" \
-            | parallel -j${THREAD_LIMIT} --shhloginfile ${PBS_NODEFILE} ${cmd}
+            | env_parallel -j${THREAD_LIMIT} --shhloginfile ${PBS_NODEFILE} ${cmd}
     fi
 
 
