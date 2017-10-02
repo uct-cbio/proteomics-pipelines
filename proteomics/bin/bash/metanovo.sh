@@ -73,13 +73,17 @@ if [ ! ${denovo_file_count} -eq ${mgf_file_count} ]; then
 fi
 
 tagdb=$output_folder/sqlite3.db
-
 #export -f denovogui
 
-find ${output_folder}/denovo/mgf -name "*.mgf" \
-    | parallel -j${THREAD_LIMIT} denovogui ${output_folder}/denovo {} ${output_folder}/identification.par $tagdb || exit 1
+# Denovo sequencing
+cmd="denovogui ${output_folder}/denovo {} ${output_folder}/identification.par $tagdb || exit 1 "
+if [ -z "${PBS_NODEFILE}" ] ; then
+  find ${output_folder}/denovo/mgf -name "*.mgf" | parallel -j${THREAD_LIMIT} ${cmd}
+else
+  find ${output_folder}/denovo/mgf -name "*.mgf" | parallel -j${THREAD_LIMIT} --sshloginfile ${PBS_NODEFILE} ${cmd}
+fi
 
-find ${output_folder}/denovo/mgf -name "*.gz"
+
 if [ ! -d $output_folder/tags ] ; then
     mkdir $output_folder/tags
 fi
@@ -94,11 +98,24 @@ if [ ! -d ${output_folder}/db ] ; then
         bp_fasta_prepare.py ${input_fasta} ${CHUNKSIZE}  ${output_folder}/db/ \
         || { rm -rf ${output_folder}/db ; echo "Error in database splitting in analysis section";     exit 1; }
 fi
-find ${output_folder}/db -name "*.fasta" \
-    | parallel -j${THREAD_LIMIT} "java ${JVM_ARGS} -cp ${output_folder}/utilities/utilities-*.jar com.compomics.util.experiment.identification.protein_inference.executable.PeptideMapping -t {} ${output_folder}/tags/tags.txt {}.csv ${output_folder}/identification.par && gzip --best {}"
 
-find ${output_folder}/db -name "*.csv" \
-    | parallel -j${THREAD_LIMIT} "bp_mapped_tags.py {} ${tagdb} && gzip --best {}"
+cmd="java ${JVM_ARGS} -cp ${output_folder}/utilities/utilities-*.jar com.compomics.util.experiment.identification.protein_inference.executable.PeptideMapping -t {} ${output_folder}/tags/tags.txt {}.csv ${output_folder}/identification.par && gzip --best {}"
+if [ -z "${PBS_NODEFILE}" ]; then
+    find ${output_folder}/db -name "*.fasta" \
+    | parallel -j${THREAD_LIMIT} ${cmd}
+else
+    find ${output_folder}/db -name "*.fasta" \
+    | parallel -j${THREAD_LIMIT} --sshloginfile ${PBS_NODEFILE} ${cmd}
+fi
+
+cmd="bp_mapped_tags.py {} ${tagdb} && gzip --best {}"
+if [ -z "${PBS_NODEFILE}" ]; then
+    find ${output_folder}/db -name "*.csv" \
+        | parallel -j${THREAD_LIMIT} ${cmd} 
+else
+    find ${output_folder}/db -name "*.csv" \
+        | parallel -j${THREAD_LIMIT} --sshloginfile ${PBS_NODEFILE} ${cmd}
+fi
 
 if [ ! -f ${output_folder}/metanovo.fasta ] ; then
     bp_export_proteins.py ${tagdb} ${output_folder}
@@ -117,11 +134,28 @@ if [ "$mn_search_database" -eq "1" ] ; then
     if [ ! -d $output_folder/mgf ] ; then
        mkdir $output_folder/mgf && cp ${mgf_folder}/*.mgf ${output_folder}/mgf || { rm -rf $output_folder/mgf/ && echo "error copying mgf files"; exit 1; } 
     fi
-    find ${output_folder}/mgf -name "*.mgf" \
-        | parallel -j${THREAD_LIMIT} "rm -rf {}.*.xml && xtandem.R --mgf {} --fasta $input_fasta --input_xml $output_folder/default_input.xml --input_xsl $output_folder/tandem-input-style.xsl --output_xml {}.xml && gzip --best {}"
     
-    find ${output_folder}/mgf -name "*.xml" \
-        | parallel -j${THREAD_LIMIT} "java -Xms1024m -jar ${MZIDLIB_PATH}/mzidlib-*.jar Tandem2mzid {} {}.mzid -outputFragmentation false -idsStartAtZero false -decoyRegex :reversed -massSpecFileFormatID MS:1001062 -databaseFileFormatID MS:1001348 && gzip --best {}"
+    # Xtandem
+    cmd="rm -rf {}.*.xml && xtandem.R --mgf {} --fasta $input_fasta --input_xml $output_folder/default_input.xml --input_xsl $output_folder/tandem-input-style.xsl --output_xml {}.xml && gzip --best {}" 
+    if [ -z "${PBS_NODEFILE}" ]; then
+        find ${output_folder}/mgf -name "*.mgf" \
+            | parallel -j${THREAD_LIMIT} ${cmd}
+    else
+        find ${output_folder}/mgf -name "*.mgf" \
+            | parallel -j${THREAD_LIMIT} --sshloginfile ${PBS_NODEFILE} ${cmd}
+    fi
+    
+    # MZID
+    cmd="java -Xms1024m -jar ${MZIDLIB_PATH}/mzidlib-*.jar Tandem2mzid {} {}.mzid -outputFragmentation false -idsStartAtZero false -decoyRegex :reversed -massSpecFileFormatID MS:1001062 -databaseFileFormatID MS:1001348 && gzip --best {}"
+    if [ -z "${PBS_NODEFILE}" ]; then
+        find ${output_folder}/mgf -name "*.xml" \
+            | parallel -j${THREAD_LIMIT} ${cmd} 
+    else
+        find ${output_folder}/mgf -name "*.xml" \
+            | parallel -j${THREAD_LIMIT} --shhloginfile ${PBS_NODEFILE} ${cmd}
+    fi
+
+
     if [ ! -d ${output_folder}/mgf/analysis ] ; then
         cd ${output_folder} && msgf_msnid.R -i mgf -v ${mn_search_fdr_value} -l ${mn_search_fdr_level}  || rm -rf ${output_folder}/mgf/analysis
     fi

@@ -46,6 +46,7 @@ RUN cd /openms && mkdir OpenMS-build && cd OpenMS-build && cmake -DOPENMS_CONTRI
 
 RUN wget http://www.proteoannotator.org/datasets/releases/ProteoAnnotator-1.7.86.zip && unzip ProteoAnnotator-*.zip
 
+
 ENV LD_LIBRARY_PATH /openms/OpenMS-build/lib:$LD_LIBRARY_PATH
 ENV PATH $PATH::/root/bin/python:/root/bin/R:/root/bin/bash:/openms/OpenMS-build/bin 
 ENV PYTHONPATH $PYTHONPATH::/root/lib
@@ -63,6 +64,7 @@ COPY lib /root/lib
 COPY bin /root/bin
 COPY docker/metanovo/config.sh /root/config.sh
 COPY docker/metanovo/run.sh /root/run.sh
+COPY docker/metanovo/sshloginfile /root/sshloginfile
 
 ENV PATH="/root/bin/bash:/root/bin/python:${PATH}"
 
