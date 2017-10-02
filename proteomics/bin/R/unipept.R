@@ -4,6 +4,7 @@ library("MSnID")
 library("MSnbase")
 library("dplyr")
 
+options(bitmapType='cairo') 
 
 msnid <- MSnID(".")
 
@@ -38,6 +39,15 @@ counts.df <- add_rownames(counts.df, "Row")
 counts.df <- counts.df[with(counts.df, order(-TotalMSMS)), ]
 
 write.table(counts.df, paste('accession_sc_pept2lca.txt',sep=''),sep='\t', row.names=FALSE)
+# Create PIE
+# PSM condifence
+jpeg('accession_sc_pie.jpeg', width=1000,height=900)
+#par(mar=c(6,12,6,12)+.1)
+
+slices <- counts.df$TotalMSMS
+lbls <- paste(counts.df$Row, "\n", slices, sep="")
+pie(slices, labels = lbls,  main="Pie Chart of spectral counts by Unipept LCA")
+dev.off()
 
 unipept.msnid <- msnid
 save(unipept.msnid, file='msnid_processed_unipept_excl_decoy.Rdata')

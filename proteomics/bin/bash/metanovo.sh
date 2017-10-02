@@ -20,9 +20,12 @@ mgf_file_count=$( find ${mgf_folder} -name "*.mgf" | wc -l  )
 if [ ! -d ${output_folder} ] ; then
     mkdir $output_folder
 fi
+
+CONFIG_FILE=${output_folder}/config.sh
+
  # Check that config does not exist or is unchanged
 if [ ! -f ${output_folder}/config.sh ] ; then
-    cp ${config_file} ${output_folder}/config.sh
+    cp ${config_file} ${CONFIG_FILE}
 else
     cmp --silent ${config_file} ${output_folder}/config.sh && echo "'${CONFIG_FILE}' unchanged."|| { echo "'${CONFIG_FILE}' has changed, please delete '${OUTPUT_FOLDER}' or replace '${CONFIG_FILE}' with the contents of config.sh in "${OUTPUT_FOLDER}; exit 1; }
 fi
@@ -92,7 +95,7 @@ if [ ! -d ${output_folder}/db ] ; then
         || { rm -rf ${output_folder}/db ; echo "Error in database splitting in analysis section";     exit 1; }
 fi
 find ${output_folder}/db -name "*.fasta" \
-    | parallel -j${THREAD_LIMIT} "java -cp ${output_folder}/utilities/utilities-*.jar com.compomics.util.experiment.identification.protein_inference.executable.PeptideMapping -t {} ${output_folder}/tags/tags.txt {}.csv ${output_folder}/identification.par && gzip --best {}"
+    | parallel -j${THREAD_LIMIT} "java ${JVM_ARGS} -cp ${output_folder}/utilities/utilities-*.jar com.compomics.util.experiment.identification.protein_inference.executable.PeptideMapping -t {} ${output_folder}/tags/tags.txt {}.csv ${output_folder}/identification.par && gzip --best {}"
 
 find ${output_folder}/db -name "*.csv" \
     | parallel -j${THREAD_LIMIT} "bp_mapped_tags.py {} ${tagdb} && gzip --best {}"
