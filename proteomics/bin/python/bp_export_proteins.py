@@ -55,14 +55,15 @@ for row in cursor1:
     summed_nsaf = 0
     for col in cols:
         val = cols[col]
-        if col in safdict:
-            nsaf = val / safdict[col]
-            summed_nsaf += nsaf
-            nsaf_col = 'N' + col
-            cmd = "UPDATE proteins set `{}`={} where Accession = '{}';".format(nsaf_col, nsaf, acc)
-            cursor2.execute(cmd)
-        elif col == 'Scans':
-            scans.update([ i for i in val.split('\n') if i != ''])
+        if val is not None:
+            if col in safdict:
+                nsaf = val / safdict[col]
+                summed_nsaf += nsaf
+                nsaf_col = 'N' + col
+                cmd = "UPDATE proteins set `{}`={} where Accession = '{}';".format(nsaf_col, nsaf, acc)
+                cursor2.execute(cmd)
+            elif col == 'Scans':
+                scans.update([ i for i in val.split('\n') if i != ''])
     cmd = "UPDATE proteins set Summed_NSAF={} where Accession = '{}';".format(summed_nsaf, acc)
     cursor2.execute(cmd)
 db.commit()

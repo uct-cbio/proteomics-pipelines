@@ -18,7 +18,7 @@ f = open(sys.argv[1])
 lines = f.readlines()
 f.close()
 
-db = sqlite3.connect(sys.argv[2], timeout=100)
+db = sqlite3.connect(sys.argv[2], timeout=1000)
 
 cursor = db.cursor()
 
