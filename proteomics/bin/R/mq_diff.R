@@ -30,17 +30,67 @@ dir.create(outdir, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 
 path=opt$f
 
-data <- read.csv(path)
+
 exp_design=opt$d
 
 source(exp_design)
 
+data <- read.csv(path)
+ratios <- t(t(data[, cols])/colSums(data[, cols]))
+data[, cols] <- lapply(data[, cols], function(x){replace(x, x == 0,  NA)})
+data[, cols] <- lapply(data[, cols], function(x){ log2(x)})
+
 rownames(data) <- data$Identifier
 Identifier <- data$Identifier
+#names <- paste(Identifier, '(', data$PeptideCount, ' peptides, ', data$MS.MS.Count,' msms)',sep='')
+
 data <- data[,cols]
 data$Identifier <- Identifier
 orig_data <- data
 data <- data[,cols]
+
+fpie <- function( df , names, valcols, outfile) {
+    slices <- round(rowMeans(df[,valcols] * 100),3)
+    lbls <- paste(names, " ", slices, ' %', sep="")
+    df$label <- t(c(lbls))
+    df$slices <- t(c(slices))
+    df$label[df$slices < 0.5] <- ""
+    jpeg(outfile, width=1000,height=900)
+    par(mar=c(6,12,6,12)+.1)
+    pie(df$slices, labels = df$label,  main="Average sample summed intensity percentage distribution \nof identified taxa")
+    dev.off() }
+
+out <- paste(outdir, 'mean_intensity_all.jpeg', sep='')
+
+fpie(ratios, Identifier, cols, out)
+
+
+
+f <- f # Defined in experimental design template
+refmap <- data.frame(f, cols)
+comparisons <- colnames(contrast.matrix)
+
+for ( comp in comparisons){
+    vals <- strsplit(comp,'-')
+    # Get the reference cols
+    ref  = as.character(vals[[1]][2])
+    refdf <- refmap[refmap$f==ref,]
+    #refcols <- as.character(refdf$cols)
+    refcols <- as.numeric(rownames(refdf))
+    print(ref)
+    print(refcols)
+    out <- paste(outdir, 'mean_intensity_',ref,'.jpeg' , sep='')
+    fpie(ratios, Identifier, refcols, out)
+
+    # Get the sample cols
+    samp = as.character(vals[[1]][1])
+    sampdf <- refmap[refmap$f==samp,]
+    sampcols <- as.numeric(rownames(sampdf))
+    print(samp) 
+    print(sampcols)
+    out <- paste(outdir, 'mean_intensity_',samp,'.jpeg' , sep='')
+    fpie(ratios, Identifier, sampcols, out)
+}
 
 ######################
 # Let's make a SPLOM #
@@ -57,14 +107,12 @@ splom <- function (df, valcols, labels, path, name) {
     df <- df[df$temp!= '' , ]  
     labels <- df$temp
     df <- df[, valcols]
-    
     prot_labels <- as.numeric(labels)
     prot_labels <- rev(rainbow_hcl(length(prot_labels)))[prot_labels]
     pairs(df, col = prot_labels, lower.panel = NULL, cex.labels=0.5, pch=19, cex = 0.01)
     dev.off() }
 
 #splom(splomdata, cols, splomdata$Identifier, splom_path, 'all_proteins_splom.png')
-
 #splom(splomdata, cols, splomdata$Protein.families, splom_path,'all_proteins_families_splom.png')
 #splom(splomdata, cols, splomdata$Pathway, splom_path, 'all_proteins_pathways_splom.png')
 
@@ -86,12 +134,13 @@ for ( i in seq_along(colnames(contrast.matrix))) {
     cntrst_ <- strsplit(cntrst, '-')
     Exposed <- cntrst_[[1]][1]
     Control <- cntrst_[[1]][2]
-    print(Exposed)
-    print(Control)
+    print(cntrst)
     print('*') 
     table <- topTable(fit2,adjust="BH", coef=i, n=Inf)
     table <- merge(orig_data, table, by=0)
     
+    print(Exposed)    
+
     table$Exposed <- Exposed
     table$Control <- Control
     table <- setDT(table, keep.rownames = TRUE)[]

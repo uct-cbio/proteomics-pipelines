@@ -323,10 +323,8 @@ class mq_txt:
         if not (os.path.exists(self.unipept_dir +'unipept.sh')):
             w = open(self.unipept_dir + 'unipept.sh','w')
             w.write('\ncat ../peptides/target_peptides_list.txt | prot2pept | peptfilter | tr I L | sort -u | unipept pept2lca -e -a > pept2lca.txt')
-            
-            w.write('\ncat ../peptides/target_peptides_list.txt | prot2pept | peptfilter | tr I L | sort -u | unipept pept2taxa -e -a > pept2taxa.txt')
+            #w.write('\ncat ../peptides/target_peptides_list.txt | prot2pept | peptfilter | tr I L | sort -u | unipept pept2taxa -e -a > pept2taxa.txt')
             w.close()
-            
             cmd = 'cd {} && chmod 700 unipept.sh && ./unipept.sh > unipept.log 2>&1 && exit'.format(self.unipept_dir)
             process = subprocess.Popen(cmd, shell=True)
             process.wait()
@@ -364,27 +362,25 @@ class mq_txt:
                 agg_cols[col] = np.sum
                 clean_cols.append(col)
             elif col.startswith('Intensity.'):
-                agg_cols[col] = np.mean
+                agg_cols[col] = np.sum
                 clean_cols.append(col)
-        
         lca_level_cutoff = 1
-
         # pept2lca
         self.pept2lca = pd.read_csv(self.unipept_dir + '/pept2lca.txt')
-        self.pept2lca['PeptideCount'] = 1
-        lca_peptides = pd.merge(self.normalized_target_peptides, self.pept2lca, how='inner', left_on='Sequence', right_on='peptide')
+        lca_peptides = pd.merge(self.normalized_target_peptides,self.pept2lca,how='inner',left_on='Sequence',right_on='peptide')
+        lca_peptides['PeptideCount'] = 1
+        lca_peptides['taxon_name'].replace(np.nan, "unassigned", inplace=True)
+
         lca_peptides.to_csv(self.unipept_dir + '/pep2lca_peptides.csv')
         pept2lca_taxon_sc = lca_peptides.groupby(lca_peptides.taxon_name).agg(agg_cols) 
         pept2lca_taxon_sc = pept2lca_taxon_sc[pept2lca_taxon_sc['PeptideCount'] >= lca_level_cutoff ]
         lca_taxon_ids = pept2lca_taxon_sc['taxon_id'].tolist()
         pept2lca_taxon_sc = pept2lca_taxon_sc.sort_values('MS.MS.Count', ascending=False)
         pept2lca_taxon_sc['Identifier'] = pept2lca_taxon_sc['taxon_name']
-        
         newcols = [i for i in clean_cols if i in pept2lca_taxon_sc.columns.tolist()]
         pept2lca_taxon_sc = pept2lca_taxon_sc[newcols]
-        
         pept2lca_taxon_sc.to_csv(self.unipept_dir + '/pept2lca_taxon_sc.csv')
-        
+
         # pept2lca species
         pept2lca_species_sc = lca_peptides.groupby(lca_peptides.species_name).agg(agg_cols) 
         pept2lca_species_sc = pept2lca_species_sc[pept2lca_species_sc['PeptideCount'] >=  lca_level_cutoff ]
@@ -441,63 +437,63 @@ class mq_txt:
         pept2lca_phylum_sc = pept2lca_phylum_sc[newcols]
         pept2lca_phylum_sc.to_csv(self.unipept_dir + '/pept2lca_phylum_sc.csv')
         
-        # pept2taxa 
-        self.pept2taxa = pd.read_csv(self.unipept_dir + '/pept2taxa.txt')
-        self.pept2taxa['PeptideCount'] = 1
-        pept2taxa = self.pept2taxa[self.pept2taxa['taxon_id'].isin(lca_taxon_ids)]
-        taxa_peptides = pd.merge(self.normalized_target_peptides, pept2taxa, how='inner', left_on='Sequence', right_on='peptide')
-        pept2taxa_sc = taxa_peptides.groupby(taxa_peptides.taxon_name).agg(agg_cols)
-        pept2taxa_sc = pept2taxa_sc.sort_values('MS.MS.Count', ascending=False)
-        pept2taxa_sc['Identifier'] = pept2taxa_sc['taxon_name']
-        newcols = [i for i in clean_cols if i in pept2taxa_sc.columns.tolist()]
-        pept2taxa_sc = pept2taxa_sc[newcols]
-        pept2taxa_sc.to_csv(self.unipept_dir + '/pept2taxa_taxon_sc.csv')
-        
-        # pept2taxa species
-        pept2taxa = self.pept2taxa[self.pept2taxa['species_id'].isin(lca_species_ids)]
-        #self.pept2taxa = self.pept2taxa[['peptide','taxon_id','taxon_name', 'genus_name', 'genus_id']]
-        taxa_peptides = pd.merge(self.normalized_target_peptides, pept2taxa, how='inner', left_on='Sequence', right_on='peptide')
-        pept2taxa_sc = taxa_peptides.groupby(taxa_peptides.species_name).agg(agg_cols)
-        #pept2ltaxa_sc = pept2taxa_sc[['taxon_name','taxon_id','genus_name','genus_id','Intensity','MS/MS Count']]
-        pept2taxa_sc = pept2taxa_sc.sort_values('MS.MS.Count', ascending=False)
-        pept2taxa_sc['Identifier'] = pept2taxa_sc['species_name']
-        del pept2taxa_sc['taxon_name']
-        del pept2taxa_sc['taxon_id']
-        newcols = [i for i in clean_cols if i in pept2taxa_sc.columns.tolist()]
-        pept2taxa_sc = pept2taxa_sc[newcols]
-        pept2taxa_sc.to_csv(self.unipept_dir + '/pept2taxa_species_sc.csv')
-        
-        # pept2taxa genus sc
-        pept2taxa = self.pept2taxa[self.pept2taxa['genus_id'].isin(lca_genus_ids)]
-        taxa_peptides = pd.merge(self.normalized_target_peptides, pept2taxa, how='inner', left_on='Sequence', right_on='peptide')
-        pept2taxa_genus_sc = taxa_peptides.groupby(taxa_peptides.genus_name).agg(agg_cols)
-        #pept2taxa_genus_sc = pept2taxa_genus_sc[['taxon_name','taxon_id', 'genus_name','genus_id','Intensity','MS/MS Count']]
-        del pept2taxa_genus_sc['taxon_name']
-        del pept2taxa_genus_sc['taxon_id']
-        del pept2taxa_genus_sc['species_name']
-        del pept2taxa_genus_sc['species_id']
-        pept2taxa_genus_sc = pept2taxa_genus_sc.sort_values('MS.MS.Count', ascending=False)
-        pept2taxa_genus_sc['Identifier'] = pept2taxa_genus_sc['genus_name']
-        newcols = [i for i in clean_cols if i in pept2taxa_genus_sc.columns.tolist()]
-        pept2taxa_genus_sc = pept2taxa_genus_sc[newcols]
-        pept2taxa_genus_sc.to_csv(self.unipept_dir + '/pept2taxa_genus_sc.csv')
+        ## pept2taxa 
+        #self.pept2taxa = pd.read_csv(self.unipept_dir + '/pept2taxa.txt')
+        #self.pept2taxa['PeptideCount'] = 1
+        #pept2taxa = self.pept2taxa[self.pept2taxa['taxon_id'].isin(lca_taxon_ids)]
+        #taxa_peptides = pd.merge(self.normalized_target_peptides, pept2taxa, how='inner', left_on='Sequence', right_on='peptide')
+        #pept2taxa_sc = taxa_peptides.groupby(taxa_peptides.taxon_name).agg(agg_cols)
+        #pept2taxa_sc = pept2taxa_sc.sort_values('MS.MS.Count', ascending=False)
+        #pept2taxa_sc['Identifier'] = pept2taxa_sc['taxon_name']
+        #newcols = [i for i in clean_cols if i in pept2taxa_sc.columns.tolist()]
+        #pept2taxa_sc = pept2taxa_sc[newcols]
+        #pept2taxa_sc.to_csv(self.unipept_dir + '/pept2taxa_taxon_sc.csv')
+        #
+        ## pept2taxa species
+        #pept2taxa = self.pept2taxa[self.pept2taxa['species_id'].isin(lca_species_ids)]
+        ##self.pept2taxa = self.pept2taxa[['peptide','taxon_id','taxon_name', 'genus_name', 'genus_id']]
+        #taxa_peptides = pd.merge(self.normalized_target_peptides, pept2taxa, how='inner', left_on='Sequence', right_on='peptide')
+        #pept2taxa_sc = taxa_peptides.groupby(taxa_peptides.species_name).agg(agg_cols)
+        ##pept2ltaxa_sc = pept2taxa_sc[['taxon_name','taxon_id','genus_name','genus_id','Intensity','MS/MS Count']]
+        #pept2taxa_sc = pept2taxa_sc.sort_values('MS.MS.Count', ascending=False)
+        #pept2taxa_sc['Identifier'] = pept2taxa_sc['species_name']
+        #del pept2taxa_sc['taxon_name']
+        #del pept2taxa_sc['taxon_id']
+        #newcols = [i for i in clean_cols if i in pept2taxa_sc.columns.tolist()]
+        #pept2taxa_sc = pept2taxa_sc[newcols]
+        #pept2taxa_sc.to_csv(self.unipept_dir + '/pept2taxa_species_sc.csv')
+        #
+        ## pept2taxa genus sc
+        #pept2taxa = self.pept2taxa[self.pept2taxa['genus_id'].isin(lca_genus_ids)]
+        #taxa_peptides = pd.merge(self.normalized_target_peptides, pept2taxa, how='inner', left_on='Sequence', right_on='peptide')
+        #pept2taxa_genus_sc = taxa_peptides.groupby(taxa_peptides.genus_name).agg(agg_cols)
+        ##pept2taxa_genus_sc = pept2taxa_genus_sc[['taxon_name','taxon_id', 'genus_name','genus_id','Intensity','MS/MS Count']]
+        #del pept2taxa_genus_sc['taxon_name']
+        #del pept2taxa_genus_sc['taxon_id']
+        #del pept2taxa_genus_sc['species_name']
+        #del pept2taxa_genus_sc['species_id']
+        #pept2taxa_genus_sc = pept2taxa_genus_sc.sort_values('MS.MS.Count', ascending=False)
+        #pept2taxa_genus_sc['Identifier'] = pept2taxa_genus_sc['genus_name']
+        #newcols = [i for i in clean_cols if i in pept2taxa_genus_sc.columns.tolist()]
+        #pept2taxa_genus_sc = pept2taxa_genus_sc[newcols]
+        #pept2taxa_genus_sc.to_csv(self.unipept_dir + '/pept2taxa_genus_sc.csv')
 
-        # pept2taxa family sc
-        pept2taxa = self.pept2taxa[self.pept2taxa['family_id'].isin(lca_family_ids)]
-        taxa_peptides = pd.merge(self.normalized_target_peptides, pept2taxa, how='inner', left_on='Sequence', right_on='peptide')
-        pept2taxa_sc = taxa_peptides.groupby(taxa_peptides.family_name).agg(agg_cols)
-        #pept2taxa_genus_sc = pept2taxa_genus_sc[['taxon_name','taxon_id', 'genus_name','genus_id','Intensity','MS/MS Count']]
-        del pept2taxa_sc['taxon_name']
-        del pept2taxa_sc['taxon_id']
-        del pept2taxa_sc['species_name']
-        del pept2taxa_sc['species_id']
-        del pept2taxa_sc['genus_name']
-        del pept2taxa_sc['genus_id']
-        pept2taxa_sc = pept2taxa_sc.sort_values('MS.MS.Count', ascending=False)
-        pept2taxa_sc['Identifier'] = pept2taxa_sc['family_name']
-        newcols = [i for i in clean_cols if i in pept2taxa_sc.columns.tolist()]
-        pept2taxa_sc = pept2taxa_sc[newcols]
-        pept2taxa_sc.to_csv(self.unipept_dir + '/pept2taxa_family_sc.csv')
+        ## pept2taxa family sc
+        #pept2taxa = self.pept2taxa[self.pept2taxa['family_id'].isin(lca_family_ids)]
+        #taxa_peptides = pd.merge(self.normalized_target_peptides, pept2taxa, how='inner', left_on='Sequence', right_on='peptide')
+        #pept2taxa_sc = taxa_peptides.groupby(taxa_peptides.family_name).agg(agg_cols)
+        ##pept2taxa_genus_sc = pept2taxa_genus_sc[['taxon_name','taxon_id', 'genus_name','genus_id','Intensity','MS/MS Count']]
+        #del pept2taxa_sc['taxon_name']
+        #del pept2taxa_sc['taxon_id']
+        #del pept2taxa_sc['species_name']
+        #del pept2taxa_sc['species_id']
+        #del pept2taxa_sc['genus_name']
+        #del pept2taxa_sc['genus_id']
+        #pept2taxa_sc = pept2taxa_sc.sort_values('MS.MS.Count', ascending=False)
+        #pept2taxa_sc['Identifier'] = pept2taxa_sc['family_name']
+        #newcols = [i for i in clean_cols if i in pept2taxa_sc.columns.tolist()]
+        #pept2taxa_sc = pept2taxa_sc[newcols]
+        #pept2taxa_sc.to_csv(self.unipept_dir + '/pept2taxa_family_sc.csv')
 
 
     def create_R_peptide_parameters(self):
@@ -560,19 +556,22 @@ class mq_txt:
         process = subprocess.Popen(cmd, shell=True)
         process.wait()
         assert process.returncode == 0
-        self.normalized_target_peptides = pd.read_csv(self.diff_dir + '/peptide_normalization/msnbase/imputed.csv') 
+        self.normalized_target_peptides = pd.read_csv(self.diff_dir + '/peptide_normalization/msnbase/normalized.csv') 
     
     def diff(self, exp_design, infile, outpath):
         cmd = 'mq_diff.R -d {} -f {} -o {}'.format(exp_design, infile, outpath)
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        out, err = process.communicate()
         process.wait()
+        print(out)
+
         assert process.returncode == 0
     
     def diff_analysis(self):
         # peptides
         try:
             peptide_exp = self.diff_dir + '/peptide_experimental_design.R'
-            peptides = self.diff_dir + '/peptide_normalization/msnbase/imputed.csv'
+            peptides = self.diff_dir + '/peptide_normalization/msnbase/normalized.csv'
             self.diff(peptide_exp, peptides, self.diff_dir + '/peptide_diff')
         except:
             pass
@@ -614,33 +613,33 @@ class mq_txt:
         except:
             pass
         
-        try:
-            #pept2taxa_genus_sc
-            peptides=self.unipept_dir + '/pept2taxa_genus_sc.csv'
-            self.diff(peptide_exp, peptides, self.diff_dir + '/pept2taxa_genus')
-        except:
-            pass
+        #try:
+        #    #pept2taxa_genus_sc
+        #    peptides=self.unipept_dir + '/pept2taxa_genus_sc.csv'
+        #    self.diff(peptide_exp, peptides, self.diff_dir + '/pept2taxa_genus')
+        #except:
+        #    pass
 
-        try:
-            #pept2taxa_sc
-            peptides=self.unipept_dir + '/pept2taxa_taxon_sc.csv'
-            self.diff(peptide_exp, peptides, self.diff_dir + '/pept2taxa_taxon')
-        except:
-            pass
+        #try:
+        #    #pept2taxa_sc
+        #    peptides=self.unipept_dir + '/pept2taxa_taxon_sc.csv'
+        #    self.diff(peptide_exp, peptides, self.diff_dir + '/pept2taxa_taxon')
+        #except:
+        #    pass
         
-        try:
-            #pept2taxa_sc
-            peptides=self.unipept_dir + '/pept2taxa_species_sc.csv'
-            self.diff(peptide_exp, peptides, self.diff_dir + '/pept2taxa_species')
-        except:
-            pass
+        #try:
+        #    #pept2taxa_sc
+        #    peptides=self.unipept_dir + '/pept2taxa_species_sc.csv'
+        #    self.diff(peptide_exp, peptides, self.diff_dir + '/pept2taxa_species')
+        #except:
+        #    pass
 
-        try:
-            #pept2taxa_sc
-            peptides=self.unipept_dir + '/pept2taxa_family_sc.csv'
-            self.diff(peptide_exp, peptides, self.diff_dir + '/pept2taxa_family')
-        except:
-            pass
+        #try:
+        #    #pept2taxa_sc
+        #    peptides=self.unipept_dir + '/pept2taxa_family_sc.csv'
+        #    self.diff(peptide_exp, peptides, self.diff_dir + '/pept2taxa_family')
+        #except:
+        #    pass
 
 def peptides(path):
     pep_dct = {}

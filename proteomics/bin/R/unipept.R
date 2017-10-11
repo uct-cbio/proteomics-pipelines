@@ -20,6 +20,8 @@ fdata$taxon_name <- p2lca$taxon_name[match(fdata$pepSeq, p2lca$peptide)]
 
 fdata$taxon_name <- as.character(fdata$taxon_name)
 fdata$taxon_name[is.na(fdata$taxon_name)] <- "unassigned"
+
+
 fdata$taxon_name=as.factor(fdata$taxon_name)
 fData(msnset) <- fdata
 combined <- merge(ids, p2lca, by.x='peptideSequence', by.y='peptide', all.x=TRUE)
@@ -41,11 +43,19 @@ counts.df <- counts.df[with(counts.df, order(-TotalMSMS)), ]
 write.table(counts.df, paste('accession_sc_pept2lca.txt',sep=''),sep='\t', row.names=FALSE)
 # Create PIE
 # PSM condifence
+
+
 jpeg('accession_sc_pie.jpeg', width=1000,height=900)
+filt <- counts.df[!(counts.df$Row=="unassigned"),]
 #par(mar=c(6,12,6,12)+.1)
-slices <- counts.df$TotalMSMS
-lbls <- paste(counts.df$Row, "\n", slices, sep="")
-pie(slices, labels = lbls,  main="Pie Chart of spectral counts by Unipept LCA")
+slices <- round((filt$TotalMSMS/sum(filt$TotalMSMS) * 100),3)
+lbls <- paste(filt$Row, " ", slices,' %', sep="")
+df <- data.frame(matrix(, nrow=length(lbls), ncol=2) )
+df$label <- lbls
+df$slices <- slices
+df$label[df$slices < 0.5] <- ""
+par(mar=c(6,12,6,12)+.1)
+pie(df$slices, labels =df$label ,  main="Pie Chart of total spectral counts by Unipept LCA (%)")
 dev.off()
 
 unipept.msnid <- msnid

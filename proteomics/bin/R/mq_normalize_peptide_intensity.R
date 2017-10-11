@@ -47,9 +47,11 @@ orig_data <- data
 
 #print(data$Identifier)
 
-data[, cols] <- lapply(data[,cols], function(x) replace(x, is.infinite(x), NA))
+#data[, cols] <- lapply(data[,cols], function(x) {replace(x, is.infinite(x), NA)})
+#data[, cols] <- t(t(data[, cols])/colSums(data[, cols]))
 data[, cols] <- lapply(data[, cols], function(x){replace(x, x == 0,  NA)})
-data[, cols] <- log2(data[, cols])
+data[, cols] <- lapply(data[, cols], function(x){ log2(x)})
+
 #data <- data[rowSums(is.na(data[,cols])) < length(cols)/2, ]
 #data <- data[rowSums(is.na(data[,cols])) < 1,]
 
@@ -70,25 +72,33 @@ eset <- readMSnSet2(msnpath, ecol, fname)
 eset@phenoData$sampleNames <- cols
 eset@phenoData$sampleGroups <- f
 
-png(paste(msnbase_path,'boxplots_unnormalized.png',sep=''),units="in", width=11, height=8.5, res=300)
-par(mfrow = c(2, 1))
-boxplot(exprs(eset), notch=TRUE, col=(c("gold")), main="Samples", ylab="peptide log2(Intensity)", las=2) 
-dev.off()
+#png(paste(msnbase_path,'boxplots_unnormalized.png',sep=''),units="in", width=11, height=8.5, res=300)
+#par(mfrow = c(2, 1))
+#boxplot(exprs(eset), notch=TRUE, col=(c("gold")), main="Samples", ylab="peptide log2(Intensity)", las=2) 
+#dev.off()
 
+#x.nrm <- eset
 x.nrm <- normalise(eset, "quantiles")
 x.imputed <- impute(x.nrm, method = "QRILC")
+x.nrm <- x.imputed
+
+#x.imputed <- x.nrm
 
 png(paste(msnbase_path,'boxplots_normalized.png',sep=''),units="in",width=11,height=8.5,res=300)
 par(mfrow = c(2, 1))
-boxplot(exprs(x.imputed), notch=TRUE, col=(c("gold")), main="Samples", ylab="peptide log2(Intensity)", las=2) 
+boxplot(exprs(x.nrm), notch=TRUE, col=(c("gold")), main="Samples", ylab="peptide intensity ratio", las=2) 
 dev.off()
 
-png(paste(msnbase_path,'all_data_heatmap_normalized.png',sep=''),units="in",width=11,height=8.5,res=300)
-heatmap(exprs(x.imputed), margins=c(10,17))
-dev.off()
+#png(paste(msnbase_path,'all_data_heatmap_normalized.png',sep=''),units="in",width=11,height=8.5,res=300)
+#heatmap(exprs(x.nrm), margins=c(10,17))
+#dev.off()
 
-data <- ms2df(x.imputed)
-imputedpath = paste(outdir, "msnbase/imputed.csv",sep='')
+data <- ms2df(x.nrm)
+data[, cols] <- lapply(data[, cols], function(x){2^x})
+#data[, cols] <- lapply(data[, cols], function(x){replace(x, x == NA,  0)})
+data[is.na(data)] <- 0
+
+imputedpath = paste(outdir, "msnbase/normalized.csv",sep='')
 write.csv(data, file= imputedpath)
 
 quit()
