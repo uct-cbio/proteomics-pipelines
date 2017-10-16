@@ -3,7 +3,7 @@
 #####################
 
 MGF_FOLDER="/home/mpotgieter1/lustre/blackburn/hypohyper/S507_S5527_hexdata/mgf_test"
-FASTA_FILE="/home/mpotgieter1/lustre/blackburn/hypohyper/S507_S5527_hexdata/proteomes/Pan_UP000001584_22_03_2016.fasta"
+FASTA_FILE="/home/mpotgieter1/lustre/uniprot/uniprot_sprot.fasta"
 OUTPUT_FOLDER='/home/mpotgieter1/lustre/test_metanovo_output'
 CHUNKSIZE=200000 # size to split fasta
 THREAD_LIMIT=24

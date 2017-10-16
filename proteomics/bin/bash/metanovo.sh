@@ -151,7 +151,7 @@ if [ "$mn_search_database" -eq "1" ] ; then
             | parallel -j${THREAD_LIMIT} ${cmd} 
     else
         find ${output_folder}/mgf -name "*.xml" \
-            | env_parallel -j${THREAD_LIMIT} --shhloginfile ${PBS_NODEFILE} ${cmd}
+            | env_parallel -j${THREAD_LIMIT} --sshloginfile ${PBS_NODEFILE} ${cmd}
     fi
 
 
