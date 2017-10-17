@@ -13,7 +13,7 @@ source ${CONFIG_FILE}
 
 FASTA_BASE=$(basename $FASTA_FILE)
 
-sudo docker run -it --rm -v ${MGF_FOLDER}:/root/mgf \
+docker run -it --rm -v ${MGF_FOLDER}:/root/mgf \
     -v ${FASTA_FILE}:/root/${FASTA_BASE} \
     -v ${OUTPUT_FOLDER}:/root/output \
     -v ${CONFIG_FILE}:/root/config.sh  \
