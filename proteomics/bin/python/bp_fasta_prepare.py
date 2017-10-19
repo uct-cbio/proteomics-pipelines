@@ -27,16 +27,16 @@ chunkcount=1
 recs = []
 
 for rec in records:
-    if not 'X' in str(rec.seq):
-        recs.append(rec)
-        if chunkcount==chunksize:
-            partname='{}.part.{}.fasta'.format(filename, count)
-            SeqIO.write(recs, output_folder +'/' + partname, 'fasta')
-            recs = []
-            count +=1
-            chunkcount=1
-        else:
-            chunkcount+= 1
+    #if not 'X' in str(rec.seq):
+    recs.append(rec)
+    if chunkcount==chunksize:
+        partname='{}.part.{}.fasta'.format(filename, count)
+        SeqIO.write(recs, output_folder +'/' + partname, 'fasta')
+        recs = []
+        count +=1
+        chunkcount=1
+    else:
+        chunkcount+= 1
 
 if len(recs) > 0:
     partname='{}.part.{}.fasta'.format(filename, count)
