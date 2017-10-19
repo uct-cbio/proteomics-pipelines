@@ -2,7 +2,7 @@
 
 set -e
 set -a
-echo "MetaNovo version 9.0"
+echo "MetaNovo version 10.0"
 res1=$(date +%s.%N)
 
 
