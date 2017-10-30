@@ -90,7 +90,7 @@ for group in grouper(passed_tags, 500):
     scanids = cursor.fetchall()
     for _ in scanids:
         ids[_[1]].add(_[0])
-del scanids
+    del scanids
 
 count = 0
 

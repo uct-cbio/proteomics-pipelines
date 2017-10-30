@@ -2,7 +2,7 @@
 #PBS -M matthys.potgieter@gmail.com 
 #PBS -l select=1:ncpus=24:nodetype=haswell_reg
 #PBS -l walltime=48:00:00
-#PBS -N foreskin
+#PBS -N lung
 #PBS -q smp
 #PBS -W group_list=largeq
 #PBS -m be
@@ -11,7 +11,8 @@
 #  MetaNovo v9   #
 ##################
 
-CONFIG=${HOME}/cbio-pipelines/proteomics/bin/config/metanovo_test_config.sh
+#CONFIG=${HOME}/cbio-pipelines/proteomics/bin/config/metanovo_test_config.sh
+CONFIG=/home/mpotgieter1/lustre/clemens_out/metanovo1.sh
 #CONFIG=/home/mpotgieter1/lustre/suereta_out/metanovo1.sh
 #CONFIG=/home/mpotgieter1/lustre/thys_out/metanovo1.sh
 #CONFIG=/home/mpotgieter1/lustre/nyari_out/metanovo1.sh
