@@ -173,43 +173,43 @@ function parameters {
 
 function denovogui {
     set -e
-    output_folder=$1
-    spectrum_file=$2 
-    id_params=$3
-    tagdb=$4
-    sample=$(basename $spectrum_file)
-    original_spectrum_file=$spectrum_file
+    output_folder="$1"
+    spectrum_file="$2" 
+    id_params="$3"
+    tagdb="$4"
+    sample="$(basename "$spectrum_file")"
+    original_spectrum_file="$spectrum_file"
 
     echo "Started process for: "${sample}"..."
-    sample_name=${sample%.mgf}
-    sample_folder=${output_folder}"/runs/"${sample_name}
+    sample_name="${sample%.mgf}"
+    sample_folder=${output_folder}"/runs/""${sample_name}"
     replicate=0
 
-    rm -rf $sample_folder
-    mkdir ${sample_folder} 
-    cp ${spectrum_file} ${sample_folder}
+    rm -rf "$sample_folder"
+    mkdir "${sample_folder}" 
+    cp "${spectrum_file}" "${sample_folder}"
 
-    mkdir ${sample_folder}/log
-    mkdir ${sample_folder}/temp
+    mkdir "${sample_folder}/log"
+    mkdir "${sample_folder}/temp"
 
-    cp -R ${output_folder}/dg ${sample_folder}/dg
+    cp -R ${output_folder}/dg "${sample_folder}/dg"
 
-    java -cp ${sample_folder}/dg/DeNovoGUI-*.jar com.compomics.denovogui.cmd.PathSettingsCLI -temp_folder ${sample_folder}/temp \
-        -log ${sample_folder}/log
+    java -cp "${sample_folder}"/dg/DeNovoGUI-*.jar com.compomics.denovogui.cmd.PathSettingsCLI -temp_folder "${sample_folder}/temp" \
+        -log "${sample_folder}/log"
    
 
-    java -cp ${sample_folder}/dg/DeNovoGUI-*.jar com.compomics.denovogui.cmd.DeNovoCLI \
+    java -cp "${sample_folder}"/dg/DeNovoGUI-*.jar com.compomics.denovogui.cmd.DeNovoCLI \
         -pepnovo ${dg_pepnovo} \
         -directag ${dg_directag} \
         -pnovo ${dg_pnovo} \
         -novor ${dg_novor} \
-        -spectrum_files ${sample_folder}/${sample} \
-        -output_folder ${sample_folder} \
-        -id_params ${id_params} >> ${sample_folder}/log/${sample_name}.log 2>&1 \
-        && bp_parse_tags.py ${sample_folder} ${sample} ${tagdb} \
-        && rm -rf ${sample_folder}/dg \
-        && tar -czf ${spectrum_file}.tar.gz ${spectrum_file}  \
-        && rm -rf ${spectrum_file} \
-        && rm -rf ${sample_folder}/*.mgf || exit 1
+        -spectrum_files "${sample_folder}/${sample}" \
+        -output_folder "${sample_folder}" \
+        -id_params ${id_params} >> "${sample_folder}/log/${sample_name}.log" 2>&1 \
+        && bp_parse_tags.py "${sample_folder}" "${sample}" ${tagdb} \
+        && rm -rf "${sample_folder}/dg" \
+        && tar -czf "${spectrum_file}.tar.gz" "${spectrum_file}"  \
+        && rm -rf "${spectrum_file}" \
+        && rm -rf "${sample_folder}/*.mgf" || exit 1
     wait
 }

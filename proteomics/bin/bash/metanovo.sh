@@ -77,10 +77,10 @@ tagdb=$output_folder/sqlite3.db
 # Denovo sequencing
 cmd="denovogui ${output_folder}/denovo {} ${output_folder}/identification.par $tagdb || exit 1 "
 if [ -z "${PBS_NODEFILE}" ] ; then
-  find ${output_folder}/denovo/mgf -name "*.mgf" | parallel -j${THREAD_LIMIT} ${cmd}
+  find ${output_folder}/denovo/mgf -name "*.mgf" | paralleli -q -j${THREAD_LIMIT} ${cmd}
 else
   source `which env_parallel.bash`
-  find ${output_folder}/denovo/mgf -name "*.mgf" | env_parallel -j${THREAD_LIMIT} --sshloginfile ${PBS_NODEFILE} ${cmd}
+  find ${output_folder}/denovo/mgf -name "*.mgf" | env_parallel -q -j${THREAD_LIMIT} --sshloginfile ${PBS_NODEFILE} ${cmd}
 fi
 
 if [ ! -d $output_folder/tags ] ; then
