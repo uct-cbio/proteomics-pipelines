@@ -19,7 +19,7 @@ make_option(c("-d", "--design"), type="character", default=NULL,
 make_option(c("-p", "--peptides"), type="character", default=NULL,
         help="Path to the peptides.txt file", metavar="character"),
 make_option(c("-o","--output"), type="character", default=NULL,
-        help="Path to the output folder", metavar="character")) 
+        help="Path to the output file", metavar="character")) 
 
 opt_parser = OptionParser(option_list=option_list);
 
@@ -37,7 +37,6 @@ exp_design=opt$d
 
 source(exp_design)
 
-data$Identifier <- data$Sequence
 
 rownames(data) <- data$Identifier
 
@@ -86,7 +85,7 @@ x.nrm <- x.imputed
 
 png(paste(msnbase_path,'boxplots_normalized.png',sep=''),units="in",width=11,height=8.5,res=300)
 par(mfrow = c(2, 1))
-boxplot(exprs(x.nrm), notch=TRUE, col=(c("gold")), main="Samples", ylab="peptide intensity ratio", las=2) 
+boxplot(exprs(x.nrm), notch=TRUE, col=(c("gold")), main="Samples", ylab="intensity ratio", las=2) 
 dev.off()
 
 #png(paste(msnbase_path,'all_data_heatmap_normalized.png',sep=''),units="in",width=11,height=8.5,res=300)

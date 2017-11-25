@@ -21,6 +21,8 @@ import os
 import rfunc
 import subprocess
 import yaml
+import posthocs as ph
+import scipy
 
 def name_dct():
     names = {'sf_novel_m':'Six Frame Novel Only\n(M start)',
@@ -113,6 +115,17 @@ def verify(df):    #check that the unique peptide occurred in more than onerepli
             columns.append(i)
     return columns
 
+def list_kw_dunn(names, data, value, group, path):
+    kw = scipy.stats.kruskal(*data)
+    w = open(path + '/kw.txt', 'w')
+    w.write(str(kw))
+    w.close()
+    post_hoc = pd.DataFrame(ph.posthoc_dunn(data, p_adjust = 'fdr_bh'))
+    post_hoc.columns = names
+    post_hoc.index = names
+    post_hoc.to_csv(path + '/dunn_bh.csv')
+    
+
 class mq_txt:
     def __init__(self, config, exclude_contaminants=True):
         #assert not os.path.exists(outdir)
@@ -128,27 +141,22 @@ class mq_txt:
         self.reverse_msms = self.get_reverse(self.msms)
         self.reverse_peptides = self.get_reverse(self.peptides)
         self.reverse_proteingroups = self.get_reverse(self.proteingroups) 
-
         #taminant_msms = self.get_contaminants(self.msms)
         self.contaminant_peptides = self.get_contaminants(self.peptides)
         self.contaminant_peptides_list = self.contaminant_peptides['Sequence'].tolist()
         self.contaminant_proteingroups = self.get_contaminants(self.proteingroups)
         self.contaminant_msms = self.msms[self.msms['Sequence'].isin(self.contaminant_peptides_list)]
-        
         self.target_msms = self.exclude_reverse(self.msms)
         self.target_peptides = self.exclude_reverse(self.peptides)
         self.target_proteingroups = self.exclude_reverse(self.proteingroups)
         #if exclude_contaminants == True:
         #self.target_peptides = self.exclude_contaminants(self.target_peptides)
         #self.target_proteingroups = self.exclude_contaminants(self.target_proteingroups)
-       
         self.target_peptides_list = self.target_peptides['Sequence'].tolist()
         #self.target_msms = self.target_msms[self.target_msms['Sequence'].isin(self.target_peptides_list)]
-
         self.reference_fasta = list(SeqIO.parse(self.config['reference_fasta'], 'fasta'))
         self.search_fasta = list(SeqIO.parse(self.config['search_fasta'],'fasta'))
         self.get_reference_peptides()
-
         self.reference_peptides = self.target_peptides[self.target_peptides['Sequence'].isin(self.reference_peptides_list)]
         self.non_reference_peptides = self.target_peptides[self.target_peptides['Sequence'].isin(self.non_reference_peptides_list)]
         self.reference_msms = self.target_msms[self.target_msms['Sequence'].isin(self.reference_peptides_list)]
@@ -319,6 +327,7 @@ class mq_txt:
         if not os.path.exists(outpath):
             rfunc.list_kw_dunn(names, data, 'PEP', 'Category', outpath)
     
+
     def unipept(self):
         if not (os.path.exists(self.unipept_dir +'unipept.sh')):
             w = open(self.unipept_dir + 'unipept.sh','w')
@@ -365,6 +374,7 @@ class mq_txt:
                 agg_cols[col] = np.sum
                 clean_cols.append(col)
         lca_level_cutoff = 1
+        
         # pept2lca
         self.pept2lca = pd.read_csv(self.unipept_dir + '/pept2lca.txt')
         lca_peptides = pd.merge(self.normalized_target_peptides,self.pept2lca,how='inner',left_on='Sequence',right_on='peptide')
@@ -551,22 +561,91 @@ class mq_txt:
         w.write(template)
         w.close()
         peptide_txt = self.peptide_dir +'target_peptides.txt'
+        self.target_peptides['Identifier'] = self.target_peptides['Sequence']
         self.target_peptides.to_csv(peptide_txt, sep='\t')
-        cmd = 'cd {} && mq_normalize_peptide_intensity.R -d peptide_experimental_design.R -p {} -o {} && exit'.format(self.diff_dir, peptide_txt,  self.diff_dir + 'peptide_normalization')
+        cmd = 'cd {} && mq_normalize_intensity.R -d peptide_experimental_design.R -p {} -o {} && exit'.format(self.diff_dir, peptide_txt,  self.diff_dir + 'peptide_normalization')
         process = subprocess.Popen(cmd, shell=True)
         process.wait()
         assert process.returncode == 0
         self.normalized_target_peptides = pd.read_csv(self.diff_dir + '/peptide_normalization/msnbase/normalized.csv') 
+    
+    def create_R_proteingroup_parameters(self):
+        config= self.config
+        vals=[]
+        d = '#!/usr/bin/env R\n\n'
+        vals.append(d)
+        d = "cols <- c("
+        vals.append(d)
+        samples = config['samples']
+        experiment = defaultdict(list)
+        for sample in samples:
+            group = samples[sample]['GROUP']
+            experiment[group].append(sample)
+        groups = []
+        reps = []
+        for group in experiment:
+            groups.append(group)
+            for sample in experiment[group]:
+                rep = "'iBAQ.{}'".format(sample)
+                reps.append(rep)
+        reps = ','.join(reps)
+        d = reps
+        vals.append(d)
+        vals.append(')\n')
+        d = 'f <- factor(c('
+        vals.append(d)
+        reps = []
+        for group in groups:
+            rep = "rep('{}',{})".format(group, len(experiment[group]))
+            reps.append(rep)
+        d = ','.join(reps)
+        vals.append(d)
+        d = "),\n"
+        vals.append(d)
+        levels = ','.join(["'" +group + "'" for group in groups])
+        d ="levels=c({}))\n".format(levels)
+        vals.append(d)
+        d='design <- model.matrix(~0+f)\n'
+        vals.append(d)
+        d = 'colnames(design) <- c({})\n'.format(levels)
+        vals.append(d)
+        d = 'contrast.matrix <- makeContrasts(\n'
+        vals.append(d)
+        comps = []
+        for comparison in config['comparisons']:
+            comp = '"{}-{}"'.format(comparison[0], comparison[1])
+            comps.append(comp)
+        d = ','.join(comps)
+        vals.append(d)
+        d = ',levels=design)\n'
+        vals.append(d)
+        template = ''.join(vals)
+        w = open(self.diff_dir + '/protein_experimental_design.R','w')
+        w.write(template)
+        w.close()
+        peptide_txt = self.peptide_dir +'target_proteins.txt'
+        self.target_peptides.to_csv(peptide_txt, sep='\t')
+        cmd = 'cd {} && mq_normalize_intensity.R -d protein_experimental_design.R -p {} -o {} && exit'.format(self.diff_dir, peptide_txt,  self.diff_dir + 'peptide_normalization')
+        process = subprocess.Popen(cmd, shell=True)
+        process.wait()
+        assert process.returncode == 0
+        self.normalized_target_proteins = pd.read_csv(self.diff_dir + '/peptide_normalization/msnbase/normalized_protein_ibaq.csv') 
     
     def diff(self, exp_design, infile, outpath):
         cmd = 'mq_diff.R -d {} -f {} -o {}'.format(exp_design, infile, outpath)
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         out, err = process.communicate()
         process.wait()
-        print(out)
-
         assert process.returncode == 0
-    
+        
+        var = pd.read_csv(outpath +'/group_variance/group_variance.txt',sep='\t')
+        names = []
+        data = []
+        for col in var:
+            names.append(col)
+            data.append(var[col].tolist())
+        list_kw_dunn(names, data, 'Variance', 'Group', outpath + '/group_variance/' )
+
     def diff_analysis(self):
         # peptides
         try:
