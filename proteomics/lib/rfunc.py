@@ -218,7 +218,7 @@ def list_kw_dunn(names, lists, dep_var, dep_fac, outpath):
     df1 = pd.concat(dfs).reset_index()
     del df1['index']
 
-    assert len(df1[df1['PEP'] < 0]) == 0
+    #assert len(df1[df1['PEP'] < 0]) == 0
 
     data = KW_DUNN(df1, dep_var, dep_fac, outpath)
 
@@ -312,12 +312,14 @@ def KW_DUNN(dataframe, dep_var, dep_fac, outpath):   # pandas df, col to do anov
     data.loc[0, 'Kruskal-Wallis p-value'] = kw_p
     data.loc[0, 'Kruskal-Wallis statistic'] = kw_statistic
     data.loc[0, 'Kruskal-Wallis parameter'] = kw_parameter
+    
     try:
         comp_dct = df.set_index('Comparison')['P.adj'].to_dict()
         for val in comp_dct:
             data.loc[0, val +' Dunn-test P.adj'] = comp_dct[val]
     except:
         pass
+    
     return data
 
 

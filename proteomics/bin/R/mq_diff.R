@@ -23,24 +23,25 @@ make_option(c("-o","--output"), type="character", default=NULL,
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
-
 outdir=paste(opt$o,'/',sep='')
-
 dir.create(outdir, showWarnings = TRUE, recursive = FALSE, mode = "0777")
-
 path=opt$f
-
-
 exp_design=opt$d
 
 source(exp_design)
 
 data <- read.csv(path)
-ratios <- t(t(data[, cols])/colSums(data[, cols]))
+
+#ratios <- t(t(data[, cols])/colSums(data[, cols]))
+
+intensities <- t(t(data[, cols]))
+
 data[, cols] <- lapply(data[, cols], function(x){replace(x, x == 0,  NA)})
+
 data[, cols] <- lapply(data[, cols], function(x){ log2(x)})
 
 rownames(data) <- data$Identifier
+
 Identifier <- data$Identifier
 #names <- paste(Identifier, '(', data$PeptideCount, ' peptides, ', data$MS.MS.Count,' msms)',sep='')
 
@@ -50,47 +51,45 @@ orig_data <- data
 data <- data[,cols]
 
 fpie <- function( df , names, valcols, outfile) {
-    slices <- round(rowMeans(df[,valcols] * 100),3)
+    slices <- rowMeans(df[,valcols] )
+    slices <- slices/sum(slices) * 100
+    slices <- round(slices, 2)
     lbls <- paste(names, " ", slices, ' %', sep="")
     df$label <- t(c(lbls))
     df$slices <- t(c(slices))
     df$label[df$slices < 0.5] <- ""
     jpeg(outfile, width=1000,height=900)
     par(mar=c(6,12,6,12)+.1)
-    pie(df$slices, labels = df$label,  main="Average sample summed intensity percentage distribution \nof identified taxa")
+    pie(df$slices, labels = df$label,  main="Average summed intensity\nby identified taxon (%)")
     dev.off() }
 
 out <- paste(outdir, 'mean_intensity_all.jpeg', sep='')
-
-fpie(ratios, Identifier, cols, out)
-
-
-
+fpie(intensities, Identifier, cols, out)
 f <- f # Defined in experimental design template
 refmap <- data.frame(f, cols)
+
 comparisons <- colnames(contrast.matrix)
 
-for ( comp in comparisons){
-    vals <- strsplit(comp,'-')
-    # Get the reference cols
-    ref  = as.character(vals[[1]][2])
-    refdf <- refmap[refmap$f==ref,]
-    #refcols <- as.character(refdf$cols)
-    refcols <- as.numeric(rownames(refdf))
-    print(ref)
-    print(refcols)
-    out <- paste(outdir, 'mean_intensity_',ref,'.jpeg' , sep='')
-    fpie(ratios, Identifier, refcols, out)
+groups <- rownames(contrast.matrix)
 
-    # Get the sample cols
-    samp = as.character(vals[[1]][1])
-    sampdf <- refmap[refmap$f==samp,]
-    sampcols <- as.numeric(rownames(sampdf))
-    print(samp) 
-    print(sampcols)
-    out <- paste(outdir, 'mean_intensity_',samp,'.jpeg' , sep='')
-    fpie(ratios, Identifier, sampcols, out)
+group_variance_values <- vector("list", length(groups))
+group_variance_names <- vector("list", length(groups))
+
+#variances <- data.frame()
+
+variances <- data.frame(matrix(, nrow=nrow(orig_data), ncol=0))
+print(length(orig_data))
+for (group in groups){
+    groupdf <- refmap[refmap$f==group,]
+    groupcols <- as.numeric(rownames(groupdf))
+    out <- paste(outdir, 'mean_intensity_',group,'.jpeg' , sep='')
+    fpie(intensities, Identifier, groupcols, out) 
+    print(groupcols)
+    variances <- cbind(variances, var = apply(orig_data[,groupcols], 1, function(x) var(na.omit(x))))
+    names(variances)[names(variances) == 'var'] <- group
 }
+dir.create(paste(outdir,'/group_variance',sep=''), showWarnings = TRUE, recursive = FALSE, mode = "0777")
+write.table(variances, paste(outdir,'/group_variance/group_variance.txt',sep=''), sep='\t', row.names=TRUE)
 
 ######################
 # Let's make a SPLOM #
@@ -129,6 +128,7 @@ dir.create(limma_dir, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 pval_lists <- vector("list", length(colnames(contrast.matrix)))
 #qval_lists_0_005 <- vector("list", length(colnames(contrast.matrix)))
 
+
 for ( i in seq_along(colnames(contrast.matrix))) {
     cntrst = colnames(contrast.matrix)[i]
     cntrst_ <- strsplit(cntrst, '-')
@@ -138,9 +138,6 @@ for ( i in seq_along(colnames(contrast.matrix))) {
     print('*') 
     table <- topTable(fit2,adjust="BH", coef=i, n=Inf)
     table <- merge(orig_data, table, by=0)
-    
-    print(Exposed)    
-
     table$Exposed <- Exposed
     table$Control <- Control
     table <- setDT(table, keep.rownames = TRUE)[]
@@ -157,7 +154,6 @@ num_groups = length(colnames(design))
 
 pvals <- unlist(pval_lists, recursive = TRUE, use.names = FALSE)
 pval_data <- data[rownames(data) %in% pvals, ]
-
 
 #########################################################
 # Hierarchical clustering and correlation of replicates #
@@ -197,14 +193,12 @@ pval_data <- data[rownames(data) %in% pvals, ]
 ############
 
 library('dendextend')
-
 heatmap_path=paste(outdir,'heatmaps/',sep='')
-
 dir.create(heatmap_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
-
+if (length(rownames(pval_data)) > 0) {
 png(paste(heatmap_path,'heatmap_significant.png',sep=''),units="in",width=11,height=8.5,res=300)
 heatmap(as.matrix(pval_data), margins=c(10,17))
-dev.off()
+dev.off()}
 
 hm <- function( df, heatmap_path, file,  main, xlab ) {
     some_col_func<-function(n)(colorspace::diverge_hcl(n,h=c(246, 40), c = 96, l = c(65, 90)))
@@ -226,25 +220,31 @@ hm <- function( df, heatmap_path, file,  main, xlab ) {
     dev.off() }
 
 # Heatmap of global data set
-hm(pval_data, heatmap_path, "heatmap_intensity.jpeg", "Log2(Intensity) - Adj. p-value < 0.05", "log2(Intensity)")
+if (length(rownames(pval_data)) > 0) {
+    hm(pval_data, heatmap_path, "heatmap_intensity.jpeg", "Log2(Intensity) - Adj. p-value < 0.05", "log2(Intensity)")
+
+}
 
 #######
 # PCA #
 #######
 
 pca_path=paste(outdir,'PCA/',sep='')
+
 dir.create(pca_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 
-pc <- function( df, path, file, var.axes ) {
-    png(paste(path,file,sep=''), units="in", width=8.5, height=8.5, res=300)
-    pca <- prcomp(t(df), center=TRUE, scale=TRUE)
-    g <- ggbiplot(pca, obs.scale = 1, var.scale = 1,
-    groups=f, ellipse=TRUE, circle=TRUE, var.axes=var.axes)
-    g <- g + scale_color_discrete(name = '')
-    g <- g + theme(legend.direction = 'horizontal',
-    legend.position = 'top')
-    print(g)
-    dev.off() }
-pc(data, pca_path, "all_identified_pca.png", FALSE)
+pca <- prcomp(t(data), center=TRUE, scale=TRUE)
 
-quit()
+png(paste(pca_path,'pca.png',sep=''), units="in", width=8.5, height=8.5, res=300)
+g <- ggbiplot(pca, obs.scale = 1, var.scale = 1,
+groups=f, ellipse=TRUE, circle=TRUE, var.axes=FALSE)
+g <- g + scale_color_discrete(name = '')
+g <- g + theme(legend.direction = 'horizontal',
+legend.position = 'top')
+print(groups)
+dev.off() 
+
+#pc(data, pca_path, "all_identified_pca.png", FALSE)
+
+#quit()
+
