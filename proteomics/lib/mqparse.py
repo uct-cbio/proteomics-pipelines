@@ -128,8 +128,9 @@ def list_kw_dunn(names, data, value, group, path):
 
 class mq_txt:
     def __init__(self, config, exclude_contaminants=True):
-        #assert not os.path.exists(outdir)
-        self.config = yaml.load(open(config).read())
+        with open(config) as f:
+            self.config = yaml.load(f.read())
+
         self.outdir = self.config['outdir']
         self.create_folders()
         self.txt_path = self.config['mq_txt']
@@ -636,8 +637,6 @@ class mq_txt:
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         out, err = process.communicate()
         process.wait()
-        assert process.returncode == 0
-        
         var = pd.read_csv(outpath +'/group_variance/group_variance.txt',sep='\t')
         names = []
         data = []
@@ -648,12 +647,10 @@ class mq_txt:
 
     def diff_analysis(self):
         # peptides
-        try:
-            peptide_exp = self.diff_dir + '/peptide_experimental_design.R'
-            peptides = self.diff_dir + '/peptide_normalization/msnbase/normalized.csv'
-            self.diff(peptide_exp, peptides, self.diff_dir + '/peptide_diff')
-        except:
-            pass
+        peptide_exp = self.diff_dir + '/peptide_experimental_design.R'
+        peptides = self.diff_dir + '/peptide_normalization/msnbase/normalized.csv'
+        self.diff(peptide_exp, peptides, self.diff_dir + '/peptide_diff')
+        
         #pept2lca_phylum_sc
         try:
             peptides=self.unipept_dir + '/pept2lca_phylum_sc.csv'
