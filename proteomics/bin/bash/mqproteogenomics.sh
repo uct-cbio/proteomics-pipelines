@@ -146,8 +146,8 @@ fi
 ##################
 if [ ! -d $outpath/gsea ] ; then
     mkdir ${outpath}/gsea
-    ips_gsea.py $outpath  && mq_annotate.py $outpath && mq_genesets.R --outdir $outpath --keggid $kegg_id || rm -rf $outpath/gsea
-    gage.R --outdir $outpath --keggid $kegg_id  || rm -rf ${outpath}/gsea
+    ips_gsea.py $outpath  && mq_annotate.py $outpath && mq_genesets.R --outdir $outpath/gsea --keggid $kegg_id || rm -rf $outpath/gsea
+    gage.R --outdir $outpath/gsea --keggid $kegg_id  || rm -rf ${outpath}/gsea
 fi
 
 

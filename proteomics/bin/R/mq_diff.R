@@ -45,13 +45,13 @@ rownames(data) <- data$Identifier
 Identifier <- data$Identifier
 #names <- paste(Identifier, '(', data$PeptideCount, ' peptides, ', data$MS.MS.Count,' msms)',sep='')
 
-data <- data[,cols]
+#data <- data[,cols]
 data$Identifier <- Identifier
 orig_data <- data
 data <- data[,cols]
 
 fpie <- function( df , names, valcols, outfile) {
-    slices <- rowMeans(df[,valcols] )
+    slices <- rowSums(df[,valcols] )
     slices <- slices/sum(slices) * 100
     slices <- round(slices, 2)
     lbls <- paste(names, " ", slices, ' %', sep="")
@@ -60,10 +60,10 @@ fpie <- function( df , names, valcols, outfile) {
     df$label[df$slices < 0.5] <- ""
     jpeg(outfile, width=1000,height=900)
     par(mar=c(6,12,6,12)+.1)
-    pie(df$slices, labels = df$label,  main="Average summed intensity\nby identified taxon (%)")
+    pie(df$slices, labels = df$label,  main="Summed intensity (%)")
     dev.off() }
 
-out <- paste(outdir, 'mean_intensity_all.jpeg', sep='')
+out <- paste(outdir, 'summed_intensity_all.jpeg', sep='')
 fpie(intensities, Identifier, cols, out)
 f <- f # Defined in experimental design template
 refmap <- data.frame(f, cols)
@@ -76,19 +76,23 @@ group_variance_values <- vector("list", length(groups))
 group_variance_names <- vector("list", length(groups))
 
 #variances <- data.frame()
+vardata <- data
+vardata$Identifier <- Identifier
 
-variances <- data.frame(matrix(, nrow=nrow(orig_data), ncol=0))
-print(length(orig_data))
+variances <- data.frame(matrix(, nrow=nrow(vardata), ncol=0))
+print(length(vardata))
 for (group in groups){
     groupdf <- refmap[refmap$f==group,]
     groupcols <- as.numeric(rownames(groupdf))
-    out <- paste(outdir, 'mean_intensity_',group,'.jpeg' , sep='')
+    out <- paste(outdir, 'summed_intensity_',group,'.jpeg' , sep='')
     fpie(intensities, Identifier, groupcols, out) 
     print(groupcols)
-    variances <- cbind(variances, var = apply(orig_data[,groupcols], 1, function(x) var(na.omit(x))))
+    variances <- cbind(variances, var = apply(vardata[,groupcols], 1, function(x) var(na.omit(x))))
     names(variances)[names(variances) == 'var'] <- group
 }
+
 dir.create(paste(outdir,'/group_variance',sep=''), showWarnings = TRUE, recursive = FALSE, mode = "0777")
+
 write.table(variances, paste(outdir,'/group_variance/group_variance.txt',sep=''), sep='\t', row.names=TRUE)
 
 ######################
@@ -159,6 +163,7 @@ for ( i in seq_along(colnames(contrast.matrix))) {
 num_groups = length(colnames(design))
 
 pvals <- unlist(pval_lists, recursive = TRUE, use.names = FALSE)
+
 pval_data <- data[rownames(data) %in% pvals, ]
 
 
@@ -200,32 +205,39 @@ dir.create(heatmap_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 #print(pval_data)
 
 
+dend_c <- t(data) %>% dist(method="man") %>% hclust(method="ward.D") %>% as.dendrogram %>% ladderize%>% color_branches(k=num_groups)
+
 hm <- function( df, heatmap_path, file,  main, xlab ) {
     some_col_func<-function(n)(colorspace::diverge_hcl(n,h=c(246, 40), c = 96, l = c(65, 90)))
-    dend_r <- df %>% dist(method="man") %>% hclust(method="ward.D") %>% as.dendrogram %>% ladderize %>% color_branches(k=10)
-    dend_c <- t(df) %>% dist(method="man") %>% hclust(method="ward.D") %>% as.dendrogram %>% ladderize%>% color_branches(k=num_groups)
+    col_colors<-rainbow_hcl(length(unique(f)))[sort_levels_values(as.numeric(f))]
+    #dend_r <- df %>% dist(method="man") %>% hclust(method="ward.D") %>% as.dendrogram %>% ladderize %>% color_branches(k=10)
+    #dend_c <- t(df) %>% dist(method="man") %>% hclust(method="ward.D") %>% as.dendrogram %>% ladderize%>% color_branches(k=num_groups)
     png(paste(heatmap_path, file, sep=''), units="in", width=11, height=8.5, res=300)
     gplots::heatmap.2(as.matrix(df),
     main = main,
     srtCol = 90,
-    Rowv = dend_r,
+    #Rowv = dend_r,
     Colv = dend_c,
+    ColSideColors = col_colors,
     trace="none",
     margins =c(10,17),
     key.xlab = xlab,
     denscol = "grey",
     density.info = "density",
     cexRow = 0.75,
-    col = some_col_func)
+    col = some_col_func,
+    colCol= col_colors )
+    par(lend = 1)           # square line ends for the color legend
+    legend("topright",      # location of the legend on the heatmap plot
+               legend = unique(f), # category labels
+              col =unique(col_colors),  # color key
+                   lty= 1,             # line style
+                       lwd = 10            # line width
+                   )
     dev.off() }
 
 # Heatmap of global data set
 hm(data, heatmap_path, "heatmap_intensity_all.jpeg", "Log2(Intensity) - All", "log2(Intensity)")
-
-if (length(rownames(pval_data)) >=2) {
-png(paste(heatmap_path,'heatmap_significant.png',sep=''),units="in",width=11,height=8.5,res=300)
-heatmap(as.matrix(pval_data), margins=c(10,17))
-dev.off()}
 
 if (length(rownames(pval_data)) >=2) {
     hm(pval_data, heatmap_path, "heatmap_significant.jpeg", "Log2(Intensity) - Adj. p-value < 0.05", "log2(Intensity)")
@@ -237,19 +249,20 @@ if (length(rownames(pval_data)) >=2) {
 pca_path=paste(outdir,'PCA/',sep='')
 dir.create(pca_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 pc <- function( df, path, file, var.axes ) {
-    png(paste(path,file,sep=''), units="in", width=8.5, height=8.5, res=300)
+    png(paste(path,file,sep=''), units="in", width=18.5, height=18.5, res=300)
     pca <- prcomp(t(df), center=TRUE, scale=TRUE)
     g <- ggbiplot(pca, obs.scale = 1, var.scale = 1,
-    groups=f, ellipse=TRUE, circle=TRUE, var.axes=var.axes)
+    groups=f, ellipse=TRUE, circle=TRUE, var.axes=var.axes, varname.abbrev = FALSE)
     g <- g + scale_color_discrete(name = '')
     g <- g + theme(legend.direction = 'horizontal',legend.position = 'top')
     print(g)
     dev.off() }
 pc(data, pca_path, "all_identified_pca.png", FALSE)
 pc(data, pca_path, "all_identified_pca_labelled.png", TRUE)
+
 if (length(rownames(pval_data)) >=2) {
-    pc(pval_data, pca_path, "pval_0_05_identified_pca_labelled.png", TRUE)
-    pc(pval_data, pca_path, "pval_0_05_identified_pca.png", FALSE)
+    pc(pval_data, pca_path, "qval_0_05_identified_pca_labelled.png", TRUE)
+    pc(pval_data, pca_path, "qval_0_05_identified_pca.png", FALSE)
 }
 
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import mygene
 
 import numpy as np
 import scipy as sp
@@ -230,7 +231,6 @@ def mwu(dataframe, group1, group2):
     c = 'print(data)';ro.r(c)
     c = "test = wilcox.test(data${} ~ data${})".format(group1,group2); ro.r(c)
     c = "print(test)";ro.r(c)
-
     c = "stat = as.list(test$statistic[1])[1]"; ro.r(c)
     #print
     c    = 'stat$W'
@@ -322,6 +322,49 @@ def KW_DUNN(dataframe, dep_var, dep_fac, outpath):   # pandas df, col to do anov
     
     return data
 
+class up2ko:
+    def __init__(self, up):
+        self.up = up
+        mg = mygene.MyGeneInfo()
+        res = mg.query(self.up)
+        self.ids = []
+        self.names = []
+        for i in res['hits']:
+            symbol = i['entrezgene']
+            ko = entrez2ko(symbol)
+            self.ids.append(ko.ko)
+            self.names.append(ko.name)
+        self.ko = ';'.join(set(self.ids))
+        self.name = ';'.join(set(self.names))
+
+class string2ko: # uniprot id
+    def __init__(self, string):
+        c = 'library(KEGGREST)';ro.r(c)
+        c = "res <- keggFind('ko', c('{}'))".format(string) ; ro.r(c)
+        c = "print(res)" ; ro.r(c)
+        c = 'names(res)'
+        self.ko = ';'.join([i.split(':')[1] for i in robjects.r(c)])
+
+        c = 'res'
+        self.name= ';'.join(robjects.r(c))
+
+class entrez2ko: # uniprot id
+    def __init__(self, entrez):
+        self.entrez = entrez
+        c = 'library(KEGGREST)';ro.r(c)
+        c = 'conv <- keggConv("genes", "ncbi-geneid:{}")'.format(self.entrez); ro.r(c) 
+        c = 'ko <- keggGet(conv)'; ro.r(c)
+        c = 'names(ko[[1]]$ORTHOLOGY)'
+        self.ko = ';'.join(robjects.r(c))
+        c = 'ko[[1]]$ORTHOLOGY'
+        self.name= ';'.join(robjects.r(c))
+        
+
+    # keggConv("genes", "uniprot:Q05025"))
+    # q <- keggGet("cjo:107318960")
+    # q[[1]]$ORTHOLOGY   
+    #c    = 'stat$W'
+    #stat = robjects.r(c)[0]
 
 def limma(df1, treated, control):   # pandas df, treated columns, control columns
     df = df1.copy()

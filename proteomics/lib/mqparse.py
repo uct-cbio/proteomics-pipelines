@@ -23,6 +23,8 @@ import subprocess
 import yaml
 import posthocs as ph
 import scipy
+import pickle
+import mygene
 
 def name_dct():
     names = {'sf_novel_m':'Six Frame Novel Only\n(M start)',
@@ -126,8 +128,15 @@ def list_kw_dunn(names, data, value, group, path):
     post_hoc.to_csv(path + '/dunn_bh.csv')
     
 
+def parse_protein_ids(val):
+    val = val.split(';')
+    if len(val) > 1:
+        return val[0] +';...'
+    else:
+        return val[0]
+
 class mq_txt:
-    def __init__(self, config, exclude_contaminants=True):
+    def __init__(self, config, exclude_contaminants=False):
         with open(config) as f:
             self.config = yaml.load(f.read())
 
@@ -135,14 +144,21 @@ class mq_txt:
         self.create_folders()
         self.txt_path = self.config['mq_txt']
         self.peptides = pd.read_csv(self.txt_path +'/peptides.txt', sep='\t')
-        self.proteingroups = pd.read_csv(self.txt_path +'/proteinGroups.txt', sep='\t')
+        self.peptides['Identifier'] = self.peptides['Sequence']
+        
+
+        self.proteingroups = self.create_protein_group_identifier(pd.read_csv(self.txt_path +'/proteinGroups.txt', sep='\t'))
+        self.proteingroups['Leading Protein'] = self.proteingroups['Protein IDs'].apply(lambda x : x.split(';')[0])
+        assert len(self.proteingroups['Identifier'].tolist()) == len(set(self.proteingroups['Identifier'].tolist()))
+        self.proteingroups = self.leading_protein_ko(self.proteingroups)
+        assert len(self.proteingroups['Identifier'].tolist()) == len(set(self.proteingroups['Identifier'].tolist()))
+
         self.msms = pd.read_csv(self.txt_path +'/msms.txt', sep='\t')
         self.summary = pd.read_csv(self.txt_path +'/summary.txt', sep='\t')
         self.target_proteingroups = self.exclude_reverse(self.proteingroups)
         self.reverse_msms = self.get_reverse(self.msms)
         self.reverse_peptides = self.get_reverse(self.peptides)
         self.reverse_proteingroups = self.get_reverse(self.proteingroups) 
-        #taminant_msms = self.get_contaminants(self.msms)
         self.contaminant_peptides = self.get_contaminants(self.peptides)
         self.contaminant_peptides_list = self.contaminant_peptides['Sequence'].tolist()
         self.contaminant_proteingroups = self.get_contaminants(self.proteingroups)
@@ -150,11 +166,20 @@ class mq_txt:
         self.target_msms = self.exclude_reverse(self.msms)
         self.target_peptides = self.exclude_reverse(self.peptides)
         self.target_proteingroups = self.exclude_reverse(self.proteingroups)
-        #if exclude_contaminants == True:
-        #self.target_peptides = self.exclude_contaminants(self.target_peptides)
-        #self.target_proteingroups = self.exclude_contaminants(self.target_proteingroups)
+        
+        if exclude_contaminants == True:
+            self.target_peptides = self.exclude_contaminants(self.target_peptides)
+            self.target_proteingroups = self.exclude_contaminants(self.target_proteingroups)
+        
+        self.peptide_txt = self.peptide_dir +'target_peptides.txt'
+        self.target_peptides.to_csv(self.peptide_txt, sep='\t')
+        
+        self.protein_txt = self.protein_dir + 'target_proteins.txt'
+        self.target_proteingroups.to_csv(self.protein_txt, sep='\t')
+        self.protein_id_lists(self.target_proteingroups, self.protein_dir +'/protein_ids.txt')
+        
         self.target_peptides_list = self.target_peptides['Sequence'].tolist()
-        #self.target_msms = self.target_msms[self.target_msms['Sequence'].isin(self.target_peptides_list)]
+        self.target_msms = self.target_msms[self.target_msms['Sequence'].isin(self.target_peptides_list)]
         self.reference_fasta = list(SeqIO.parse(self.config['reference_fasta'], 'fasta'))
         self.search_fasta = list(SeqIO.parse(self.config['search_fasta'],'fasta'))
         self.get_reference_peptides()
@@ -196,15 +221,65 @@ class mq_txt:
 
         # peptide lists
         self.save_peptide_lists()
+       
+        # fasta export
+        fasta_file = self.config['search_fasta']
+        prot_ids = self.protein_dir +'/protein_ids.txt'
+        outfile = self.fasta_dir +'/leading_proteins.fasta'
+        self.export_pg_fasta(fasta_file, prot_ids, outfile)
         
-        # Create peptide parameters
-        self.create_R_peptide_parameters()
+        # interproscan
+        infile = self.fasta_dir +'/leading_proteins.fasta'
+        outpath  = self.fasta_dir
+        self.ips_fasta(infile, outpath) 
+        
+        # gene sets
+        infile = self.fasta_dir +'/leading_proteins.fasta.tsv'
+        self.ips_genesets(infile, self.target_proteingroups, self.gsea_dir)
+              
+        # Create peptide paraameters
+        outfile=self.diff_dir + '/peptide_experimental_design.R'
+        self.create_R_parameters(  config = self.config, 
+                                   outfile=outfile, 
+                                   quant='Intensity'  )
+        
+        # Normalize peptides
+        outdir = self.diff_dir + 'peptide_normalization'
+        infile = self.peptide_txt
+        design = self.diff_dir + '/peptide_experimental_design.R'
+        self.normalize(design, infile, outdir)
+        self.normalized_target_peptides = pd.read_csv(self.diff_dir + '/peptide_normalization/msnbase/normalized.csv') 
+  
+        # Create protein paraameters
+        outfile=self.diff_dir + '/protein_experimental_design.R'
+        self.create_R_parameters(  config = self.config, 
+                                   outfile=outfile, 
+                                   quant='iBAQ'  )
+
+        # Normalize proteins
+        outdir = self.diff_dir + 'protein_normalization'
+        infile = self.gsea_dir +'/ipr_target_proteins.txt'
+        design = self.diff_dir + '/protein_experimental_design.R'
+        self.normalize(design, infile, outdir)
+        self.normalized_target_proteins = pd.read_csv(self.diff_dir + '/protein_normalization/msnbase/normalized.csv') 
         
         # unipept anslysis
         self.unipept()
         
         # diff analusis
         self.diff_analysis()
+        
+        # GSEA
+        outpath=self.gsea_dir
+        design = self.diff_dir + '/protein_experimental_design.R'
+        table=self.diff_dir + '/protein_normalization/msnbase/normalized.csv'
+        genecol='Leading.Protein.Kegg.Orthology.ID'
+        self.ips_gsea(outpath, design, table, genecol)
+
+    def create_protein_group_identifier(self, proteingroups):
+        proteingroups['Identifier'] = ' (Protein group ' + proteingroups['id'].apply(str)+')'
+        proteingroups['Identifier'] = proteingroups['Protein IDs'].apply(parse_protein_ids) + proteingroups['Identifier']
+        return proteingroups
 
     def create_summary(self):
         w = open(self.outdir +'/summary.txt','w')
@@ -217,15 +292,22 @@ class mq_txt:
 
     def create_folders(self):
         self.unipept_dir = self.outdir + '/unipept/'
+        self.fasta_dir = self.outdir + '/fasta/'
         self.peptide_dir = self.outdir + '/peptides/'
+        self.protein_dir = self.outdir + '/proteins/'
         self.pep_dir = self.outdir + '/pep/'
         self.diff_dir = self.outdir + '/diff/'
+        self.gsea_dir = self.outdir + '/gsea/'
+        
         if not os.path.exists(self.outdir):
             os.mkdir(self.outdir) 
             os.mkdir(self.pep_dir)
+            os.mkdir(self.fasta_dir)
             os.mkdir(self.unipept_dir)
             os.mkdir(self.peptide_dir)
+            os.mkdir(self.protein_dir)
             os.mkdir(self.diff_dir)
+            os.mkdir(self.gsea_dir)
    
     def get_reference_peptides(self):
         peptides = self.exclude_contaminants(self.target_peptides)
@@ -240,7 +322,8 @@ class mq_txt:
                 nonrefseqs.append(i)
         self.reference_peptides_list = refseqs
         self.non_reference_peptides_list = nonrefseqs
-
+        self.target_peptides['ReferenceProteomePeptide']= self.target_peptides['Sequence'].apply(lambda x : str(x in refseqs))
+    
     def exclude_contaminants(self, df):
         df = df.copy()
         df = df[df['Potential contaminant'] != '+' ]
@@ -265,19 +348,15 @@ class mq_txt:
         w = open(self.peptide_dir +'/reference_peptides_list.txt', 'w')
         w.write('\n'.join(self.reference_peptides['Sequence'].tolist()))
         w.close()
-
         w = open(self.peptide_dir +'/non_reference_peptides_list.txt', 'w')
         w.write('\n'.join(self.non_reference_peptides['Sequence'].tolist()))
         w.close()
-
         w = open(self.peptide_dir +'/reverse_peptides_list.txt', 'w')
         w.write('\n'.join(self.reverse_peptides['Sequence'].tolist()))
         w.close()
-
         w = open(self.peptide_dir +'/contaminant_peptides_list.txt', 'w')
         w.write('\n'.join(self.contaminant_peptides['Sequence'].tolist()))
         w.close()
-
         w = open(self.peptide_dir +'/target_peptides_list.txt', 'w')
         w.write('\n'.join(self.target_peptides['Sequence']))
         w.close()
@@ -378,11 +457,11 @@ class mq_txt:
         
         # pept2lca
         self.pept2lca = pd.read_csv(self.unipept_dir + '/pept2lca.txt')
-        lca_peptides = pd.merge(self.normalized_target_peptides,self.pept2lca,how='inner',left_on='Sequence',right_on='peptide')
+        lca_peptides = pd.merge(self.normalized_target_peptides,self.pept2lca,how='left',left_on='Sequence',right_on='peptide')
         lca_peptides['PeptideCount'] = 1
         lca_peptides['taxon_name'].replace(np.nan, "unassigned", inplace=True)
 
-        lca_peptides.to_csv(self.unipept_dir + '/pep2lca_peptides.csv')
+        lca_peptides.to_csv(self.unipept_dir + '/pept2lca_peptides.csv')
         pept2lca_taxon_sc = lca_peptides.groupby(lca_peptides.taxon_name).agg(agg_cols) 
         pept2lca_taxon_sc = pept2lca_taxon_sc[pept2lca_taxon_sc['PeptideCount'] >= lca_level_cutoff ]
         lca_taxon_ids = pept2lca_taxon_sc['taxon_id'].tolist()
@@ -505,10 +584,324 @@ class mq_txt:
         #newcols = [i for i in clean_cols if i in pept2taxa_sc.columns.tolist()]
         #pept2taxa_sc = pept2taxa_sc[newcols]
         #pept2taxa_sc.to_csv(self.unipept_dir + '/pept2taxa_family_sc.csv')
+      
+    def ips_gsea(self, outpath, design, table, genecol, keggid='ko'):
+        cmd = 'gage.R --outdir {} --keggid {} --design {} --table {} --genecol {}'.format(outpath, keggid, design, table, genecol)
+        process = subprocess.Popen(cmd, shell=True)
+        process.wait()
+        assert process.returncode == 0
+    
+    def ips_genesets(self, ipr, proteins, outpath, keggid='ko', id_col="Majority protein IDs"):
+        cols = ['ProteinAccession', 
+                'MD5', 
+                'Length', 
+                'Analysis', 
+                'SignatureAccession',
+                'SignatureDescription',
+                'Start',
+                'Stop',
+                'Score',
+                'Status',
+                'Date',
+                'InterProAnnotationsAccession',
+                'InterProAnnotationsDescription',
+                'GoAnnotations',
+                'PathwaysAnnotations' ]
+        data = pd.read_csv(ipr, sep='\t', names = cols,  engine='python')
+        lst_col = 'ProteinAccession' 
+        x = data.assign(**{lst_col:data[lst_col].str.split('|')})
+        data = pd.DataFrame({col:np.repeat(x[col].values, x[lst_col].str.len()) for col in x.columns.difference([lst_col])}).assign(**{lst_col:np.concatenate(x[lst_col].values)})[x.columns.tolist()]
+        
+        
+        # GO Terms
+        id2go= defaultdict(set)
+        gos = set()
+        def go(df):
+            go = df['GoAnnotations']
+            id = df['ProteinAccession']
+            try:
+                go=go.split('|')
+                id2go[id].update(go)
+                for goterm in go:
+                    gos.add(goterm)
+            except:
+                pass
+        data.apply(go, axis=1)
+        with open( outpath +'/accession2go.p', 'wb') as f:
+            pickle.dump( id2go, f)
+        go_df = pd.DataFrame()
+        go_vals = list(gos)
+        go_df['GO_ID'] = pd.Series(go_vals)
+        go_df.to_csv(outpath +'/go_terms.csv')
+
+        def gointersect(val):
+            vals = val.split(';')
+            setlist = []
+            for val in vals:
+                vset = id2go[val]
+                setlist.append(vset)
+            union = set.union(*setlist)
+            if len(union) > 0:
+                return ';'.join(union)
+        proteins['_go.term.union']   = proteins[id_col].apply(gointersect)
+        
+        go2pg = defaultdict(set)
+        def go2gene(df):
+            go_terms = df['_go.term.union']
+            pg = df['Identifier']
+            try:
+                go_terms = go_terms.split(';')
+                for _ in go_terms:
+                    go2pg[_].add(pg)
+            except:
+                pass
+        proteins.apply(go2gene,axis=1)
+
+        go_df = pd.DataFrame()
+        go_df['GO_ID'] = pd.Series(list(go2pg.keys()))
+        go_df['GENES'] = pd.Series(list(go2pg.values())).apply( lambda x  : '|'.join(x))
+        go_df.to_csv(outpath +'/go2proteingroups.csv')
 
 
-    def create_R_peptide_parameters(self):
-        config= self.config
+        # KEGG
+        id2kegg= defaultdict(set)
+        keggs = set()
+        def kegg(df):
+            id = df['ProteinAccession']
+            pathways = df['PathwaysAnnotations']
+            try:
+                kegg = [i for i in pathways.split('|') if i.startswith('KEGG: ')]
+                kegg = [i.split('KEGG: ')[1].split('+')[0] for i in kegg]
+                id2kegg[id].update(kegg)
+                for keggterm in kegg:
+                    keggs.add(keggterm)
+            except:
+                pass
+        data.apply(kegg, axis=1)
+        with open( outpath +'/accession2kegg.p', 'wb') as f:
+            pickle.dump( id2kegg, f)
+        kegg_df = pd.DataFrame()
+        kegg_vals = list(keggs)
+        kegg_df['KEGG_ID'] = pd.Series(kegg_vals)
+        kegg_df.to_csv(outpath +'/kegg_terms.csv')
+        
+        def keggintersect(val):
+            vals = val.split(';')
+            setlist = []
+            for val in vals:
+                vset = id2kegg[val]
+                setlist.append(vset)
+            union = set.union(*setlist)
+            if len(union) > 0 :
+                return ';'.join(union)
+        proteins['_kegg.term.union']   = proteins[id_col].apply(keggintersect)
+
+        kegg2pg = defaultdict(set)
+        
+        def kegg2gene(df):
+            kegg_terms = df['_kegg.term.union']
+            pg = df['Identifier']
+            try:
+                kegg_terms = kegg_terms.split(';')
+                for _ in kegg_terms:
+                    kegg2pg[_].add(pg)
+            except:
+                pass
+        proteins.apply(kegg2gene,axis=1)
+        kegg_df = pd.DataFrame()
+        kegg_df['KEGG_ID'] = pd.Series(list(kegg2pg.keys()))
+        kegg_df['KEGG_ID'] = kegg_df['KEGG_ID'].apply(str)
+        kegg_df['GENES'] = pd.Series(list(kegg2pg.values())).apply( lambda x  : '|'.join(x))
+        kegg_df.to_csv(outpath +'/kegg2proteingroups.csv')
+
+
+
+        # REACTOME
+        id2reactome= defaultdict(set)
+        reactomes = set()
+        def reactome(df):
+            id = df['ProteinAccession']
+            pathways = df['PathwaysAnnotations']
+            try:
+                reactome = [i for i in pathways.split('|') if i.startswith('Reactome: ')]
+                reactome = [i.split('Reactome: ')[1] for i in reactome]
+                id2reactome[id].update(reactome)
+                for reactometerm in reactome:
+                    reactomes.add(reactometerm)
+            except:
+                pass
+        data.apply(reactome, axis=1)
+        with open( outpath +'/accession2reactome.p', 'wb') as f:
+            pickle.dump( id2reactome, f)
+        r_df = pd.DataFrame()
+        r_vals = list(reactomes)
+        r_df['REACTOME_ID'] = pd.Series(r_vals)
+        r_df.to_csv(outpath +'/reactome_terms.csv')
+        
+        def reactomeintersect(val):
+            vals = val.split(';')
+            setlist = []
+            for val in vals:
+                vset = id2reactome[val]
+                setlist.append(vset)
+            union = set.union(*setlist)
+            if len(union) > 0 :
+                return ';'.join(union)
+        proteins['_reactome.term.union']   = proteins[id_col].apply(reactomeintersect)
+        
+        reactome2pg = defaultdict(set)
+        
+        def reactome2gene(df):
+            r_terms = df['_reactome.term.union']
+            pg = df['Identifier']
+            try:
+                r_terms = r_terms.split(';')
+                for _ in r_terms:
+                    reactome2pg[_].add(pg)
+            except:
+                pass
+        proteins.apply(reactome2gene,axis=1)
+        
+        reactome_df = pd.DataFrame()
+        reactome_df['REACTOME_ID'] = pd.Series(list(reactome2pg.keys()))
+        reactome_df['REACTOME_ID'] = reactome_df['REACTOME_ID'].apply(str)
+        reactome_df['GENES'] = pd.Series(list(reactome2pg.values())).apply( lambda x  : '|'.join(x))
+        reactome_df.to_csv(outpath +'/reactome2proteingroups.csv')
+
+        # MetaCyc
+        id2metacyc= defaultdict(set)
+        metacycs = set()
+        def metacyc(df):
+            id = df['ProteinAccession']
+            pathways = df['PathwaysAnnotations']
+            try:
+                metacyc = [i for i in pathways.split('|') if i.startswith('MetaCyc: ')]
+                metacyc = [i.split('MetaCyc: ')[1] for i in metacyc]
+                id2metacyc[id].update(metacyc)
+                for metacycterm in metacyc:
+                    metacycs.add(metacycterm)
+            except:
+                pass
+        data.apply(metacyc, axis=1)
+        with open( outpath +'/accession2metacyc.p', 'wb') as f:
+            pickle.dump( id2metacyc, f)
+
+        m_df = pd.DataFrame()
+        m_vals = list(metacycs)
+        m_df['METACYC_ID'] = pd.Series(m_vals)
+        m_df.to_csv(outpath +'/metacyc_terms.csv')
+        
+        def metacycintersect(val):
+            vals = val.split(';')
+            setlist = []
+            for val in vals:
+                vset = id2metacyc[val]
+                setlist.append(vset)
+            union = set.union(*setlist)
+            if len(union) > 0 :
+                return ';'.join(union)
+        proteins['_metacyc.term.union']   = proteins[id_col].apply(metacycintersect)
+        
+        metacyc2pg = defaultdict(set)
+        
+        def metacyc2gene(df):
+            m_terms = df['_metacyc.term.union']
+            pg = df['Identifier']
+            try:
+                m_terms = m_terms.split(';')
+                for _ in m_terms:
+                    metacyc2pg[_].add(pg)
+            except:
+                pass
+        proteins.apply(metacyc2gene,axis=1)
+        
+        metacyc_df = pd.DataFrame()
+        metacyc_df['METACYC_ID'] = pd.Series(list(metacyc2pg.keys()))
+        metacyc_df['METACYC_ID'] = metacyc_df['METACYC_ID'].apply(str)
+        metacyc_df['GENES'] = pd.Series(list(metacyc2pg.values())).apply( lambda x  : '|'.join(x))
+        metacyc_df.to_csv(outpath +'/metacyc2proteingroups.csv')
+
+        # IPR
+        id2ipr= defaultdict(set)
+        iprs = set()
+        def ipr(df):
+            id = df['ProteinAccession']
+            ipr = str(df['InterProAnnotationsAccession']) +': ' + str(df['InterProAnnotationsDescription'])
+            if ipr.startswith('IPR'):
+                id2ipr[id].add(ipr)
+                iprs.add(ipr)
+        data.apply(ipr, axis=1)
+        with open( outpath +'/accession2ipr.p', 'wb') as f:
+            pickle.dump( id2ipr, f)
+
+        ipr_df = pd.DataFrame()
+        ipr_vals = list(iprs)
+        ipr_df['IPR_ID'] = pd.Series(ipr_vals)
+        ipr_df.to_csv(outpath +'/ipr_terms.csv')
+
+        def iprintersect(val):
+            vals = val.split(';')
+            setlist = []
+            for val in vals:
+                vset = id2ipr[val]
+                setlist.append(vset)
+            union = set.union(*setlist)
+            if len(union) > 0 :
+                return ';'.join(union)
+        proteins['_ipr.term.union']   = proteins[id_col].apply(iprintersect)
+        
+        ipr2pg = defaultdict(set)
+        
+        def ipr2gene(df):
+            ipr_terms = df['_ipr.term.union']
+            pg = df['Identifier']
+            try:
+                ipr_terms = ipr_terms.split(';')
+                for _ in ipr_terms:
+                    ipr2pg[_].add(pg)
+            except:
+                pass
+        proteins.apply(ipr2gene,axis=1)
+        ipr_df = pd.DataFrame()
+        ipr_df['IPR_ID'] = pd.Series(list(ipr2pg.keys()))
+        ipr_df['IPR_ID'] = ipr_df['IPR_ID'].apply(str)
+        ipr_df['GENES'] = pd.Series(list(ipr2pg.values())).apply( lambda x  : '|'.join(x))
+        ipr_df.to_csv(outpath +'/ipr2proteingroups.csv')
+        
+
+        cmd = 'mq_genesets.R --outdir {} --keggid {}'.format(outpath, keggid)
+        process = subprocess.Popen(cmd, shell=True)
+        process.wait()
+        assert process.returncode == 0
+        
+        proteins.to_csv(outpath +'/ipr_target_proteins.txt',sep='\t')
+
+
+
+    def ips_fasta(self, infile, outpath):
+        cmd = 'ips.sh {} {} $python2ve'.format(infile, outpath)
+        process = subprocess.Popen(cmd, shell=True)
+        process.wait()
+        assert process.returncode == 0
+
+    def protein_id_lists(self, proteingroups, outfile):
+        lst = proteingroups['Majority protein IDs'].tolist()
+        newlst = []
+        for l in lst:
+            newlst += l.split(';')
+        l =pd.Series(newlst)
+        l.to_csv(outfile , index = False)
+
+    def export_pg_fasta(self, fasta_file, protein_id_file, outfile):
+        fasta = SeqIO.parse(fasta_file,'fasta')
+        new_fasta = []
+        ids = pd.read_csv(protein_id_file, header = None)[0].tolist()
+        for rec in fasta:
+            if rec.id.split('|')[1] in ids:
+                new_fasta.append(rec)
+        SeqIO.write(new_fasta, outfile, 'fasta')
+
+    def create_R_parameters(self, config, outfile, quant):
         vals=[]
         d = '#!/usr/bin/env R\n\n'
         vals.append(d)
@@ -524,7 +917,7 @@ class mq_txt:
         for group in experiment:
             groups.append(group)
             for sample in experiment[group]:
-                rep = "'Intensity.{}'".format(sample)
+                rep = "'{}.{}'".format(quant, sample)
                 reps.append(rep)
         reps = ','.join(reps)
         d = reps
@@ -558,18 +951,17 @@ class mq_txt:
         d = ',levels=design)\n'
         vals.append(d)
         template = ''.join(vals)
-        w = open(self.diff_dir + '/peptide_experimental_design.R','w')
+        w = open(outfile, 'w')
         w.write(template)
         w.close()
-        peptide_txt = self.peptide_dir +'target_peptides.txt'
-        self.target_peptides['Identifier'] = self.target_peptides['Sequence']
-        self.target_peptides.to_csv(peptide_txt, sep='\t')
-        cmd = 'cd {} && mq_normalize_intensity.R -d peptide_experimental_design.R -p {} -o {} && exit'.format(self.diff_dir, peptide_txt,  self.diff_dir + 'peptide_normalization')
+
+    def normalize(self, design, infile, outdir):
+        cmd = 'mq_normalize_intensity.R -d {} -p {} -o {} && exit'.format(design, infile,  outdir)
         process = subprocess.Popen(cmd, shell=True)
         process.wait()
         assert process.returncode == 0
-        self.normalized_target_peptides = pd.read_csv(self.diff_dir + '/peptide_normalization/msnbase/normalized.csv') 
-    
+   
+
     def create_R_proteingroup_parameters(self):
         config= self.config
         vals=[]
@@ -648,46 +1040,34 @@ class mq_txt:
     def diff_analysis(self):
         # peptides
         peptide_exp = self.diff_dir + '/peptide_experimental_design.R'
-        peptides = self.diff_dir + '/peptide_normalization/msnbase/normalized.csv'
+        peptides = self.unipept_dir + '/pept2lca_peptides.csv'
         self.diff(peptide_exp, peptides, self.diff_dir + '/peptide_diff')
         
+        # proteins
+        exp = self.diff_dir + '/protein_experimental_design.R'
+        table = self.diff_dir + '/protein_normalization/msnbase/normalized.csv'
+        self.diff(exp, table,  self.diff_dir + '/protein_diff')
+        
         #pept2lca_phylum_sc
-        try:
-            peptides=self.unipept_dir + '/pept2lca_phylum_sc.csv'
-            print(len(peptides))
-            self.diff(peptide_exp, peptides, self.diff_dir + '/pept2lca_phylum')
-        except:
-            pass
+        peptide_exp = self.diff_dir + '/peptide_experimental_design.R'
+        peptides=self.unipept_dir + '/pept2lca_phylum_sc.csv'
+        self.diff(peptide_exp, peptides, self.diff_dir + '/pept2lca_phylum')
+        
         #pept2lca_species_sc
-        try:
-            peptides=self.unipept_dir + '/pept2lca_species_sc.csv'
-            print(len(peptides))
-            self.diff(peptide_exp, peptides, self.diff_dir + '/pept2lca_species')
-        except:
-            pass
+        peptides=self.unipept_dir + '/pept2lca_species_sc.csv'
+        self.diff(peptide_exp, peptides, self.diff_dir + '/pept2lca_species')
+        
         #pept2lca_genus_sc
-        try:
-            peptides=self.unipept_dir + '/pept2lca_genus_sc.csv'
-            print(len(peptides))
-            self.diff(peptide_exp, peptides, self.diff_dir + '/pept2lca_genus')
-        except:
-            pass
-
+        peptides=self.unipept_dir + '/pept2lca_genus_sc.csv'
+        self.diff(peptide_exp, peptides, self.diff_dir + '/pept2lca_genus')
+        
         #pept2lca_genus_sc
-        try:
-            peptides=self.unipept_dir + '/pept2lca_family_sc.csv'
-            print(len(peptides))
-            self.diff(peptide_exp, peptides, self.diff_dir + '/pept2lca_family')
-        except:
-            pass
+        peptides=self.unipept_dir + '/pept2lca_family_sc.csv'
+        self.diff(peptide_exp, peptides, self.diff_dir + '/pept2lca_family')
         
         #pept2lca_sc
-        try: 
-            peptides=self.unipept_dir + '/pept2lca_taxon_sc.csv'
-            print(len(peptides))
-            self.diff(peptide_exp, peptides, self.diff_dir + '/pept2lca_taxon')
-        except:
-            pass
+        peptides=self.unipept_dir + '/pept2lca_taxon_sc.csv'
+        self.diff(peptide_exp, peptides, self.diff_dir + '/pept2lca_taxon')
         
         #try:
         #    #pept2taxa_genus_sc
@@ -716,6 +1096,40 @@ class mq_txt:
         #    self.diff(peptide_exp, peptides, self.diff_dir + '/pept2taxa_family')
         #except:
         #    pass
+    def ec2ko(self, ec):
+        ko = rfunc.string2ko('[EC:{}]'.format(ec))
+        return ko
+    def string2ko(self, ec):
+        ko = rfunc.string2ko(ec)
+        return ko
+    
+    def leading_protein_mygene(self, proteingroups):
+        genes = proteingroups['Leading Protein'].tolist()
+        print(len(genes)) 
+        mg = mygene.MyGeneInfo()
+        df = mg.querymany(genes, as_dataframe=True, scopes='uniprot')
+        df = df.reset_index()
+        for col in df.columns:
+            df.rename(columns={col: 'Mygene.{}'.format(col)}, inplace =True)
+        df = df.drop_duplicates(subset=['Mygene.entrezgene'])
+        pg = pd.merge(proteingroups, df, how='left', left_on='Leading Protein', right_on='Mygene.query')    
+        print(len(pg))
+        assert len(pg) == len(proteingroups)
+        return pg
+
+    def leading_protein_ko(self, proteingroups):
+        def _(df):
+            try:
+                ko = rfunc.up2ko(df['Leading Protein'])
+                print(ko.ko, ko.name)
+                df['Leading Protein Kegg Orthology ID'] = ko.ko
+                df['Leading Protein Kegg Orthology Name'] = ko.name
+            except:
+                pass
+            return df
+        proteingroups = proteingroups.apply(_, axis = 1)
+        return proteingroups
+
 
 def peptides(path):
     pep_dct = {}

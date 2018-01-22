@@ -71,10 +71,10 @@ eset <- readMSnSet2(msnpath, ecol, fname)
 eset@phenoData$sampleNames <- cols
 eset@phenoData$sampleGroups <- f
 
-#png(paste(msnbase_path,'boxplots_unnormalized.png',sep=''),units="in", width=11, height=8.5, res=300)
-#par(mfrow = c(2, 1))
-#boxplot(exprs(eset), notch=TRUE, col=(c("gold")), main="Samples", ylab="peptide log2(Intensity)", las=2) 
-#dev.off()
+png(paste(msnbase_path,'boxplots_unnormalized.png',sep=''),units="in", width=11, height=8.5, res=300)
+par(mfrow = c(2, 1))
+boxplot(exprs(eset), notch=TRUE, col=(c("gold")), main="Samples", ylab="peptide log2(Intensity)", las=2) 
+dev.off()
 
 #x.nrm <- eset
 x.nrm <- normalise(eset, "quantiles")
@@ -88,9 +88,9 @@ par(mfrow = c(2, 1))
 boxplot(exprs(x.nrm), notch=TRUE, col=(c("gold")), main="Samples", ylab="intensity ratio", las=2) 
 dev.off()
 
-#png(paste(msnbase_path,'all_data_heatmap_normalized.png',sep=''),units="in",width=11,height=8.5,res=300)
-#heatmap(exprs(x.nrm), margins=c(10,17))
-#dev.off()
+png(paste(msnbase_path,'all_data_heatmap_normalized.png',sep=''),units="in",width=11,height=8.5,res=300)
+heatmap(exprs(x.nrm), margins=c(10,17))
+dev.off()
 
 data <- ms2df(x.nrm)
 data[, cols] <- lapply(data[, cols], function(x){2^x})
