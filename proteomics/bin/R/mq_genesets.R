@@ -84,6 +84,23 @@ names(kegg.set) <- as.list(ktab$ID)
 save(kegg.set, file=paste(outpath, '/keggset.Rdata', sep=''))
 
 ###############
+#    EC     #
+###############
+
+ecpath <- paste(outpath,'/ec2proteingroups.csv', sep='') 
+etab <- read.csv(ecpath, colClasses=c("character","character"))
+etab <- data.frame(lapply(etab, as.character), stringsAsFactors=FALSE)
+
+#ktab$ID<- with(ktab, paste0(kegg_id, KEGG_ID))
+
+etab$ID <- etab$EC_ID
+etab$GENES <- lapply(etab$GENES, vct)
+
+ec.set <- as.list(etab$GENES)
+names(ec.set) <- as.list(etab$ID)
+save(ec.set, file=paste(outpath, '/ecset.Rdata', sep=''))
+
+###############
 #    METACYC     #
 ###############
 

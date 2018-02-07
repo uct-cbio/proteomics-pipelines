@@ -66,3 +66,8 @@ RUN pip3 install mygene
 
 ENV DOCKER_JAVA_ARGS -XX:+UseParallelGC -XX:ParallelGCThreads= -XX:+AggressiveOpts -XX:+UseFastAccessorMethods -Xms128M -Xmx2048M
 COPY interproscan.properties /interproscan/interproscan.properties
+
+ENV PYTHONPATH $PYTHONPATH::/root/cbio-pipelines/proteomics/lib
+ENV PATH $PATH::/root/cbio-pipelines/proteomics/bin/R:/root/cbio-pipelines/proteomics/bin/bash
+ENV python2ve /root/ve27
+

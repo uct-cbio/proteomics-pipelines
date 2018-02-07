@@ -12,7 +12,7 @@ library('qvalue')
 library("optparse")
 library('MSnbase')
 library("dplyr")
- 
+
 option_list = list(
 make_option(c("-d", "--design"), type="character", default=NULL,
         help="Experimntal design template", metavar="character"),
@@ -31,6 +31,7 @@ exp_design=opt$d
 source(exp_design)
 
 data <- read.csv(path)
+data <- data[with(data, order(-rowSums(data[,cols]))), ]
 
 #ratios <- t(t(data[, cols])/colSums(data[, cols]))
 
@@ -51,12 +52,10 @@ orig_data <- data
 data <- data[,cols]
 
 fpie <- function( df , names, valcols, outfile) {
-    slices <- rowSums(df[,valcols] )
-    slices <- slices/sum(slices) * 100
-    slices <- round(slices, 2)
-    lbls <- paste(names, " ", slices, ' %', sep="")
-    df$label <- t(c(lbls))
-    df$slices <- t(c(slices))
+    df$slices <- rowSums(df[,valcols] )
+    df$slices <- df$slices/sum(df$slices) * 100
+    df$slices <- round(df$slices, 2)
+    df$label <- paste(names, " ", df$slices, ' %', sep="")
     df$label[df$slices < 0.5] <- ""
     jpeg(outfile, width=1000,height=900)
     par(mar=c(6,12,6,12)+.1)
@@ -78,20 +77,22 @@ group_variance_names <- vector("list", length(groups))
 #variances <- data.frame()
 vardata <- data
 vardata$Identifier <- Identifier
+vardata$sums  <- rowSums(intensities[,cols] ) # sum the raw intensity to exclude proteins that contribute less than 1 percent
+total <- sum(vardata$sums)
+vardata$percentage <- lapply(vardata$sums, function(x){ (x/total) * 100})
+vardata <- vardata[vardata$percentage >= 1,]
 
 variances <- data.frame(matrix(, nrow=nrow(vardata), ncol=0))
 print(length(vardata))
+dir.create(paste(outdir,'/group_variance',sep=''), showWarnings = TRUE, recursive = FALSE, mode = "0777")
 for (group in groups){
     groupdf <- refmap[refmap$f==group,]
     groupcols <- as.numeric(rownames(groupdf))
     out <- paste(outdir, 'summed_intensity_',group,'.jpeg' , sep='')
     fpie(intensities, Identifier, groupcols, out) 
-    print(groupcols)
     variances <- cbind(variances, var = apply(vardata[,groupcols], 1, function(x) var(na.omit(x))))
-    names(variances)[names(variances) == 'var'] <- group
+    names(variances)[names(variances) == 'var'] <- group 
 }
-
-dir.create(paste(outdir,'/group_variance',sep=''), showWarnings = TRUE, recursive = FALSE, mode = "0777")
 
 write.table(variances, paste(outdir,'/group_variance/group_variance.txt',sep=''), sep='\t', row.names=TRUE)
 
@@ -205,13 +206,13 @@ dir.create(heatmap_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 #print(pval_data)
 
 
-dend_c <- t(data) %>% dist(method="man") %>% hclust(method="ward.D") %>% as.dendrogram %>% ladderize%>% color_branches(k=num_groups)
+#dend_c <- t(data) %>% dist(method="man") %>% hclust(method="ward.D") %>% as.dendrogram %>% ladderize%>% color_branches(k=num_groups)
 
 hm <- function( df, heatmap_path, file,  main, xlab ) {
     some_col_func<-function(n)(colorspace::diverge_hcl(n,h=c(246, 40), c = 96, l = c(65, 90)))
     col_colors<-rainbow_hcl(length(unique(f)))[sort_levels_values(as.numeric(f))]
     #dend_r <- df %>% dist(method="man") %>% hclust(method="ward.D") %>% as.dendrogram %>% ladderize %>% color_branches(k=10)
-    #dend_c <- t(df) %>% dist(method="man") %>% hclust(method="ward.D") %>% as.dendrogram %>% ladderize%>% color_branches(k=num_groups)
+    dend_c <- t(df) %>% dist(method="man") %>% hclust(method="ward.D") %>% as.dendrogram %>% ladderize%>% color_branches(k=num_groups)
     png(paste(heatmap_path, file, sep=''), units="in", width=11, height=8.5, res=300)
     gplots::heatmap.2(as.matrix(df),
     main = main,
