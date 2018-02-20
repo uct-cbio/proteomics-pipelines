@@ -1,7 +1,0 @@
-project_name=project01
-project_dir=/scratch/researchdata/cbio/immun/project01
-department=immunology
-user=gerrit
-sub_dirs=(raw publish)
-
-
