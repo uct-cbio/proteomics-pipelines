@@ -14,8 +14,8 @@ library('MSnbase')
 library("dplyr")
  
 option_list = list(
-make_option(c("-d", "--design"), type="character", default=NULL,
-        help="Experimental design template", metavar="character"),
+make_option(c("-q", "--quant_regex"), type="character", default=NULL,
+        help="Quant regex", metavar="character"),
 make_option(c("-p", "--peptides"), type="character", default=NULL,
         help="Path to the peptides.txt file", metavar="character"),
 make_option(c("-o","--output"), type="character", default=NULL,
@@ -33,10 +33,13 @@ path=opt$p
 
 data <- read.csv(path, sep='\t')
 
-exp_design=opt$d
+quant_regex=opt$q
 
-source(exp_design)
+#source(exp_design)
 
+cols <- names(data)[grep(quant_regex,names(data))] 
+
+print(cols)
 
 rownames(data) <- data$Identifier
 
@@ -69,7 +72,7 @@ ecol <- cols
 fname <- "Identifier"
 eset <- readMSnSet2(msnpath, ecol, fname)
 eset@phenoData$sampleNames <- cols
-eset@phenoData$sampleGroups <- f
+#eset@phenoData$sampleGroups <- f
 
 png(paste(msnbase_path,'boxplots_unnormalized.png',sep=''),units="in", width=11, height=8.5, res=300)
 par(mfrow = c(2, 1))

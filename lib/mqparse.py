@@ -254,29 +254,31 @@ class mq_txt:
         self.ips_genesets(infile, self.target_proteingroups, self.gsea_dir)
               
         # Create peptide paraameters
-        outfile=self.diff_dir + '/peptide_experimental_design.R'
-        self.create_R_parameters(  config = self.config, 
-                                   outfile=outfile, 
-                                   quant='Intensity'  )
+        for level in self.config['group_levels']:
+            outfile=self.diff_dir + '/peptide_experimental_design_{}.R'.format(level)
+            self.create_R_parameters(  config = self.config, 
+                                       outfile=outfile, 
+                                       quant='Intensity',
+                                       group_level=level)
         
         # Normalize peptides
         outdir = self.diff_dir + 'peptide_normalization'
         infile = self.peptide_txt
-        design = self.diff_dir + '/peptide_experimental_design.R'
-        self.normalize(design, infile, outdir)
+        self.normalize('Intensity.', infile, outdir)
         self.normalized_target_peptides = pd.read_csv(self.diff_dir + '/peptide_normalization/msnbase/normalized.csv') 
   
         # Create protein paraameters
-        outfile=self.diff_dir + '/protein_experimental_design.R'
-        self.create_R_parameters(  config = self.config, 
-                                   outfile=outfile, 
-                                   quant='iBAQ'  )
+        for level in self.config['group_levels']:
+            outfile=self.diff_dir + '/protein_experimental_design_{}.R'.format(level)
+            self.create_R_parameters(  config = self.config, 
+                                       outfile=outfile, 
+                                       quant='iBAQ',
+                                       group_level=level)
 
         # Normalize proteins
         outdir = self.diff_dir + 'protein_normalization'
         infile = self.gsea_dir +'/ipr_target_proteins.txt'
-        design = self.diff_dir + '/protein_experimental_design.R'
-        self.normalize(design, infile, outdir)
+        self.normalize('iBAQ.', infile, outdir)
         self.normalized_target_proteins = pd.read_csv(self.diff_dir + '/protein_normalization/msnbase/normalized.csv') 
         
         # unipept anslysis
@@ -287,13 +289,16 @@ class mq_txt:
         
         # GSEA
         outpath=self.gsea_dir
-        design = self.diff_dir + '/protein_experimental_design.R'
-        table=self.diff_dir + '/protein_normalization/msnbase/normalized.csv'
-        genecol='Mygene.entrez'
-        kocol='Leading.Protein.Kegg.Orthology.ID'
+        for level in self.config['group_levels']:
+            gsea_dir = outpath + '/' + level
+            os.mkdir(gsea_dir)
+            design = self.diff_dir + '/protein_experimental_design_{}.R'.format(level)
+            table=self.diff_dir + '/protein_normalization/msnbase/normalized.csv'
+            genecol='Mygene.entrez'
+            kocol='Leading.Protein.Kegg.Orthology.ID'
 
-        self.ips_gsea(outpath, design, table, genecol=genecol , kocol=kocol)
-        self.summarize_gsea(outpath, outpath + '/summary.txt', self.config)
+            self.ips_gsea(outpath, gsea_dir, design, table, genecol=genecol , kocol=kocol)
+            self.summarize_gsea(gsea_dir, gsea_dir + '/summary.txt', self.config, level)
 
     def create_protein_group_identifier(self, proteingroups):
         proteingroups['Identifier'] = ' (Protein group ' + proteingroups['id'].apply(str)+')'
@@ -604,9 +609,9 @@ class mq_txt:
         #pept2taxa_sc = pept2taxa_sc[newcols]
         #pept2taxa_sc.to_csv(self.unipept_dir + '/pept2taxa_family_sc.csv')
       
-    def ips_gsea(self, outpath, design, table, genecol, kocol, keggid='hsa', pval=0.05):
+    def ips_gsea(self, indir, outpath, design, table, genecol, kocol, keggid='hsa', pval=0.05):
         print(pval)
-        cmd = 'gage.R --outdir {} --keggid {} --design {} --table {} --genecol {} --kocol {} --pval {}'.format(outpath, keggid, design, table, genecol, kocol,  pval)
+        cmd = 'gage.R --indir {} --outdir {} --keggid {} --design {} --table {} --genecol {} --kocol {} --pval {}'.format(indir, outpath, keggid, design, table, genecol, kocol,  pval)
         process = subprocess.Popen(cmd, shell=True)
         process.wait()
         assert process.returncode == 0
@@ -971,18 +976,21 @@ class mq_txt:
                 new_fasta.append(rec)
         SeqIO.write(new_fasta, outfile, 'fasta')
 
-    def create_R_parameters(self, config, outfile, quant):
+    def create_R_parameters(self, config, outfile, quant, group_level):
         vals=[]
         d = '#!/usr/bin/env R\n\n'
         vals.append(d)
         d = "cols <- c("
         vals.append(d)
         samples = config['samples']
+        
         experiment = defaultdict(list)
+
         for sample in samples:
-            group = samples[sample]['GROUP']
-            #for group in groups:
-            experiment[group].append(sample)
+            if group_level in samples[sample]:
+                group = samples[sample][group_level]
+                experiment[group].append(sample)
+        
         groups = []
         reps = []
         for group in experiment:
@@ -1014,7 +1022,7 @@ class mq_txt:
         d = 'contrast.matrix <- makeContrasts(\n'
         vals.append(d)
         comps = []
-        for comparison in config['comparisons']:
+        for comparison in config['comparisons'][group_level]:
             comp = '"{}-{}"'.format(comparison[0], comparison[1])
             comps.append(comp)
         d = ','.join(comps)
@@ -1026,8 +1034,8 @@ class mq_txt:
         w.write(template)
         w.close()
 
-    def normalize(self, design, infile, outdir):
-        cmd = 'mq_normalize_intensity.R -d {} -p {} -o {} && exit'.format(design, infile,  outdir)
+    def normalize(self, quant, infile, outdir):
+        cmd = 'mq_normalize_intensity.R -q {} -p {} -o {} && exit'.format(quant, infile,  outdir)
         process = subprocess.Popen(cmd, shell=True)
         process.wait()
         assert process.returncode == 0
@@ -1119,9 +1127,9 @@ class mq_txt:
         if os.path.exists(inpath + '/group_variance/kw.txt'):
             with open(inpath + '/group_variance/kw.txt') as f:
                 kw = f.read()
-                kw_pval = np.round(float(kw.split('pvalue=')[1].split(')')[0]),3)
+                kw_pval = float(kw.split('pvalue=')[1].split(')')[0])
             if kw_pval < 0.05:
-                w.write('Kruskal-Wallis test showed a significant difference in the variance between groups (p-value {}).\n'.format(kw_pval))
+                w.write('Kruskal-Wallis test showed a significant difference in the variance between groups (p-value {}).\n'.format(np.round(kw_pval,3)))
                 
                 dunn_bh = pd.read_csv(inpath + '/group_variance/dunn_bh.csv')
                 dunn_bh = dunn_bh.set_index('Unnamed: 0')
@@ -1131,9 +1139,9 @@ class mq_txt:
                         comp = set([ind, col])
                         if not comp in comps:
                             comps.append(comp)
-                            pval = dunn_bh.loc[ind, col]
-                            if  0 <= float(pval) < 0.05:
-                                w.write("Dunn's post-hoc test with BH correction showed a significant difference between the variance of {} and {} groups (adjusted p-value {}).\n".format(col, ind, str(pval)))
+                            pval = float(dunn_bh.loc[ind, col])
+                            if  0 <= pval < 0.05:
+                                w.write("Dunn's post-hoc test with BH correction showed a significant difference between the variance of {} and {} groups (adjusted p-value {}).\n".format(col, ind, str(np.round(pval,3))))
             else:
                 w.write('Kruskal-Wallis test did not show a significant difference in the variance between groups (p-value {}).\n'.format(kw_pval))
             w.write('\n')
@@ -1161,9 +1169,9 @@ class mq_txt:
         w.write('\n')
         w.close()
     
-    def summarize_gsea(self, inpath, outfile, config):
+    def summarize_gsea(self, inpath, outfile, config, group_level):
         w = open(outfile, 'w')
-        for comp in config['comparisons']:
+        for comp in config['comparisons'][group_level]:
             w.write('Comparison between {} and {}:\n\n'.format(comp[1], comp[0]))
             mcp = '{}_{}'.format(comp[0], comp[1])
             for fl in os.listdir(inpath + '/' + mcp):
@@ -1182,89 +1190,72 @@ class mq_txt:
         w.close()
         
     def diff_analysis(self):
-        # peptides
-        peptide_exp = self.diff_dir + '/peptide_experimental_design.R'
-        peptides = self.unipept_dir + '/pept2lca_peptides.csv'
-        self.diff(peptide_exp, peptides, self.diff_dir + '/peptide_diff')
-        self.summarize_diff(self.diff_dir + '/peptide_diff', self.diff_dir + '/peptide_diff/summary.txt')
-        
-        
-        #pept2lca_phylum_sc
-        peptide_exp = self.diff_dir + '/peptide_experimental_design.R'
-        peptides=self.unipept_dir + '/pept2lca_phylum_sc.csv'
-        self.diff(peptide_exp, peptides, self.diff_dir + '/pept2lca_phylum')
-        self.summarize_diff(self.diff_dir + '/pept2lca_phylum', self.diff_dir + '/pept2lca_phylum/summary.txt')
-        
-        #pept2lca_species_sc
-        peptides=self.unipept_dir + '/pept2lca_species_sc.csv'
-        self.diff(peptide_exp, peptides, self.diff_dir + '/pept2lca_species')
-        self.summarize_diff(self.diff_dir + '/pept2lca_species', self.diff_dir + '/pept2lca_species/summary.txt')
-        
-        #pept2lca_genus_sc
-        peptides=self.unipept_dir + '/pept2lca_genus_sc.csv'
-        self.diff(peptide_exp, peptides, self.diff_dir + '/pept2lca_genus')
-        self.summarize_diff(self.diff_dir + '/pept2lca_genus', self.diff_dir + '/pept2lca_genus/summary.txt')
-        
-        #pept2lca_genus_sc
-        peptides=self.unipept_dir + '/pept2lca_family_sc.csv'
-        self.diff(peptide_exp, peptides, self.diff_dir + '/pept2lca_family')
-        self.summarize_diff(self.diff_dir + '/pept2lca_family', self.diff_dir + '/pept2lca_family/summary.txt')
-        
-        #pept2lca_sc
-        peptides=self.unipept_dir + '/pept2lca_taxon_sc.csv'
-        self.diff(peptide_exp, peptides, self.diff_dir + '/pept2lca_taxon') 
-        self.summarize_diff(self.diff_dir + '/pept2lca_taxon', self.diff_dir + '/pept2lca_taxon/summary.txt')
-        
-        # proteins
-        exp = self.diff_dir + '/protein_experimental_design.R'
-        table = self.diff_dir + '/protein_normalization/msnbase/normalized.csv'
-        self.diff(exp, table,  self.diff_dir + '/protein_diff')
-        self.summarize_diff(self.diff_dir + '/protein_diff', self.diff_dir + '/protein_diff/summary.txt')
-        
-        # genesets diff
-        exp = self.diff_dir + '/protein_experimental_design.R'
-        for col in self.normalized_target_proteins.columns.tolist():
-            if col.endswith('.term.union'):
-                self.aggregate_quant(self.normalized_target_proteins, col, 'iBAQ.', self.diff_dir + '/' + col)
-                table = self.diff_dir + '/' + col + '/' + col + '.csv'
-                self.diff(exp, table,  self.diff_dir + '/' + col)
-                self.summarize_diff(self.diff_dir + '/' + col, self.diff_dir + '/' + col + '/summary.txt')
-        
-        # KEGGG ORTHOLOGY
-        exp = self.diff_dir + '/protein_experimental_design.R'
-        col = 'Leading.Protein.Kegg.Orthology'
-        self.aggregate_quant(self.normalized_target_proteins, col, 'iBAQ.', self.diff_dir + '/' + col)
-        table = self.diff_dir + '/' + col + '/' + col + '.csv'
-        self.diff(exp, table,  self.diff_dir + '/' + col)
-        self.summarize_diff(self.diff_dir + '/' + col, self.diff_dir + '/' + col + '/summary.txt')
+        for level in self.config['group_levels']:
+            
+            os.mkdir(self.diff_dir + '/' + level)
 
-        #try:
-        #    #pept2taxa_genus_sc
-        #    peptides=self.unipept_dir + '/pept2taxa_genus_sc.csv'
-        #    self.diff(peptide_exp, peptides, self.diff_dir + '/pept2taxa_genus')
-        #except:
-        #    pass
+            # peptides
+            diff_dir = self.diff_dir + '/' + level + '/peptide_diff'
+            peptide_exp = self.diff_dir + '/peptide_experimental_design_{}.R'.format(level)
+            peptides = self.unipept_dir + '/pept2lca_peptides.csv'
+            self.diff(peptide_exp, peptides, diff_dir )
+            self.summarize_diff(diff_dir , diff_dir + '/summary.txt')
+            
+            
+            #pept2lca_phylum_sc
+            diff_dir = self.diff_dir + '/' + level + '/pept2lca_phylum'
+            peptides=self.unipept_dir + '/pept2lca_phylum_sc.csv'
+            self.diff(peptide_exp, peptides, diff_dir )
+            self.summarize_diff(diff_dir , diff_dir + '/summary.txt')
+            
+            #pept2lca_species_sc
+            diff_dir = self.diff_dir + '/' + level + '/pept2lca_species'
+            peptides=self.unipept_dir + '/pept2lca_species_sc.csv'
+            self.diff(peptide_exp, peptides, diff_dir )
+            self.summarize_diff(diff_dir , diff_dir + '/summary.txt')
+            
+            #pept2lca_genus_sc
+            diff_dir = self.diff_dir + '/' + level + '/pept2lca_genus'
+            peptides=self.unipept_dir + '/pept2lca_genus_sc.csv'
+            self.diff(peptide_exp, peptides, diff_dir )
+            self.summarize_diff(diff_dir , diff_dir + '/summary.txt')
+            
+            #pept2lca_genus_sc
+            diff_dir = self.diff_dir + '/' + level + '/pept2lca_family'
+            peptides=self.unipept_dir + '/pept2lca_family_sc.csv'
+            self.diff(peptide_exp, peptides, diff_dir )
+            self.summarize_diff(diff_dir , diff_dir + '/summary.txt')
+            
+            #pept2lca_sc
+            diff_dir = self.diff_dir + '/' + level + '/pept2lca_taxon'
+            peptides=self.unipept_dir + '/pept2lca_taxon_sc.csv'
+            self.diff(peptide_exp, peptides, diff_dir ) 
+            self.summarize_diff(diff_dir, diff_dir + '/summary.txt')
+            
+            # proteins
+            diff_dir = self.diff_dir + '/' + level + '/protein_diff'
+            protein_exp = self.diff_dir + '/protein_experimental_design_{}.R'.format(level)
+            table = self.diff_dir + '/protein_normalization/msnbase/normalized.csv'
+            self.diff(protein_exp, table,  diff_dir )
+            self.summarize_diff(diff_dir ,diff_dir + '/summary.txt')
+            
+            # genesets diff
+            for col in self.normalized_target_proteins.columns.tolist():
+                if col.endswith('.term.union'):
+                    diff_dir = self.diff_dir + '/' + level + '/' + col
+                    self.aggregate_quant(self.normalized_target_proteins, col, 'iBAQ.', diff_dir) 
+                    table = diff_dir  + '/' + col + '.csv'
+                    self.diff(protein_exp, table,  diff_dir )
+                    self.summarize_diff(diff_dir , diff_dir + '/summary.txt')
+            
+            # KEGGG ORTHOLOGY
+            col = 'Leading.Protein.Kegg.Orthology'
+            diff_dir = self.diff_dir + '/' + level + '/' + col
+            self.aggregate_quant(self.normalized_target_proteins, col, 'iBAQ.', diff_dir )
+            table = diff_dir + '/' + col + '.csv'
+            self.diff(protein_exp, table, diff_dir)
+            self.summarize_diff(diff_dir , diff_dir + '/summary.txt')
 
-        #try:
-        #    #pept2taxa_sc
-        #    peptides=self.unipept_dir + '/pept2taxa_taxon_sc.csv'
-        #    self.diff(peptide_exp, peptides, self.diff_dir + '/pept2taxa_taxon')
-        #except:
-        #    pass
-        
-        #try:
-        #    #pept2taxa_sc
-        #    peptides=self.unipept_dir + '/pept2taxa_species_sc.csv'
-        #    self.diff(peptide_exp, peptides, self.diff_dir + '/pept2taxa_species')
-        #except:
-        #    pass
-
-        #try:
-        #    #pept2taxa_sc
-        #    peptides=self.unipept_dir + '/pept2taxa_family_sc.csv'
-        #    self.diff(peptide_exp, peptides, self.diff_dir + '/pept2taxa_family')
-        #except:
-        #    pass
 
     def ec2ko(self, ec):
         ko = rfunc.string2ko('[EC:{}]'.format(ec))

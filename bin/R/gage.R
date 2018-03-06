@@ -12,6 +12,11 @@ make_option(c("-o", "--outdir"),
        default=NULL,
        help="Directory containing MQ proteogenomics pipeline output files",
         metavar="character"),
+make_option(c("-i", "--indir"),
+       type="character",
+       default=NULL,
+       help="Directory containing geneset annotations",
+        metavar="character"),
 make_option(c("-k", "--keggid"),
         type="character",
         default=NULL,
@@ -47,6 +52,7 @@ make_option(c("-p", "--pval"),
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
+inpath = opt$indir
 path = opt$outdir
 species = opt$keggid
 genecol = opt$genecol
@@ -57,59 +63,59 @@ source(opt$design)
 
 # GENE SETS 
 bp <- 'false'
-bp_path <- paste(path,'/bpset.Rdata',sep='')
+bp_path <- paste(inpath,'/bpset.Rdata',sep='')
 if(file.exists(bp_path)){
     load(bp_path)
     bp <- 'true'
 }
 
 mf <- 'false'
-mf_path <- paste(path,'/mfset.Rdata',sep='')
+mf_path <- paste(inpath,'/mfset.Rdata',sep='')
 if(file.exists(mf_path)){
     load(mf_path)
     mf <- 'true'
 }
 cc <- 'false'
-cc_path <- paste(path,'/ccset.Rdata',sep='')
+cc_path <- paste(inpath,'/ccset.Rdata',sep='')
 if(file.exists(cc_path)){
     load(cc_path)
     cc <- 'true'
 }
 kegg <- 'false'
-kegg_path <- paste(path,'/keggset.Rdata',sep='')
+kegg_path <- paste(inpath,'/keggset.Rdata',sep='')
 if(file.exists(kegg_path)){
     load(kegg_path)
     kegg <- 'true'
 }
 ec <- 'false'
-ec_path <- paste(path,'/ecset.Rdata',sep='')
+ec_path <- paste(inpath,'/ecset.Rdata',sep='')
 if(file.exists(ec_path)){
     load(ec_path)
     ec <- 'true'
 }
 operon <-'false'
-operon_path <- paste(path,'/operonset.Rdata',sep='')
+operon_path <- paste(inpath,'/operonset.Rdata',sep='')
 if(file.exists(operon_path)){
     load(operon_path)
     operon <- 'true'
 }
 
 ipr <- 'false'
-ipr_path <- paste(path,'/iprset.Rdata',sep='')
+ipr_path <- paste(inpath,'/iprset.Rdata',sep='')
 if(file.exists(ipr_path)){
     load(ipr_path)
     ipr <- 'true'
 }
 
 metacyc <- 'false'
-metacyc_path <- paste(path,'/metacycset.Rdata',sep='')
+metacyc_path <- paste(inpath,'/metacycset.Rdata',sep='')
 if(file.exists(metacyc_path)){
     load(metacyc_path)
     metacyc <- 'true'
 }
 
 reactome <- 'false'
-reactome_path <- paste(path,'/reactomeset.Rdata',sep='')
+reactome_path <- paste(inpath,'/reactomeset.Rdata',sep='')
 if(file.exists(reactome_path)){
     load(reactome_path)
     reactome <- 'true'
