@@ -1,3 +1,7 @@
 tests/* filter=lfs diff=lfs merge=lfs -text
 tests/*/* filter=lfs diff=lfs merge=lfs -text
 tests/*/*/* filter=lfs diff=lfs merge=lfs -text
+tests/lib/testdata/* filter=lfs diff=lfs merge=lfs -text
+tests/lib/testdata/example_mq/* filter=lfs diff=lfs merge=lfs -text
+tests/lib/testdata/*/* filter=lfs diff=lfs merge=lfs -text
+tests/lib/testdata/*/*/* filter=lfs diff=lfs merge=lfs -text
