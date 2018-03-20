@@ -1,0 +1,479 @@
+BLASTP 2.2.24 [Aug-08-2010]
+
+
+Reference: Altschul, Stephen F., Thomas L. Madden, Alejandro A. Schaffer, 
+Jinghui Zhang, Zheng Zhang, Webb Miller, and David J. Lipman (1997), 
+"Gapped BLAST and PSI-BLAST: a new generation of protein database search
+programs",  Nucleic Acids Res. 25:3389-3402.
+
+Reference for compositional score matrix adjustment: Altschul, Stephen F., 
+John C. Wootton, E. Michael Gertz, Richa Agarwala, Aleksandr Morgulis,
+Alejandro A. Schaffer, and Yi-Kuo Yu (2005) "Protein database searches
+using compositionally adjusted substitution matrices", FEBS J. 272:5101-5109.
+
+Query= 8
+         (561 letters)
+
+Database: ./globals/con.Fasta 
+           95,118 sequences; 48,598,454 total letters
+
+Searching..................................................done
+
+
+
+                                                                 Score    E
+Sequences producing significant alignments:                      (bits) Value
+
+PTHR37156:SF1                                                          79   2e-14
+PTHR33444:SF4                                                          77   9e-14
+PTHR33444:SF2                                                          57   1e-07
+PTHR33444                                                              50   2e-05
+PTHR16830                                                              41   0.010
+PTHR33444:SF3                                                          40   0.018
+PTHR34593:SF2                                                          39   0.036
+PTHR34152:SF3                                                          37   0.099
+PTHR37156                                                              35   0.38 
+PTHR36594                                                              35   0.53 
+PTHR13817:SF8                                                          33   1.5  
+PTHR12002:SF108                                                        32   3.4  
+PTHR24213:SF18                                                         32   3.9  
+PTHR35313:SF1                                                          32   6.0  
+PTHR24346                                                              31   7.6  
+
+>PTHR37156:SF1 
+          Length = 3934
+
+ Score = 79.3 bits (194), Expect = 2e-14,   Method: Composition-based stats.
+ Identities = 56/219 (25%), Positives = 99/219 (45%), Gaps = 35/219 (15%)
+
+Query: 52   NTLAPEINRSPRHSIIPDISLDSESLRSPRHSLAPE-VLSPRNSLVPDTAGLRSPRHSLV 110
+            N + PE +  P + ++P+ S   E++  P +S  PE V+ P NS +P+   +  P +S +
+Sbjct: 1119 NVVVPENSFIPENVVVPENSFIPENVVVPENSFIPENVVVPENSFIPENVVV--PENSFI 1176
+
+Query: 111  PNDTYSRSPRNSLVPDSALSPRNSLVPDSFNRS-----------------PRNSLVPEVS 153
+            P +     P NS +P++ + P NS +P++                     P NS +PE S
+Sbjct: 1177 PENVVV--PENSFIPENVVVPENSFIPENVVVPENVVVPENNFIMENVIVPENSFIPENS 1234
+
+Query: 154  KSGRNSLVPDSNRSPRHSLVPDSNTYGSRANLAPDFNRSPRNSLIPDSSRTPRASLTPSE 213
+                NS +P+++  P +S +P+ N       + P+ N  P N ++P++S  P     P  
+Sbjct: 1235 FIPENSFIPENSFIPENSFIPE-NVIVPENVMVPENNFIPENVVVPENSFIPENMFIPEN 1293
+
+Query: 214  STTWHKDEETGSRSPRHSIQVPDSSRSPRGSIAPESLCV 252
+                          P +S  +P++   P  S  PE++ V
+Sbjct: 1294 VVV-----------PENSF-IPENVVVPEMSFIPENVVV 1320
+
+
+
+ Score = 77.8 bits (190), Expect = 6e-14,   Method: Composition-based stats.
+ Identities = 54/222 (24%), Positives = 99/222 (44%), Gaps = 31/222 (13%)
+
+Query: 52   NTLAPEINRSPRHSIIPDISLDSESLRSPRHSLAPE-VLSPRNSLVPDTAGLRSPRHSLV 110
+            N + PE +  P +S IP+ S   E++  P +S  PE V+ P NS +P+   +  P +S +
+Sbjct: 1095 NVVVPENSFIPENSFIPENSFIPENVVVPENSFIPENVVVPENSFIPENVVV--PENSFI 1152
+
+Query: 111  PNDTYSRSPRNSLVPDSALSPRNSLVPDSFNRSPRNSLVPEVSKSGRNS----------- 159
+            P +     P NS +P++ + P NS +P++    P NS +PE      NS           
+Sbjct: 1153 PENVV--VPENSFIPENVVVPENSFIPENV-VVPENSFIPENVVVPENSFIPENVVVPEN 1209
+
+Query: 160  -------------LVPDSNRSPRHSLVPDSNTYGSRANLAPDFNRSPRNSLIPDSSRTPR 206
+                         +VP+++  P +S +P+ N++    +  P+ +  P N ++P++   P 
+Sbjct: 1210 VVVPENNFIMENVIVPENSFIPENSFIPE-NSFIPENSFIPENSFIPENVIVPENVMVPE 1268
+
+Query: 207  ASLTPSESTTWHKDEETGSRSPRHSIQVPDSSRSPRGSIAPE 248
+             +  P             +     ++ VP++S  P   + PE
+Sbjct: 1269 NNFIPENVVVPENSFIPENMFIPENVVVPENSFIPENVVVPE 1310
+
+
+
+ Score = 75.5 bits (184), Expect = 3e-13,   Method: Composition-based stats.
+ Identities = 54/229 (23%), Positives = 104/229 (45%), Gaps = 43/229 (18%)
+
+Query: 52   NTLAPEINRSPRHSIIPDISLDSESLRSPRHSLAPE------------------------ 87
+            N + PE +  P + ++P+ S   E++  P +S  PE                        
+Sbjct: 1155 NVVVPENSFIPENVVVPENSFIPENVVVPENSFIPENVVVPENSFIPENVVVPENVVVPE 1214
+
+Query: 88   -------VLSPRNSLVPDTAGLRSPRHSLVPNDTYSRSPRNSLVPDSALSPRNSLVPDSF 140
+                   V+ P NS +P+ + +  P +S +P +++   P NS +P++ + P N +VP++ 
+Sbjct: 1215 NNFIMENVIVPENSFIPENSFI--PENSFIPENSFI--PENSFIPENVIVPENVMVPEN- 1269
+
+Query: 141  NRSPRNSLVPEVSKSGRNSLVPDSNRSPRHSLVPDSNTYGSRANLAPDFNRSPRNSLIPD 200
+            N  P N +VPE      NS +P++   P + +VP+ N++     + P+ +  P N ++P+
+Sbjct: 1270 NFIPENVVVPE------NSFIPENMFIPENVVVPE-NSFIPENVVVPEMSFIPENVVVPE 1322
+
+Query: 201  SSRTPRASLTPSESTTWHKDEETGSRSPRHSIQVPDSSRSPRGSIAPES 249
+            +S  P   + P  S         G+     ++ V ++S  P   + PE+
+Sbjct: 1323 NSFIPENVVVPMNSFIPENVVVPGNSFFPENVVVMENSFIPENVVVPEN 1371
+
+
+
+ Score = 75.5 bits (184), Expect = 4e-13,   Method: Composition-based stats.
+ Identities = 54/203 (26%), Positives = 93/203 (45%), Gaps = 29/203 (14%)
+
+Query: 62   PRHSIIPDISLDSESLRSPRHSLAPE-VLSPRNSLVPDTAGLRSPRHSLVPNDTYSRSPR 120
+            P + ++P+ S   E+   P +S  PE V+ P NS +P+   +  P +S +P +     P 
+Sbjct: 1093 PENVVVPENSFIPENSFIPENSFIPENVVVPENSFIPENVVV--PENSFIPENVV--VPE 1148
+
+Query: 121  NSLVPDSALSPRNSLVPDSFNRSPRNSLVPEVSKSGRNSLVPDSNRSPRHSLVPDSNTYG 180
+            NS +P++ + P NS +P++    P NS +PE      NS +P++   P +S +P++    
+Sbjct: 1149 NSFIPENVVVPENSFIPENV-VVPENSFIPENVVVPENSFIPENVVVPENSFIPENVVVP 1207
+
+Query: 181  SRAN-----------LAPDFNRSPRNSLIPDSSRTPRASLTPSESTTWHKDEETGSRSPR 229
+                           + P+ +  P NS IP++S  P  S  P  S             P 
+Sbjct: 1208 ENVVVPENNFIMENVIVPENSFIPENSFIPENSFIPENSFIPENSFI-----------PE 1256
+
+Query: 230  HSIQVPDSSRSPRGSIAPESLCV 252
+            + I VP++   P  +  PE++ V
+Sbjct: 1257 NVI-VPENVMVPENNFIPENVVV 1278
+
+
+
+ Score = 71.2 bits (173), Expect = 6e-12,   Method: Composition-based stats.
+ Identities = 46/174 (26%), Positives = 87/174 (50%), Gaps = 22/174 (12%)
+
+Query: 52   NTLAPEINRSPRHSIIPDISLDSESLRSPRHSLAPE-VLSPRNSLVPDTAGLRSPRHSLV 110
+            N + PE N  P + ++P+ S   E++  P + + PE    P N +VP+ + +  P + +V
+Sbjct: 1263 NVMVPENNFIPENVVVPENSFIPENMFIPENVVVPENSFIPENVVVPEMSFI--PENVVV 1320
+
+Query: 111  PNDTYSRS----PRNSLVPDSALSPRNSLVPDSF-----NRSPRNSLVPEVSKSGRNSLV 161
+            P +++       P NS +P++ + P NS  P++      +  P N +VPE S    N ++
+Sbjct: 1321 PENSFIPENVVVPMNSFIPENVVVPGNSFFPENVVVMENSFIPENVVVPENSFIPENVVM 1380
+
+Query: 162  PDSNRSPRHSLVPDSNTYGSRA----------NLAPDFNRSPRNSLIPDSSRTP 205
+            P+++  P + +VP++N                N+ P+ N  P N ++P++S  P
+Sbjct: 1381 PENSFIPENVVVPENNFIPENVMVPGNSFFPENVVPENNFIPENVMVPENSFIP 1434
+
+
+
+ Score = 69.3 bits (168), Expect = 3e-11,   Method: Composition-based stats.
+ Identities = 55/219 (25%), Positives = 92/219 (42%), Gaps = 38/219 (17%)
+
+Query: 50   SRNTLAPEINRSPRHSIIPDISLDSESLRSPRHSLA------------------PE-VLS 90
+            + N   PE    P +S IP+ S   E++  P +S                    PE V+ 
+Sbjct: 1040 TENNFIPENVVVPENSFIPENSFFHENV-VPENSFIPENVVVPENVVVPENNFIPENVVV 1098
+
+Query: 91   PRNSLVPDTAGLRSPRHSLVPNDTYSRSPRNSLVPDSALSPRNSLVPDSFNRSPRNSLVP 150
+            P NS +P+ + +  P +S +P +     P NS +P++ + P NS +P++    P NS +P
+Sbjct: 1099 PENSFIPENSFI--PENSFIPENVVV--PENSFIPENVVVPENSFIPENV-VVPENSFIP 1153
+
+Query: 151  EVSKSGRNSLVPDSNRSPRHSLVPDSNTYGSRANLAPDFNRSPRNSLIPDSSRTPRASLT 210
+            E      NS +P++   P +S +P++                P NS IP++   P  S  
+Sbjct: 1154 ENVVVPENSFIPENVVVPENSFIPENVVV-------------PENSFIPENVVVPENSFI 1200
+
+Query: 211  PSESTTWHKDEETGSRSPRHSIQVPDSSRSPRGSIAPES 249
+            P             +     ++ VP++S  P  S  PE+
+Sbjct: 1201 PENVVVPENVVVPENNFIMENVIVPENSFIPENSFIPEN 1239
+
+
+
+ Score = 59.7 bits (143), Expect = 2e-08,   Method: Composition-based stats.
+ Identities = 37/148 (25%), Positives = 73/148 (49%), Gaps = 21/148 (14%)
+
+Query: 52   NTLAPEINRSPRHSIIPDISLDSESLRSPRHSLAPE-VLSPRNSLVPDTAGLRS----PR 106
+            N + PE++  P + ++P+ S   E++  P +S  PE V+ P NS  P+   +      P 
+Sbjct: 1305 NVVVPEMSFIPENVVVPENSFIPENVVVPMNSFIPENVVVPGNSFFPENVVVMENSFIPE 1364
+
+Query: 107  HSLVPNDTYSRS----PRNSLVPDSALSPRNSLVPDSF----------NRSPRNSLVPEV 152
+            + +VP +++       P NS +P++ + P N+ +P++           N  P N+ +PE 
+Sbjct: 1365 NVVVPENSFIPENVVMPENSFIPENVVVPENNFIPENVMVPGNSFFPENVVPENNFIPEN 1424
+
+Query: 153  SKSGRNSLVPDSNRS--PRHSLVPDSNT 178
+                 NS +P++     P + ++ ++NT
+Sbjct: 1425 VMVPENSFIPENENVVIPENIIMLENNT 1452
+
+
+
+ Score = 38.1 bits (87), Expect = 0.056,   Method: Composition-based stats.
+ Identities = 19/82 (23%), Positives = 42/82 (51%), Gaps = 2/82 (2%)
+
+Query: 52   NTLAPEINRSPRHSIIPDISLDSESLRSPRHSLAPEVLSPRNSLVPDTAGLRSPRHSLVP 111
+            N + PE +  P + ++P+ +   E++  P +S  PE + P N+ +P+   +  P +S +P
+Sbjct: 1377 NVVMPENSFIPENVVVPENNFIPENVMVPGNSFFPENVVPENNFIPENVMV--PENSFIP 1434
+
+Query: 112  NDTYSRSPRNSLVPDSALSPRN 133
+             +     P N ++ ++  +  N
+Sbjct: 1435 ENENVVIPENIIMLENNTNTEN 1456
+
+
+>PTHR33444:SF4 
+          Length = 285
+
+ Score = 77.4 bits (189), Expect = 9e-14,   Method: Compositional matrix adjust.
+ Identities = 41/140 (29%), Positives = 71/140 (50%), Gaps = 7/140 (5%)
+
+Query: 402 TYGSVAYQLKDANLEASGTCDFVCKALSIVNKTVVVTIVLVCLSTLPLLMLIMGIQFLKD 461
+           +Y S   ++++A  E+ G  DF+      +  T+   IV+  +  +P+ M+++G  +  D
+Sbjct: 85  SYDSWFERIREARKESRGFVDFIKNIFFFILGTIGCMIVIGVMMVIPICMIVIGAIYFND 144
+
+Query: 462 CPREPYIPIYMVVGGSVGCVKMGLTLYNQLHTRRM----DASSTANAASIGSRVASIALT 517
+           CP E  IPIY++V G  G +K  ++++ +    R     D     NA    + V S+ + 
+Sbjct: 145 CPIERMIPIYLIVWGCFGLLKQIISMFERCRRHRQNQQRDNEQEDNAKQ--NPVQSL-IN 201
+
+Query: 518 GFLIIWFSFGNYWVLRIKWP 537
+            FLI WF  GNYW+  +  P
+Sbjct: 202 CFLICWFIAGNYWIYHVYEP 221
+
+
+>PTHR33444:SF2 
+          Length = 238
+
+ Score = 57.0 bits (136), Expect = 1e-07,   Method: Compositional matrix adjust.
+ Identities = 33/113 (29%), Positives = 61/113 (53%), Gaps = 6/113 (5%)
+
+Query: 426 KALSIVNKTVVVTIVLVCLS---TLPLLMLIMGIQFLKDCPREPYIPIYMVVGGSVGCVK 482
+           +++ I+    VV+I+  CLS     P+ M+++GI    +CP +P IPIY++V G+   + 
+Sbjct: 61  RSMWIMMVATVVSII--CLSMYYIFPIAMIVIGIVNFDNCPIQPMIPIYLIVHGAFMMIM 118
+
+Query: 483 MGLTLYNQLHTRRM-DASSTANAASIGSRVASIALTGFLIIWFSFGNYWVLRI 534
+           M + +Y Q++  R+ +         +  R+ ++ +T F   WF  G  W+ RI
+Sbjct: 119 MMMMMYWQIYMTRVNEEDEDTREEMMIVRIINMIMTLFGFCWFIMGMVWIFRI 171
+
+
+>PTHR33444 
+          Length = 269
+
+ Score = 49.7 bits (117), Expect = 2e-05,   Method: Compositional matrix adjust.
+ Identities = 39/152 (25%), Positives = 67/152 (44%), Gaps = 9/152 (5%)
+
+Query: 402 TYGSVAYQLKDANLEASGTCDFVCKALSIVNKTVVVTIVLVCLSTLPLLMLIMGIQFLKD 461
+           TY S   ++++    +    DF       +   +   I    +  +P+ M+I+G     D
+Sbjct: 69  TYXSXWDRIEEMMDMSWDWDDFXRPMWIXIXARIXWMIWXAIMMVIPIAMIIIGAINXND 128
+
+Query: 462 CPREPYIPIYMVVGGSVGCVKMGLTLY-NQLHTRRMDASSTANAASIGSRVASIALTGFL 520
+           CP +P IPIY++V G    +K  + +Y      RR +        ++   +  I +  F+
+Sbjct: 129 CPIQPMIPIYLIVWGVFWIIKNIINMYWRMRRWRRNEEEENEWWENMIINIIDILINIFI 188
+
+Query: 521 IIWFSFGNYWVLRIKWPDYAPTLF----EPNH 548
+            +WF  GNYW+ RI    Y P  +    EPN+
+Sbjct: 189 FVWFIMGNYWIYRI----YPPVNWDDPTEPNY 216
+
+
+>PTHR16830 
+          Length = 1213
+
+ Score = 40.8 bits (94), Expect = 0.010,   Method: Compositional matrix adjust.
+ Identities = 20/97 (20%), Positives = 47/97 (48%), Gaps = 4/97 (4%)
+
+Query: 116 SRSPRNSLVPDSALSPRNSLVPDSFNRSPRNSLVPEVSKSGRNSLVPDSNRSPRHSLVPD 175
+           +R P  ++ P++   P  ++ P++    P  ++ P  +++   ++VP++   P  ++   
+Sbjct: 114 TRDPETTIAPETTXQPETTMAPEA----PETTVAPMTTRAPETTMVPETTVMPETTMWVP 169
+
+Query: 176 SNTYGSRANLAPDFNRSPRNSLIPDSSRTPRASLTPS 212
+             T      +AP+    P  ++IPD++R P  +  P 
+Sbjct: 170 ETTPEPETTMAPETTMPPETTMIPDTTRAPETTRPPE 206
+
+
+
+ Score = 39.3 bits (90), Expect = 0.027,   Method: Compositional matrix adjust.
+ Identities = 28/124 (22%), Positives = 56/124 (45%), Gaps = 24/124 (19%)
+
+Query: 53  TLAPEINRSPRHSIIPDISLDSESLRSPRHSLAPEVLSPRNSLVPDTAGLRSPRHSLVPN 112
+           T+ PE  R P  +I P      E+   P  ++APE  +P  ++ P T             
+Sbjct: 108 TMTPETTRDPETTIAP------ETTXQPETTMAPE--APETTVAPMT------------- 146
+
+Query: 113 DTYSRSPRNSLVPDSALSPRNSLVPDSFNRSPRNSLVPEVSKSGRNSLVPDSNRSPRHSL 172
+              +R+P  ++VP++ + P  ++        P  ++ PE +     +++PD+ R+P  + 
+Sbjct: 147 ---TRAPETTMVPETTVMPETTMWVPETTPEPETTMAPETTMPPETTMIPDTTRAPETTR 203
+
+Query: 173 VPDS 176
+            P++
+Sbjct: 204 PPET 207
+
+
+>PTHR33444:SF3 
+          Length = 277
+
+ Score = 39.7 bits (91), Expect = 0.018,   Method: Compositional matrix adjust.
+ Identities = 35/150 (23%), Positives = 63/150 (42%), Gaps = 16/150 (10%)
+
+Query: 409 QLKDANLEASGTCDFVCKALSIVNKTVVVTIVLVCLSTLPLLMLIMGIQFLKDCPREPYI 468
+           +L D    +  T +F       +N+ +   I +  L  L  LM+I G+  +  C  +P I
+Sbjct: 92  KLSDVYSMSGDTVEFARNMSDYINERIPYQIWIAVLICLIFLMMIFGLLNIPFCHIQPMI 151
+
+Query: 469 PIYMVVGGSVGCVKMGLTLYNQLHT--------RRMDASSTANAASIGSRVASIALTGFL 520
+           PI+++V G +  +     +Y  + T        R++ AS   +   I   +A+       
+Sbjct: 152 PIWLIVEGVLFMISCTFRMYFLIPTPRRYRRQQRQLGASLLCHGIEILFIIAN------- 204
+
+Query: 521 IIWFSFGNYWVLRIKWPDYAPTLFEPNHWC 550
+           I+W   G  WV   K+  +   + E  H+C
+Sbjct: 205 IVWLILGCIWVYGSKYFVHFNEIME-RHYC 233
+
+
+>PTHR34593:SF2 
+          Length = 230
+
+ Score = 38.9 bits (89), Expect = 0.036,   Method: Compositional matrix adjust.
+ Identities = 38/131 (29%), Positives = 68/131 (51%), Gaps = 7/131 (5%)
+
+Query: 90  SPRNSLVPDTAGLRSPRHSLVPNDTYSRSPRNSLVP-DSALSPRNSLVPDSFNRSPRNSL 148
+           SP  ++VP      SP  ++VP D ++ SP  +++P D   SP  ++VP     SP  ++
+Sbjct: 27  SPSVAMVP-VDHTSSPSVAMVPVD-HTSSPSVAMIPVDHTSSPSVAMVPVDHTSSPSVAM 84
+
+Query: 149 VP-EVSKSGRNSLVP-DSNRSPRHSLVPDSNTYGSRANLAP-DFNRSPRNSLIP-DSSRT 204
+           VP + + S   +++P D   SP  ++VP  +T      + P D   SP  +++P D + +
+Sbjct: 85  VPVDHTSSPSVAMIPVDHTSSPSVAMVPVDHTSSPSVAMIPVDHTSSPSVAMVPVDHTSS 144
+
+Query: 205 PRASLTPSEST 215
+           P  ++ P + T
+Sbjct: 145 PSVAMVPVDHT 155
+
+
+>PTHR34152:SF3 
+          Length = 201
+
+ Score = 37.4 bits (85), Expect = 0.099,   Method: Compositional matrix adjust.
+ Identities = 17/62 (27%), Positives = 38/62 (61%), Gaps = 1/62 (1%)
+
+Query: 434 TVVVTIVLVCLSTLPLLMLIMGIQFLKDCPREPYIPIYMVVGGSVGCVKMGLTLYNQLHT 493
+            V ++I+++CL+ +P+ M+++GI  + DC  +  IPI+M+V   +  ++  +    ++  
+Sbjct: 33  IVFISIMIICLA-IPIYMIVIGIVKMNDCEIDQRIPIWMIVMAILMIIERMMECIMEMMD 91
+
+Query: 494 RR 495
+           RR
+Sbjct: 92  RR 93
+
+
+>PTHR37156 
+          Length = 3387
+
+ Score = 35.4 bits (80), Expect = 0.38,   Method: Composition-based stats.
+ Identities = 36/180 (20%), Positives = 66/180 (36%), Gaps = 14/180 (7%)
+
+Query: 73  DSESLRSPRHSLAPEVLSPRNSLVPDTAGLRSPRHSLVPNDTYSRSPRNSLVPDSALSPR 132
+           D E+     ++  PE      + +P+     +   + +P +     P N   P++   P 
+Sbjct: 825 DIENXXXTENNFIPENXXXPENFIPENFFHENXXENFIPENXXX--PENXXXPENNFIPE 882
+
+Query: 133 NSLVPDSF---NRSPRNSLVPEVSKSGRNSLVPDSNRSPRHSLVPDSNTYGSRANLAPDF 189
+           N   P++F   N  P N  +PE      N  +P++   P  + +P++       N  P+ 
+Sbjct: 883 NXXXPENFIPENFIPEN-FIPENXXXPEN-FIPENXXXP-ENFIPENXXXPE--NFIPEN 937
+
+Query: 190 NRSPRNSLIPDSSRTPRASLTPSESTTWHKDEETGSRSPRHSIQVPDSSRSPRGSIAPES 249
+              P N  IP++   P  +  P                P + I  P++   P     PE+
+Sbjct: 938 XXXPEN-FIPENXXXPE-NFIPENXXXPENFIPENXXXPENFI--PENXXXPENXXXPEN 993
+
+
+>PTHR36594 
+          Length = 3081
+
+ Score = 35.0 bits (79), Expect = 0.53,   Method: Composition-based stats.
+ Identities = 25/104 (24%), Positives = 44/104 (42%), Gaps = 4/104 (3%)
+
+Query: 102  LRSPRHSLVPNDTYSRSPRNSLVPDSALSPRNSLVPDSFNRSPRNSLVPEVSKSGRNSLV 161
+            +R P++ + P +   + P N  +P +  +P N  +P +  +SP N   P   K   N  +
+Sbjct: 2260 IRIPKNIIWPXNI--KXPTNIKMPINITNPTNXQIPPN-XKSPINXQXPPNIKXPWNXQM 2316
+
+Query: 162  PDSNRSPRHSLVPDSNTYGSRANLAPDFNRSPRNSLIPDSSRTP 205
+            P + +SP +   P      +     P+    P N   P + R P
+Sbjct: 2317 PPNIKSPTNXQFPPDYNIPTNMQXPPN-XEXPTNYQXPPNIRXP 2359
+
+
+>PTHR13817:SF8 
+          Length = 32436
+
+ Score = 33.5 bits (75), Expect = 1.5,   Method: Composition-based stats.
+ Identities = 24/91 (26%), Positives = 40/91 (43%), Gaps = 11/91 (12%)
+
+Query: 95    LVPDTAGLRSPRHSLVPNDTYSR-----------SPRNSLVPDSALSPRNSLVPDSFNRS 143
+             +V ++AG +    SL  + T+S+           +P ++  P+   SP+    P+   +S
+Sbjct: 31744 VVENSAGRQEAHFSLTIHKTFSKEKAVKSPPAVKAPTSAKSPEPVKSPQGIKSPEPRLKS 31803
+
+Query: 144   PRNSLVPEVSKSGRNSLVPDSNRSPRHSLVP 174
+             P     PE +KS      PD  +SPR    P
+Sbjct: 31804 PPPVKSPEAAKSPXXXXEPDEVKSPRRVKSP 31834
+
+
+>PTHR12002:SF108 
+          Length = 216
+
+ Score = 32.3 bits (72), Expect = 3.4,   Method: Compositional matrix adjust.
+ Identities = 29/101 (28%), Positives = 47/101 (46%), Gaps = 25/101 (24%)
+
+Query: 444 LSTLPLLMLIMG---IQFLKDCPREPYIPI---YMV--------VGGSVGCVKMGLTLYN 489
+           LS+  L++L++G   ++FL+D   EP+I +   YM         + G +G +   + +Y 
+Sbjct: 89  LSSFALIILVLGLDCVKFLRD---EPHIKLRMCYMAGFILGIGSIFGMIGSIWYAVDVYM 145
+
+Query: 490 QLHTRRMD--------ASSTANAASIGSRVASIALTGFLII 522
+           +LH   +         +     A S G  VASI LT  L I
+Sbjct: 146 ELHNVFLXGIHYDFGWSCWMGMAGSTGCFVASIVLTCCLYI 186
+
+
+>PTHR24213:SF18 
+          Length = 835
+
+ Score = 32.0 bits (71), Expect = 3.9,   Method: Compositional matrix adjust.
+ Identities = 40/130 (30%), Positives = 54/130 (41%), Gaps = 17/130 (13%)
+
+Query: 51  RNTLAPEINRSP---RHSIIPDISLDSESLRSPRHSLAPEVLSPRNSLVPDTAGLRSPRH 107
+           R+T    IN SP   RHS  P +S      RSP+H   PE+LSP    +       S RH
+Sbjct: 412 RSTSQGSINXSPVYSRHSYTPTMS------RSPQHFHRPELLSPMVQRMSHRTSSMSSRH 465
+
+Query: 108 SLVPNDTYSRSP-RNSLVPDSALSPRNSLVPDSFNRSPRNSLVPEVSKSGRNSLVPDSNR 166
+               ND+   SP R+  +P     P +            NS +P    S   +  P   +
+Sbjct: 466 ----NDSRPNSPFRHHFIPHIGNEPSSGR---XXXXXXXNSPLPYRPDSRPLTSTPTYAQ 518
+
+Query: 167 SPRHSLVPDS 176
+           +P+H  VPD 
+Sbjct: 519 TPKHFHVPDQ 528
+
+
+>PTHR35313:SF1 
+          Length = 1154
+
+ Score = 31.6 bits (70), Expect = 6.0,   Method: Compositional matrix adjust.
+ Identities = 12/33 (36%), Positives = 19/33 (57%)
+
+Query: 506 SIGSRVASIALTGFLIIWFSFGNYWVLRIKWPD 538
+           S+ S +  I L+  ++IWF   NYW + I W +
+Sbjct: 441 SLRSYMIFIVLSSIMVIWFMMHNYWFINIYWMN 473
+
+
+>PTHR24346 
+          Length = 893
+
+ Score = 31.2 bits (69), Expect = 7.6,   Method: Compositional matrix adjust.
+ Identities = 21/70 (30%), Positives = 33/70 (47%), Gaps = 1/70 (1%)
+
+Query: 283 RSPRGSIARSTLNAEDCGRSPRGSLTLTFQEPPANERRSSADNPSGSRSGGRSTSPYRSS 342
+           R PRG+ +RST +     R  R   T+T+  PPA+   +    P+G R     T+P+  +
+Sbjct: 692 RFPRGTSSRSTFHGGQPXREMRDRRTMTYNGPPASPSXNWQIRPNGXRP-SHETTPWNQN 750
+
+Query: 343 SRGAVNAAYS 352
+            R      +S
+Sbjct: 751 RRRPTTNIFS 760
+
+
+  Database: ./globals/con.Fasta
+    Posted date:  Apr 2, 2015  1:50 AM
+  Number of letters in database: 48,598,454
+  Number of sequences in database:  95,118
+  
+Lambda     K      H
+   0.313    0.128    0.375 
+
+Gapped
+Lambda     K      H
+   0.267   0.0410    0.140 
+
+
+Matrix: BLOSUM62
+Gap Penalties: Existence: 11, Extension: 1
+Number of Sequences: 95118
+Number of Hits to DB: 53,069,467
+Number of extensions: 2377989
+Number of successful extensions: 6646
+Number of sequences better than 10.0: 218
+Number of HSP's gapped: 6349
+Number of HSP's successfully gapped: 349
+Length of query: 561
+Length of database: 48,598,454
+Length adjustment: 114
+Effective length of query: 447
+Effective length of database: 37,755,002
+Effective search space: 16876485894
+Effective search space used: 16876485894
+Neighboring words threshold: 11
+Window for multiple hits: 40
+X1: 16 ( 7.2 bits)
+X2: 38 (14.6 bits)
+X3: 64 (24.7 bits)
+S1: 42 (21.9 bits)
+S2: 68 (30.8 bits)

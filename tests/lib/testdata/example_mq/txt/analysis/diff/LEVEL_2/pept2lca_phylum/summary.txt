@@ -1,0 +1,12 @@
+Kruskal-Wallis test did not show a significant difference in the variance between groups (p-value 0.16806678047331616).
+
+Comparison After_A-Before_A:
+Out of 8 comparisons, 3 were significantly different with qval <  0.05.
+Streptophyta was significantly different between Before_A and After_A, with a log2(FC) of -5.516 (qval. 0.009).
+Nematoda was significantly different between Before_A and After_A, with a log2(FC) of 6.804 (qval. 0.009).
+Actinobacteria was significantly different between Before_A and After_A, with a log2(FC) of 3.68 (qval. 0.047).
+
+Comparison After_B-Before_B:
+Out of 8 comparisons, 0 were significantly different with qval <  0.05.
+
+

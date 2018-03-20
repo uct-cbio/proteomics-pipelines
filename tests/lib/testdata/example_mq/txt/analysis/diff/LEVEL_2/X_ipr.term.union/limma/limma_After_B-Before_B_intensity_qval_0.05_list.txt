@@ -1,0 +1,10 @@
+IPR001326: Translation elongation factor EF1B, beta/delta chains, conserved site 
+
+IPR014038: Translation elongation factor EF1B, beta/delta subunit, guanine nucleotide exchange domain 
+
+IPR014717: Translation elongation factor EF1B/ribosomal protein S6 
+
+IPR018940: Elongation factor 1 beta central acidic region, eukaryote 
+
+IPR036219: Translation elongation factor eEF-1beta-like superfamily 
+

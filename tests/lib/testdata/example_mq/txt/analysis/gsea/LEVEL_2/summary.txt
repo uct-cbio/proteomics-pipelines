@@ -1,0 +1,41 @@
+Comparison between Before_A and After_A:
+
+REACTOME.up.csv
+10 terms where differentially enriched with qval < 0.05
+R-HSA-1799339 (pval 0.009, qval 0.034, set size 11)
+R-HSA-192823 (pval 0.009, qval 0.034, set size 10)
+R-HSA-72764 (pval 0.009, qval 0.034, set size 10)
+R-HSA-2408557 (pval 0.009, qval 0.034, set size 10)
+R-HSA-72689 (pval 0.009, qval 0.034, set size 10)
+R-HSA-156902 (pval 0.009, qval 0.034, set size 10)
+R-HSA-975957 (pval 0.013, qval 0.035, set size 11)
+R-HSA-975956 (pval 0.013, qval 0.035, set size 11)
+R-HSA-156827 (pval 0.018, qval 0.039, set size 12)
+R-HSA-72706 (pval 0.018, qval 0.039, set size 12)
+
+CC.up.csv
+0 terms where differentially enriched with qval < 0.05
+
+REACTOME.down.csv
+0 terms where differentially enriched with qval < 0.05
+
+MF.up.csv
+0 terms where differentially enriched with qval < 0.05
+
+BP.up.csv
+1 terms where differentially enriched with qval < 0.05
+GO:0006412 translation (pval 0.01, qval 0.04, set size 14)
+
+MF.down.csv
+0 terms where differentially enriched with qval < 0.05
+
+
+Comparison between Before_B and After_B:
+
+MF.up.csv
+0 terms where differentially enriched with qval < 0.05
+
+BP.up.csv
+0 terms where differentially enriched with qval < 0.05
+
+

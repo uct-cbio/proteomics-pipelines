@@ -1,0 +1,21 @@
+............E
+======================================================================
+ERROR: test_sequtils (unittest.loader._FailedTest)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_sequtils
+Traceback (most recent call last):
+  File "/home/ptgmat003/.conda/envs/numba34/lib/python3.5/unittest/loader.py", line 428, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/home/ptgmat003/.conda/envs/numba34/lib/python3.5/unittest/loader.py", line 369, in _get_module_from_name
+    __import__(name)
+  File "/home/ptgmat003/proteogenomics_tests/lib/test_sequtils.py", line 4, in <module>
+    import sequtils
+  File "/home/ptgmat003/cbio-pipelines/proteogenomics/lib/sequtils.py", line 40, in <module>
+    @jit
+NameError: name 'jit' is not defined
+
+
+----------------------------------------------------------------------
+Ran 13 tests in 18.254s
+
+FAILED (errors=1)

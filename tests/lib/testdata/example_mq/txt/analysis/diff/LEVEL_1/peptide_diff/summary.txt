@@ -1,0 +1,9 @@
+Kruskal-Wallis test did not show a significant difference in the variance between groups (p-value 0.3477794943280882).
+
+Comparison After-Before:
+Out of 1001 comparisons, 3 were significantly different with qval <  0.05.
+NMMAACDPR was significantly different between Before and After, with a log2(FC) of 8.106 (qval. 0.004).
+ILTDYGFEGHPFR was significantly different between Before and After, with a log2(FC) of 4.531 (qval. 0.005).
+GSSGVGLTAAVTTDQETGER was significantly different between Before and After, with a log2(FC) of 3.36 (qval. 0.044).
+
+

@@ -1,0 +1,152 @@
+BLASTP 2.2.24 [Aug-08-2010]
+
+
+Reference: Altschul, Stephen F., Thomas L. Madden, Alejandro A. Schaffer, 
+Jinghui Zhang, Zheng Zhang, Webb Miller, and David J. Lipman (1997), 
+"Gapped BLAST and PSI-BLAST: a new generation of protein database search
+programs",  Nucleic Acids Res. 25:3389-3402.
+
+Reference for compositional score matrix adjustment: Altschul, Stephen F., 
+John C. Wootton, E. Michael Gertz, Richa Agarwala, Aleksandr Morgulis,
+Alejandro A. Schaffer, and Yi-Kuo Yu (2005) "Protein database searches
+using compositionally adjusted substitution matrices", FEBS J. 272:5101-5109.
+
+Query= 9
+         (976 letters)
+
+Database: ./globals/con.Fasta 
+           95,118 sequences; 48,598,454 total letters
+
+Searching..................................................done
+
+
+
+                                                                 Score    E
+Sequences producing significant alignments:                      (bits) Value
+
+PTHR34306                                                              45   7e-04
+PTHR35000                                                              35   0.91 
+PTHR23169:SF12                                                         32   5.7  
+PTHR31076:SF32                                                         32   9.3  
+
+>PTHR34306 
+          Length = 2991
+
+ Score = 45.4 bits (106), Expect = 7e-04,   Method: Composition-based stats.
+ Identities = 43/170 (25%), Positives = 68/170 (40%), Gaps = 46/170 (27%)
+
+Query: 151  ERERERE----------REGRRETENLRNLSQQFDRERRDREAAPHLHRIVSGASSTNGR 200
+            +RER+R+          R+GRR+T       +Q DRER DR  A                
+Sbjct: 1761 DRERDRQIWRQTDWEXDRQGRRQT------GRQTDRER-DRWGA---------------- 1797
+
+Query: 201  DPKSRDPARDNAKDPPRETRRGRGDDAHD---WRKAREDDKQRSRSRPRGKGEREPGGGS 257
+                R       ++P R+  R  GD   D   WR+      +++   P  +G+R+ G  +
+Sbjct: 1798 ----RQTGWQTDREPDRQGWRQDGDRERDREPWRQGWRQTGRQTDREPDRQGDRQTGRQT 1853
+
+Query: 258  KREKDNWAP-----STEERRGAAGRRRNAAGDDRTDGKVRDDRTASKNDR 302
+             RE D +        T+ +     R  +  GD +TD +  D +T  + DR
+Sbjct: 1854 DREPDRYGDRQTWRQTDMQTDRQDRHTDRQGDRQTD-RQXDRQTDRQGDR 1902
+
+
+
+ Score = 37.4 bits (85), Expect = 0.19,   Method: Composition-based stats.
+ Identities = 34/122 (27%), Positives = 51/122 (41%), Gaps = 16/122 (13%)
+
+Query: 149  REEREREREREGRRETENLRNLSQQFDRERRDREAAPHLHRIVSGASSTNGRDPK---SR 205
+            R++ +RER+RE  R+    R   +Q DRE  DR+      R          R+P     R
+Sbjct: 1814 RQDGDRERDREPWRQ--GWRQTGRQTDREP-DRQGDRQTGR-------QTDREPDRYGDR 1863
+
+Query: 206  DPARDNAKDPPRETRRG--RGDDAHDWRKAREDDKQRSRSRPRGKGEREPGGGSKRE-KD 262
+               R       R+ R    +GD   D +  R+ D+Q  R   R    R+ G  + RE ++
+Sbjct: 1864 QTWRQTDMQTDRQDRHTDRQGDRQTDRQXDRQTDRQGDRHPDRQXNNRQTGRQTDREDRE 1923
+
+Query: 263  NW 264
+             W
+Sbjct: 1924 GW 1925
+
+
+>PTHR35000 
+          Length = 3363
+
+ Score = 35.0 bits (79), Expect = 0.91,   Method: Composition-based stats.
+ Identities = 33/145 (22%), Positives = 56/145 (38%), Gaps = 8/145 (5%)
+
+Query: 446  VSSSLGPPGLIRPQAGSDTAPTPPVPEAPVPDINGRIGGISLGSSTWPVSAATTPSTTAA 505
+            V+SS+  P  + P+  +    T  V              ++  S+T P    TTP  T+ 
+Sbjct: 2326 VTSSVTTPEGVTPEVTTXAGTTXEVSTPEAASTPEGSTPVTQASATTP--EVTTPEATSP 2383
+
+Query: 506  TLSTPGWTQSGGSGTDSASNPRLSPVQARRFTQDGS-----TTDGAVVGTRSTSRFANFF 560
+             +STP  T    +GT   S+  ++P  A   T +G+     +T  A + T      +   
+Sbjct: 2384 XVSTPEATTPPVTGTTIESST-VTPYAASETTAEGTEITEVSTPSATMATEPPETVSEEV 2442
+
+Query: 561  GDKHKEPSAPHFSNNVPAAAPAHSP 585
+                   S P  ++  P   P+ +P
+Sbjct: 2443 TTPXSTTSGPEVTDETPTTVPSSTP 2467
+
+
+>PTHR23169:SF12 
+          Length = 2002
+
+ Score = 32.3 bits (72), Expect = 5.7,   Method: Compositional matrix adjust.
+ Identities = 30/104 (28%), Positives = 46/104 (44%), Gaps = 3/104 (2%)
+
+Query: 75   ATKKEPMSEALGQLPRDRTRFRRDTEEGEGSREPLSSGRPTFKNALSFSQASGSAMGSMG 134
+             +KK  MS     L  DR + +R+ E  +     L S R      +SF Q S        
+Sbjct: 1559 TSKKTNMSREETNLVHDRDKLQRERENLQRELRSLESERQNI--TISFQQHSRLMSERNQ 1616
+
+Query: 135  SFRHPSSRLESDARREEREREREREGRRETEN-LRNLSQQFDRE 177
+              R  S ++ESD +R ER+   E++   + +N +R L  Q  +E
+Sbjct: 1617 MNRQRSIKMESDVQRLERDILDEKDKIYKRDNIIRELKNQLQKE 1660
+
+
+>PTHR31076:SF32 
+          Length = 220
+
+ Score = 31.6 bits (70), Expect = 9.3,   Method: Composition-based stats.
+ Identities = 23/78 (29%), Positives = 36/78 (46%), Gaps = 9/78 (11%)
+
+Query: 605 ESQQVQPPQTQDRVFAQRNSGMPPQPQYGATPQNIMNMQHAQPQVIQHQRAQLSIHQQQQ 664
+           E +   PP TQ+R+ A ++S   PQ Q      N  + Q  Q +  Q +++ L +  + Q
+Sbjct: 152 EDEMTDPPYTQNRI-AIKSSQPKPQQQTNNPANNQSDKQSTQEKKAQAKKSSLPLPPKTQ 210
+
+Query: 665 QQLLSSLNARVMSNNPPE 682
+           Q L  S        NPP+
+Sbjct: 211 QNLNLS--------NPPQ 220
+
+
+  Database: ./globals/con.Fasta
+    Posted date:  Apr 2, 2015  1:50 AM
+  Number of letters in database: 48,598,454
+  Number of sequences in database:  95,118
+  
+Lambda     K      H
+   0.311    0.130    0.382 
+
+Gapped
+Lambda     K      H
+   0.267   0.0410    0.140 
+
+
+Matrix: BLOSUM62
+Gap Penalties: Existence: 11, Extension: 1
+Number of Sequences: 95118
+Number of Hits to DB: 104,293,281
+Number of extensions: 5437088
+Number of successful extensions: 48387
+Number of sequences better than 10.0: 1393
+Number of HSP's gapped: 39607
+Number of HSP's successfully gapped: 2924
+Length of query: 976
+Length of database: 48,598,454
+Length adjustment: 119
+Effective length of query: 857
+Effective length of database: 37,279,412
+Effective search space: 31948456084
+Effective search space used: 31948456084
+Neighboring words threshold: 11
+Window for multiple hits: 40
+X1: 16 ( 7.2 bits)
+X2: 38 (14.6 bits)
+X3: 64 (24.7 bits)
+S1: 42 (21.8 bits)
+S2: 71 (32.0 bits)

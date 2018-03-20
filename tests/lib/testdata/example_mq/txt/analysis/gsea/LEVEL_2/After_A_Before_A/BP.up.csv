@@ -1,0 +1,2 @@
+"","p.geomean","stat.mean","p.val","q.val","set.size","iBAQ.E10","iBAQ.E9","iBAQ.E11","iBAQ.E12","RowName","Exposed","Control","Coregulated","SameDir"
+"GO:0006412 translation",0.12079262367569,1.19362076638458,0.00990348176783627,0.0396139270713451,14,0.120360373420516,0.121508611887285,0.121257087628737,0.124952946693335,"GO:0006412 translation","After_A","Before_A","Up","True"
