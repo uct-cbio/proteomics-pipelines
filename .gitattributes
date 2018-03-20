@@ -1,2 +1,6 @@
 tests/lib/testdata filter=lfs diff=lfs merge=lfs -text
 tests filter=lfs diff=lfs merge=lfs -text
+tests/lib/testdata/* filter=lfs diff=lfs merge=lfs -text
+tests/lib/testdata/*/* filter=lfs diff=lfs merge=lfs -text
+tests/lib/testdata/*/*/* filter=lfs diff=lfs merge=lfs -text
+tests/lib/testdata/*/*/*/* filter=lfs diff=lfs merge=lfs -text
