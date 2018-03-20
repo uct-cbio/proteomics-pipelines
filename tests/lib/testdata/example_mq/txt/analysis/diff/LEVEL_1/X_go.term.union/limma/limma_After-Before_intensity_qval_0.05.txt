@@ -1,0 +1,1 @@
+"rn"	"Row.names"	"X"	"Identifier"	"iBAQ.E13"	"iBAQ.E9"	"iBAQ.E1"	"iBAQ.E12"	"iBAQ.E7"	"iBAQ.E3"	"iBAQ.E16"	"iBAQ.E14"	"iBAQ.E11"	"iBAQ.E4"	"iBAQ.E6"	"iBAQ.E10"	"iBAQ.E15"	"iBAQ.E5"	"iBAQ.E8"	"iBAQ.E2"	"logFC"	"AveExpr"	"t"	"P.Value"	"adj.P.Val"	"B"	"Exposed"	"Control"

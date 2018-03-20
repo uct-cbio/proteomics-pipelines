@@ -1,0 +1,14 @@
+Kruskal-Wallis test showed a significant difference in the variance between groups (p-value 0.0).
+Dunn's post-hoc test with BH correction showed a significant difference between the variance of After_B and After_A groups (adjusted p-value 0.0).
+Dunn's post-hoc test with BH correction showed a significant difference between the variance of Before_A and After_A groups (adjusted p-value 0.005).
+Dunn's post-hoc test with BH correction showed a significant difference between the variance of Before_B and After_A groups (adjusted p-value 0.0).
+
+Comparison After_A-Before_A:
+Out of 51 comparisons, 0 were significantly different with qval <  0.05.
+
+Comparison After_B-Before_B:
+Out of 51 comparisons, 2 were significantly different with qval <  0.05.
+4658 was significantly different between Before_B and After_B, with a log2(FC) of 6.419 (qval. 0.035).
+4660 was significantly different between Before_B and After_B, with a log2(FC) of 6.419 (qval. 0.035).
+
+

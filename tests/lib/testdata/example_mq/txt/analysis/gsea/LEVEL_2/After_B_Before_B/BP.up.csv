@@ -1,0 +1,2 @@
+"","p.geomean","stat.mean","p.val","q.val","set.size","iBAQ.E15","iBAQ.E14","iBAQ.E16","iBAQ.E13","RowName","Exposed","Control","Coregulated","SameDir"
+"GO:0055114 oxidation-reduction process",0.154515808532911,0.975219591630282,0.0269215415778363,0.107686166311345,29,0.356292483260275,0.116621493725986,0.126746757555854,0.124279712035551,"GO:0055114 oxidation-reduction process","After_B","Before_B","Up","True"

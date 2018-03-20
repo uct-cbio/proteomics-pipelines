@@ -1,0 +1,360 @@
+# STOCKHOLM 1.0
+
+#=GS 20/68-435 DE [subseq from] 20
+
+20/68-435         -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------N
+#=GR 20/68-435 PP .......................................................................................................................................................................................................5
+#=GC PP_cons      .......................................................................................................................................................................................................5
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+20/68-435         ELICMCLET-FAKRVVG--KTMHEL------TRNMGKTWRYMVSDS-----QYRWVGPE-KSVTHLSMAGVMNGVWDLWGKILRKPVWQIVCD------MSPEEIVRCIDF-RYI-----TDVITPEEavEMLKKAQVgkeQRLAEAFGnvavpaySTSPGWMALSGDKMREVLDeeiKMGYKVFKFKVG----------
+#=GR 20/68-435 PP 556666664.7777777..662222......333333444443322.....22222233.44455557889999******************9......777777777777.554.....233433331133333322222455555541111222455556789999999999855559**********..........
+#=GC PP_cons      556666664.7777777..662222......333333444443322.....22222233.44455557889999******************9......777777777777.554.....23343333..33333322...45555554.......4555567899999999998...59**********..........
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx..xxxxxxxx...xxxxxxxx.......xxxxxxxxxxxxxxxxxxx...xxxxxxxxxxxxxxxxxxxxxx
+
+20/68-435         -------------------------SGVEADRAKLATVRSVIG---YD--KGFQLMIDANQV-------------------WS------VPEA-IEYMKQL---VE---FQPVFIEEP-TNP----DDVLG-H-AAIRKALKPFGVG--VATGE-AAQ-NRVTFKQLLQADAI----DVCQIDAVRLGSVNECLAVMLMA
+#=GR 20/68-435 PP .........................79***************9...66..************...................**......****.*******...**...9********.***....*****.*.*******988888..99***.899.**************....***********************
+#=GC PP_cons      .........................79***************9...66..************...................**......****.*******...**...9********.***....*****.*.*******988888..99***.899.**************....***********************
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+20/68-435         SKFDVPC---VPHNGA--MGLT-EL-TSHLSLIDYVAIT-GRKSML----EYADSF-REN-----LRHPSR-IIDAHYET-PLAPGYSIGYTDEALERYIY------------------------------------
+#=GR 20/68-435 PP *******...****64..4444.56.8899999888877.555555....566666.555.....577777.66677788.88899888877777777755....................................
+#=GC PP_cons      *******...****64..4444.56.8899999888877.555555....566666.555.....577777.66677788.88899888877777777755....................................
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//
+# STOCKHOLM 1.0
+
+#=GS 210/344-751   DE [subseq from] 210
+#=GS 408/209-470   DE [subseq from] 408
+#=GS 379/191-455   DE [subseq from] 379
+#=GS 407/186-370   DE [subseq from] 407
+#=GS 338/1676-1932 DE [subseq from] 338
+
+210/344-751           CTSVICSDKTGTLTT-NQMSVCKMFIVDKVEGDVCSLNEFSITGSTYAPEGDVLKNEKHIKAGQHDGLVELATICALCNDSSLDYNEAKGIYEKVGEATETALTCLVEKMNVFNTDVRSLSKVERANACNSVIKQLMKKEFTLEFSRDRKSMSVYCSPAKASRAAVGNKMFVKGAPEGVIDRCNYVRV.GTTRVPLTPAV
+#=GR 210/344-751   PP 89*************.9***************************************************************************************************************************************************************************.***********
+408/209-470           CTSVICSDKTGTLTT-NQMCVTKMFIIDKVEGDSVSLGQFEISGSKYTPEGEVTKNNALVKCGQYDGLVELATICALCNDSSLDYNESKGIYEKVGEATETALSCLVEKMNVFNTEVRGLSKVERANACCSVIKQLMKKEFTLEFSRDRKSMSVYCSPAKSAKAPVGNKMFVKGAPEGVIDRCAYVRV.GTNRVPLTGPV
+#=GR 408/209-470   PP 89*************.9***************************************************************************************************************************************************************************.***********
+379/191-455           CTSVICSDKTGTLTT-NQMSVCRMFIVDSVSGETCSLNDFSVTGSTYAPEGDVFRDGVAVKCSQYEGLVEMASICALCNDSSLDYNESKGVFEKVGEATETALCCLVEKMNVFDTDLRGLSRAERATACCSVIKQLMRKELTLEFSRDRKSMSVFCSTNKLSRSPSGAKMFVKGAPESVLERCSYIRVkGSARVPMSMAV
+#=GR 379/191-455   PP 89*************.9**************************************************************************************************************************************************************************9899*********
+407/186-370           --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------.-----------
+#=GR 407/186-370   PP ........................................................................................................................................................................................................
+338/1676-1932         ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------MKGAPERILDRCETIMI.QGETVKLTQHL
+#=GR 338/1676-1932 PP ...........................................................................................................................................................................69***************.***********
+#=GC PP_cons          89*************.9**********************************************************************************************************************************************************9****************.***********
+#=GC RF               xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.xxxxxxxxxxx
+
+210/344-751           KEKILAVIKEWGTGRDTLRC..LALATRDTPPKMEDMMLVDSTKFAE.YETDLTFVGCVGMLDPPRKEVMGSIRLCRDAGIRVIMITGDNKGT----AIAICRRIG-IFTE.DEEVSG.RAYTGREFDDLPPA.......EQRE..ACRRACCFARV---------------EPTHKSKIVEFL....-------.QSFD
+#=GR 210/344-751   PP ********************..*************************.*********************************************....*********.****.******.**************.......****..***********...............5***********............9***
+408/209-470           KDHIMSVIKEWGTGRDTLRC..LALATRDTPLRKEEMNLEDSTRFAD.YETDLTFVGCVGMLDLPAK--------------------------------------------.------.--------------.......----..--------------------------------------....-------.----
+#=GR 408/209-470   PP ********************..*************************.**************99977.....................................................................................................................................
+379/191-455           REQLLSTVRDWTSGRDTLRC..LAMATRDTPPDINSLNLENSATFVD.YETDLTFVGCVGMLDPPRKEV------------------------------------------.------.--------------.......----..--------------------------------------....-------.----
+#=GR 379/191-455   PP ********************..*************************.*******************98...................................................................................................................................
+407/186-370           --------------------..-------------------------.--ENLRFVGLMSMIDPPRAAVPDAVAKCRSAGIKVIMVTGDHPIT----AKAIAKGVGIISEG.NETVED.IAATR----GIPVS.......EVNP..RDAKACVVHGSD-LRD-MTPAQIDEVLRNHTEIVFARTspqqKLIIVEGcQRQG
+#=GR 407/186-370   PP ..................................................7899************************************999....9*************.******.**994....69999.......9877..667889998887.333.2334566666666666554331111223345525556
+338/1676-1932         KDEFEEAYMEMGGMGERVLGfaDLMLTKNEY----PLSYEFSTEPPNfPLTQLRFVGLISMIDPPRAAVPDAVSKCRSAGVRVIMVTGDHPIT----AKAIAKSVGIITKPtAEDIAKsRGVDIHEVDPRSATsivvhggELRDmkAEDLDAVIYYH---------TEIVFARTSPQQKLIIVE....--AC---.QRRG
+#=GR 338/1676-1932 PP *998888888877766665511455554444....45555655544415799**************************************999....9********887761355553244445555533221111111122211122333333333.........355555555555555555......22....6668
+#=GC PP_cons          ***99999999999999999..999999999****999999999999.9999*************99*9*********************999....9********99999.888888.88886888867777.......7766..667777777777.333.233456666577777777666....2233455.7778
+#=GC RF               xxxxxxxxxxxxxxxxxxxx..xxxxxxxxxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.xxxxxx.xxxxxxxxxxxxxx.......xxxx..xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx....xxxxxxx.xxxx
+
+210/344-751           EITAMTGDGVNDAPALKKAEIGIAMGS----------------------------GTAVAKT-----ASEMVLADDNFSTIVAAVEEGR
+#=GR 210/344-751   PP ***************************............................*******.....*******************986
+408/209-470           -----------------------------------------------------------------------------------------
+#=GR 408/209-470   PP .........................................................................................
+379/191-455           -----------------------------------------------------------------------------------------
+#=GR 379/191-455   PP .........................................................................................
+407/186-370           AIVAVTGDGVNDSPALKKADIGVAMGI---------------------------AGSDVSKQ-----AADMILLDDNFASIVTGVEEG-
+#=GR 407/186-370   PP 89999**********************...........................35556666.....666999999999999999887.
+338/1676-1932         EIVAVTGDGVNDSPALKRADIGVAMGI---------------------------AGSDVSKQ-----AADMILLDDNFASIVVGIEEG-
+#=GR 338/1676-1932 PP 9**************************...........................24555555.....666888888888888888876.
+#=GC PP_cons          9**************************...........................36777777.....7779999999999999999876
+#=GC RF               xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//
+# STOCKHOLM 1.0
+
+#=GS 203/65-221 DE [subseq from] 203
+
+203/65-221         -----QPAPYFKG-TAVVNG--------------EFKDLSL---DDF--KG------KY-LVLFFYPLDFTFVCP-TEIVAFSDKANEFHDVN--CEVVAVSVDSHFSHLAWIN-------T----PGKSG---GLGHM--NIALLSD--LTKQIARDYGVL---------LEGPG---LALRGLFIID-PNGIIK--HL
+#=GR 203/65-221 PP .....67888884.556666..............9******...**9..**......**.***************.*****************..******************8.......5....55555...9****..*******..************.........55566...79********.******..**
+#=GC PP_cons       .....67888884.556666..............9******...**9..**......**.***************.*****************..******************8.......5....55555...9****..*******..************.........55566...79********.******..**
+#=GC RF            xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+203/65-221         SVN-----DLPVGRSV----EETLRLVK-AFQYVE---
+#=GR 203/65-221 PP ***.....68888775....*****998.887665...
+#=GC PP_cons       ***.....68888775....*****998.887665...
+#=GC RF            xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//
+# STOCKHOLM 1.0
+
+#=GS 405/3-553 DE [subseq from] 405
+
+405/3-553         -----------------------------------------------------------------------------------------------------------------------------------------GNLVAPPVLSTPEAHL---FEDPTPVVKSSfGERLSDDDVRHVYEIDRTAREIRTGGWRRVAL
+#=GR 405/3-553 PP .........................................................................................................................................56789***********...99777777755589******************************
+#=GC PP_cons      .........................................................................................................................................56789***********...99777777755.89******************************
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+405/3-553         QFPDGMLNDAPRVFQFLQQALKDLpsksaeanavvedvakvvqeldiakqnitkQQSEDRLFILADTSYGACCVDEIAAEHVDADVVIHYGRSCLSPTARLPVVYVFTTHTLPIDPVIEAfQqIYTEK--DTEVILMADITYSDHIPTILERVT-SLGYNkvfapsIIHDpaS--PLPNRTVPPAVEsgENKLQDYSLFH
+#=GR 405/3-553 PP ********************9999*****************************877788**************************************************************99**999..5*********************99.689997877775565542..22233333333133589********
+#=GC PP_cons      ********************9999..............................77788*************************************************************.9.**999..5*********************99.68999......5565..2..222333333331..589********
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxx..............................xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.x.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx......xxxx..xxxxxxxxxxxxxxx..xxxxxxxxxxx
+
+405/3-553         VSEPPPSLLLTLSSRLK--SMYIYPTDAAKP---QALEAQTSRLLMRRYATLTSLNTCSIFGILINTLSVKNYMPTVDAIKAQIAAAGKKSYTFVVGKVNAAKVANFSEIGGWVVIGCWESSLIEST-EFFRPIITPFELGLALMSdeERVWTgEWNGDFSDIinKPLVPRTVIKNaeedsdghdegSDDEEDSAPPEFD
+#=GR 405/3-553 PP *****99********54..6*********55...45678*************************************************************************************999.************************99*********99666665544445667899****99***********
+#=GC PP_cons      *****99********54..6*********55...45678*************************************************************************************999.******************..****9.*********..66666554444...........99***********
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx..xxxxx.xxxxxxxxx..xxxxxxxxxxx...........xxxxxxxxxxxxx
+
+405/3-553         LRTGRYISHSRPMRHPKTTQSAsndtpdetrATASSALMKRANGDLaMINgTASPGAEYLRsQRTWKGLGSDFEvvydnDDgqLGAQVEQGRGGVARGYTVG--------------------------------------------------------------------------------------
+#=GR 405/3-553 PP *****************99988*********99*****************************************98865115589***************93......................................................................................
+#=GC PP_cons      *****************99988.........99*************.***.**********.************.....11..89***************93......................................................................................
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxx.........xxxxxxxxxxxxxxx.xxx.xxxxxxxxxx.xxxxxxxxxxxx.....xx..xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//
+# STOCKHOLM 1.0
+
+#=GS 20/32-437 DE [subseq from] 20
+
+20/32-437         -------------------------------------------------------------------------------SDAMHVGTNGSQPYIQLITD----RPG-LIGEGIAF--SNGRGNEL---IC-MCLETFAKRVVG---KTMHEL------TRNMGKT-WRYMVSDSQYRW-VGP-EKS----VTHLSMAGVM
+#=GR 20/32-437 PP ...............................................................................568999999**********5....899.********..89*****8...44.5889********...999777......8******.************.899.999....**********
+#=GC PP_cons      ...............................................................................568999999**********5....899.********..89*****8...44.5889********...999777......8******.************.899.999....**********
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+20/32-437         NGVWDLWGKILRKPVWQIVC----DMSPEEIVRCIDFRYITDVITPEEAVEMLKKAQVGKEQRLAEAFgNVAVPAYSTSPGWMA-----------------------LSGDKMREV-LDEE--IKMGYKVFKFKVGS--------------------------------GVEADRAKLATVRSVIGYDkgFQLMIDANQV
+#=GR 20/32-437 PP ********************....***************************************998652779*********965.......................689999999.9999..9************9................................9****************885689********
+#=GC PP_cons      ********************....***************************************99865.779*********965.......................689999999.9999..9************9................................9****************88..89********
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx..xxxxxxxxxx
+
+20/32-437         -----------WSVPEAIEYMKQLVEF-QPVFIEEPTNP-----DDVL--GHAAIRKALkPFGVGVATGEA-AQNR-VTFKQLLQADAI----DVCQIDAVRLGSVNECLAVMLMASKFDV---PCVPHNGA--MGL-TELTSHLSLIDYVAIT---GRKSMLEYADS-------------FR---ENL--RHPS--RII
+#=GR 20/32-437 PP ...........****************.***********.....****..******93224679*******.****.************....****************************...*******9..***.9**************9...88999999854.............67...777..7899..***
+#=GC PP_cons      ...........****************.***********.....****..******932.4679*******.****.************....****************************...*******9..***.9**************9...88999999854.............67...777..7899..***
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+20/32-437         DAHYE--TPLA-PGYSIGYTDEALERYIYPT--
+#=GR 20/32-437 PP *****..****.**************98875..
+#=GC PP_cons      *****..****.**************98875..
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//
+# STOCKHOLM 1.0
+
+#=GS 169/9-464 DE [subseq from] 169
+
+169/9-464         ---------------KCPMPTQDPNVRNKNFK-E-VALGYT-AEMAVNEAKRCIGCKN--KP--C--QS------------GCPVGIDIPEFIAHVAE------GDFEAAYQVINRSSSLPAVCGRVCPQESQCEGKCT-R--------GI--K-N--E-PVAIGRLERFVADWHREN-VHTA-PV-------VPEWNGH
+#=GR 169/9-464 PP ...............67899************.*.******.****************..99..*..99............*****************......***********************************.9........**..8.8..8.*****************9.3244.44.......5589***
+#=GC PP_cons      ...............67899************.*.******.****************..99..*..99............*****************......***********************************.9........**..8.8..8.*****************9.3244.44.......5589***
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+169/9-464         KVAVIGAGPAGLTAAGDLAKLGYKVTVYEALHVAGGVLMYGIPEFRLPKA-IVQQEIDGLKKM-GVDFECNMVIG-------------KVLTI--DELMGE--YGYEAVFVGSGAGLPRFMNIPGES-L-KGVYSANEFLT---RSNLMKAYLPT------SKT------PIRTGKKVAVVGGGNVAMDAARSALRL-GA
+#=GR 169/9-464 PP **************************************************.************.***********.............*****..****77..77**********************.*.***********...********955......667......9**************************.**
+#=GC PP_cons      **************************************************.************.***********.............*****..****77..77**********************.*.***********...********955......667......9**************************.**
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+169/9-464         ESVYIVYRR-GMAELPA-----RKE-E------------VEHAEEEGII------------------FKT---L-----CNPVAIHP--DEDGFVHSMTCIE---M-E-LG-EPDAS-G----RRRPIEKQGSEFELEVDTVIMSLGTSPN------P--L-IR-STT-----PGLETN-K-HGCIV--------TEG--
+#=GR 169/9-464 PP *********.*******.....9*9.9............9*********..................***...9.....******99..*************...*.9.99.*****.*....****************************......8..6.54.777.....*****9.9.*****........454..
+#=GC PP_cons      *********.*******.....9*9.9............9*********..................***...9.....******99..*************...*.9.99.*****.*....****************************......8..6.54.777.....*****9.9.*****........454..
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+169/9-464         DEGKTSRDGVYAGGDAVT-G----AATVIKAMGAGKAAAKAMDKYIRNK----------------------------------------
+#=GR 169/9-464 PP 239***************.*....*********************9875........................................
+#=GC PP_cons      239***************.*....*********************9875........................................
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//
+# STOCKHOLM 1.0
+
+#=GS 405/4-231   DE [subseq from] 405
+#=GS 405/247-559 DE [subseq from] 405
+
+405/4-231           ---------------------------NLV-APPVLSTPEAHLFEDP------------TPVVKSSFGERLSDDDVRHVYEIDRTAREIRT----------GGWRRVALQFPDGMLNDAPRVFQFLQQALKDLPSKSAEANA------------------------------------VVEDVAKVVQELDiAKQNITKQ
+#=GR 405/4-231   PP ...........................454.89******99888886............45566777789*********************..........***************************99887776644331....................................1222223333322134456677
+405/247-559         -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------.--------
+#=GR 405/247-559 PP ........................................................................................................................................................................................................
+#=GC PP_cons        ...........................454.89******99888886............45566777789*********************..........***************************99887776644331....................................1222223333322.34456677
+#=GC RF             xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.xxxxxxxx
+
+405/4-231           QSEDRLFILADTSYG------------------------------ACCVDEIAAEHVDADVVIHYGRSCLSPT-ARLPVVYVFTTHTLPI-DPVIEAFQQ------IYTEKDTE-VILMADITYSDHIPTILERVTSL-GYNKVFAPSIIHDPA----------------------------------------------
+#=GR 405/4-231   PP 8899***********..............................****************************.****************.*********......9*******.*******************8886.**********99984..............................................
+405/247-559         --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#=GR 405/247-559 PP ........................................................................................................................................................................................................
+#=GC PP_cons        8899***********..............................****************************.****************.*********......9*******.*******************8886.**********99984..............................................
+#=GC RF             xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+405/4-231           --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#=GR 405/4-231   PP ........................................................................................................................................................................................................
+405/247-559         -------------------------------------------------------------ENKLQDYSLFHVSEPPP--------SLLLTLSSRLKSM---YIYPTDAA---KPQALEAQTSRLLMRRYATLTSLN--TCSIFGILINTLSVKNYMPTVDAIKAQIAAAGKKSYTFVVGKVNAAKVANFS-EIGGWVVI
+#=GR 405/247-559 PP .............................................................5689*************........******9999966...66666666...77899*******************..****************************************************.********
+#=GC PP_cons        .............................................................5689*************........******9999966...66666666...77899*******************..****************************************************.********
+#=GC RF             xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+405/4-231           --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#=GR 405/4-231   PP ........................................................................................................................................................................................................
+405/247-559         GCWESSLI--ESTEFFRPIITPFELGLALMSDEERVWTG--EWNGDFSDIINKPLVPRTVIKNAEEDSDG---------H----DEGSDDEEDSAPPEFDLRTGRYISHSRPMRHPKTTQSAS--------NDTPDETRATASSALMKRANGDLAM-INGTASPGAEYLRSQRTWKGLGSDFEVV----YDNDDGQLGAQ
+#=GR 405/247-559 PP ********..9****************************..**********9975322222233333333.........3....3444556899********************965555444........3344578899999************.**************************99....***********
+#=GC PP_cons        ********..9****************************..**********9975322222233333333.........3....3444556899********************965555444........3344578899999************.**************************99....***********
+#=GC RF             xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+405/4-231           ------------------------------------
+#=GR 405/4-231   PP ....................................
+405/247-559         VEQGRGGVARGYTVGGEGDRH---------------
+#=GR 405/247-559 PP ****************99876...............
+#=GC PP_cons        ****************99876...............
+#=GC RF             xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//
+# STOCKHOLM 1.0
+
+#=GS 326/1-159 DE [subseq from] 326
+
+326/1-159         --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#=GR 326/1-159 PP ........................................................................................................................................................................................................
+#=GC PP_cons      ........................................................................................................................................................................................................
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+326/1-159         ------------------------------------------------------------------------------------------------------------------------SGDLHVTGSAHCTFSTAQK-----ALGKDDFTLIPEGTNGIEERMSIVWDKGVATGKMDENQFVAVTSTNAAKVFNLYPR
+#=GR 326/1-159 PP ........................................................................................................................699****************.....********************************************************
+#=GC PP_cons      ........................................................................................................................699****************.....********************************************************
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+326/1-159         KGRIAVGSDADLIIWDPDVVKTISAKTHHQAVEYNIFEGMEVRGVPLAVISQGKIVMEDGTLH----------------AMQGVGRFVPRKAFPEQVYKR--------------------------
+#=GR 326/1-159 PP ************************************************************777................99**********998766332..........................
+#=GC PP_cons      ************************************************************777................99**********998766332..........................
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//
+# STOCKHOLM 1.0
+
+#=GS 20/10-445 DE [subseq from] 20
+
+20/10-445         -----DVKIVDFKVFDLRFPTSLNGVGSDAMHVGTNGSQPYIQLITD------------R--PG-----LIGEGIAFSNGRGNELICMCLETFAKRVV-GKTMHELTRNMGKTWRYMVS-DSQYRWVGPEKSVTHLSMAGVMNGVWDLWGKILRKPVWQIVCDMSPEEIVRCIDFRYITDVITPEEAVEMLKKAQVGKEQ
+#=GR 20/10-445 PP .....56899*************************************............4..68.....99***************************.********************.********************************************************************************
+#=GC PP_cons      .....56899*************************************............4..68.....99***************************.********************.********************************************************************************
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+20/10-445         RLAEAFGNVAVPAYSTSPGWMALSGDKMREVLDEEIK-MGYKVFKFKVGSGVEADRAKLATVRSVIGYDKgfQLMIDANQVWSVPEAIEYMKQLVEFQPVFIEEPTNPDDVLGHAAIRKAL---KPF-GVGVATGEAAQNRVTFKQLLQADAIDVCQIDAVRLGSVNECLAVMLMASKFDVPCVPHNGAMGLTELTSHLS
+#=GR 20/10-445 PP *****9999****************************.*****************************985449************************************************...333.499*********************************************************************
+#=GC PP_cons      *****9999****************************.*****************************985..9************************************************...333.499*********************************************************************
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx..xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+20/10-445         LIDYVAITGRK--SMLEYADSFRENLRHPSRIIDA----HYETPLAPGYSIGYTDEALERYIYPTGSFWKSEA----------------
+#=GR 20/10-445 PP *********86..69********************....******************************9865................
+#=GC PP_cons      *********86..69********************....******************************9865................
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//
+# STOCKHOLM 1.0
+
+#=GS 169/8-464 DE [subseq from] 169
+
+169/8-464         -------------KKCPMPTQDPNVRNKNFKE-VALGYT-AEMAVNEAKRCIGCKN--KPC--QS------------GCPVGIDIPEFIAHVAE------GDFEAAYQVINRSSSLPAVCGRVCPQESQCEGKCT-RGI--K-N--E-PVAIGRLERFVADWHREN-VHTAPV------VP-EWNGHKVAVIGAGPAGLT
+#=GR 169/8-464 PP .............677899*************.******.****************..***..99............*****************......***********************************.***..7.7..8.******************.556666......55.899***************
+#=GC PP_cons      .............677899*************.******.****************..***..99............*****************......***********************************.***..7.7..8.******************.556666......55.899***************
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+169/8-464         AAGDLAKLGYKVTVYEALHVAGGVLMYGIPEFRLPKA-IVQQEIDGLKKM-GVDFECNMVIG-------------KVLTI--DELMGEYGYEAVFVGSGAGLPRFMNIPGES-L-KGVYSANEFLT---RSNLMKAYLPT------SKT------PIRTGKKVAVVGGGNVAMDAARSALRL-GAESVYIVYRR-GMAEL
+#=GR 169/8-464 PP *************************************.************.***********.............*****..****9999**********************.9.***********...*******9966......556......99*************************.***********.*****
+#=GC PP_cons      *************************************.************.***********.............*****..****9999**********************.9.***********...*******9966......556......99*************************.***********.*****
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+169/8-464         PARKE-E------------VEHAEEEGII------FKTL-----CNPVAIHP--DEDGFVHSMTCIE---M-E-LG-EPDAS-G---RRRPIEKQGSEFELEVDTVIMSLGTSPN------P--L-IRSTT-----PGLETNKHGCIV--------TEG--DEGKTSRDGVYAGGDAVT-G----AATVIKAMGAGKAAA
+#=GR 169/8-464 PP *****.9............9*********......****.....******99..*************...*.8.98.***99.9...****************************......8..6.66777.....************........454..349***************.*....***************
+#=GC PP_cons      *****.9............9*********......****.....******99..*************...*.8.98.***99.9...****************************......8..6.66777.....************........454..349***************.*....***************
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+169/8-464         KAMDKYIRNK----------------------
+#=GR 169/8-464 PP ******9875......................
+#=GC PP_cons      ******9875......................
+#=GC RF           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//
+# STOCKHOLM 1.0
+
+#=GS 211/24-486 DE [subseq from] 211
+#=GS 256/10-401 DE [subseq from] 256
+#=GS 277/4-471  DE [subseq from] 277
+
+211/24-486         --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#=GR 211/24-486 PP ........................................................................................................................................................................................................
+256/10-401         --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#=GR 256/10-401 PP ........................................................................................................................................................................................................
+277/4-471          --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#=GR 277/4-471  PP ........................................................................................................................................................................................................
+#=GC PP_cons       ........................................................................................................................................................................................................
+#=GC RF            xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+211/24-486         -D--QVDADVTVIGSGPGGYVAAIKAAQL-G---FKTVCVEKNET........LGGTCLNVGCIPSKALLNNSHLYH-LAHGKDFANRGIEIT-GIRLNLEKMMEQKSGAVKALTG-GIAHLFK-QNK-VVHVSGFGKITGKNQVTAA-KEDGSTQVINTKNILIATGSE--VAPFPGITI-DE----DNIVSSTGAL--
+#=GR 211/24-486 PP .3..3589********************9.9...9**********........************************.8887773456*****.77******************65.6899999.777.8999**************9.8******************86..778999987.23....37999*****..
+256/10-401         ---------------------------------------------........----------------------------------RGIEMS-EVRLNLDKMMEQKSTAVKALTG-GIAHLFK-QNK-VVHVNGYGKITGKNQVTAT-KADGGTQVIDTKNILIATGSE--VTPFPGITIDEDT-----IVSSTGAL--
+#=GR 256/10-401 PP .......................................................................................499999.669****************965.6899999.777.8999**************9.8******************96..6789999874555.....999*****..
+277/4-471          ----MYDYDLIIIGGGSGGLAAAKEAARF-N---KRVMVLDFVTPtplgtrwgLGGTCVNVGCIPKKLMHQAALLGQ-ALRDSR-NY-GWNVEETIKHDWERMTEAVQNHIGSL-NWGYRVALR-EKK-VTYENAYGQFVGPHRIKAT-NNKGKEKIYSAEKFLIATGERPRYLGIPGDKE---Y-----CISSDDLF--
+#=GR 277/4-471  PP ....59**********************8.8...77777653211122223339*********************98.888888.44.777777789****************9.567888888.788.9*****************9.6****************************999...4.....78899999..
+#=GC PP_cons       .3..4799********************9.9...89999886666........9*********************99.8888883445999997779****************96566899999.777.8999**************9.7******************97**8899999884344...37899*****..
+#=GC RF            xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx........xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+211/24-486         -SLKKVPEKMVVIGAGVIGVELGSVWQRLGADVTAVEFMGHVGgMGIDMEISKNFQRIL-QKQGLKFKLNTKVTGATKKS---DGKIDVAVEAA---AGGKAEVIT..CDVLLVCIGRRPFTKN-LGLEDIGIEL-DKRGRIPVNNRFQTKIPNIYAIGDV---VAGPMLA-HKAEDEGILCVEGMAGG-AVHIDYNCVP
+#=GR 211/24-486 PP .************************************9988753789************.*************9999988...79999998888...88999****..***************9.**********.*************************...*****77.9**************99.9*********
+256/10-401         -SLKKVPEKMVVIGAGVIGVELGSVWQRLGADVTAVEFLGHVGgVGIDMEISKNFQRIL-QKQGFKFKLNTKVTGATKKS---DGKIDVSIEAA---SGGKAEVIT..CDVLLVCIGRRPFTKN-LGLEELGIEL-DPRGRIPVNTRFQTKIPNIYAIGDV---VAGPMLA-HKAEDEGIICVEGMAGG-AVHIDYNCVP
+#=GR 256/10-401 PP .***********************************99877743789************.*************9999988...78888888777...8899*****..***************9.**********.*************************...*****77.9**************99.9*********
+277/4-471          -SLPYCPGKTLVVGASYVALECAGFLAGIGLDVTVMVRS-ILL.RGFDQDMANKIGEHM-EEHGVKFIRQFVPIKVEQIEAGMPGRLRVTAKAT-----NSDETIEgeYNTVLLAIGRDACTRN-IGLETVGVEINEKTGKIPVTDEEQTNVPYVYTIGDI---LEGKPELTPVAIQAGRLLAQRLYGGSTVKCDYENVP
+#=GR 277/4-471  PP .**************************************.9**.***************.********************87889999996666.....555555511568************9.************************************...99999999****************************
+#=GC PP_cons       .************************************998886.899************.*************999999987879999997777...888888888..899************9.************************************...*****8899**************99*9*********
+#=GC RF            xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx..xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+211/24-486         SVIYTHPEVAWVGKSEEQLKEEGIEYKIGKFPFAANSRAKT...NADTDGMVKIL-------SQKSTDRMLGAHILGAGAGEMVNEAALAMEYGASCEDVARVCHAHPTVSEAFREANLA--------------
+#=GR 211/24-486 PP *****************************************...***********.......****************************************************988654..............
+256/10-401         SVIYTHPEVAWVGKSEEQLKEEGIEYKVGKFPFAANSRAKT...NADTDGMVKIL-------GQKSTDRVLGAHILGPGAGEMVNEAALALEYGASCEDIARVCHAHPTLSEAFREANLA--------------
+#=GR 256/10-401 PP *****************************************...***********.......9***************************************************988654..............
+277/4-471          TTVFTPLEYGACGLSEEKAVEKFGEENIEIYHSYFWPLEWTipsRDNNKCYAKIV------CNIKDNERVVGFHILGPNAGEVTQGFAAALKCGLTKDQLDSTIGIHPVCAE----------------------
+#=GR 277/4-471  PP *********************9999998888888888888633245678889999......4457889***********************************999998887......................
+#=GC PP_cons       ***************************99999999999999...8899999****......488999*****************************************9999**988654..............
+#=GC RF            xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//
+# STOCKHOLM 1.0
+
+#=GS 20/8-456 DE [subseq from] 20
+
+20/8-456         --------------------VEDVKIVDFKVFDLRFPTSLNGVGSDAMHVGTNGSQPYIQLITDRPGLIGEGI------AFSNGRGNELICMCLETFAKRVVGKTMHELT-RNMGKTWRYMVSDSQYRWVGPEKSVTHLSMAGVMNGVWDLWGKILRKPVWQIVCDMSPEEIVRCIDFRYITDVITPEEAVEMLKKAQVG
+#=GR 20/8-456 PP ....................679**************************************************......*******************************.*****************************************************************************************
+#=GC PP_cons     ....................679**************************************************......*******************************.*****************************************************************************************
+#=GC RF          xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+20/8-456         KEQRLAEAFGNVAVPAYSTSPGWMALSGDKMREVLDEEIKMGYKVFKFKVGSGVEADRAKLATVRSVIGYDK---GFQLMIDANQVWSVPEAIEYMKQLVEFQPVFIEEPTNPDDVLGHAAIRKALK--PFG-VGVATGEAAQNRVTFKQLLQADAIDVCQIDAVRLGSVNECLAVMLMASKFDVPCVPHNGAMGLTELT
+#=GR 20/8-456 PP ************************************************************************...****************************************************..***.*******************************************************************
+#=GC PP_cons     ************************************************************************...****************************************************..***.*******************************************************************
+#=GC RF          xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+20/8-456         SHLSLIDYVAITGRKSMLEYADSFRENLRHPSRIIDAHYETPLAPGYSIGYTDEALERYIYPTGS---FWKSEAGLNIIN-QPTGG-----------
+#=GR 20/8-456 PP ***************************************************************98...************.88777...........
+#=GC PP_cons     ***************************************************************98...************.88777...........
+#=GC RF          xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//
+# STOCKHOLM 1.0
+
+#=GS 405/4-231   DE [subseq from] 405
+#=GS 405/247-559 DE [subseq from] 405
+
+405/4-231           ---------------------------NLV-APPVLSTPEAHLFEDP------------TPVVKSSFGERLSDDDVRHVYEIDRTAREIRT----------GGWRRVALQFPDGMLNDAPRVFQFLQQALKDLPSKSAEANAV------------------------------------VEDVAKVVQELdIAKQNITKQ
+#=GR 405/4-231   PP ...........................555.89******88888886............56677888899*********************..........***************************998777766443311....................................111222222220234456778
+405/247-559         ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------.---------
+#=GR 405/247-559 PP ........................................................................................................................................................................................................
+#=GC PP_cons        ...........................555.89******88888886............56677888899*********************..........***************************998777766443311....................................11122222222.234456778
+#=GC RF             xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.xxxxxxxxx
+
+405/4-231           QSEDRLFILADTSYG------------------------------ACCVDEIAAEHVDADVVIHYGRSCLSPT-ARLPVVYVFTTHTLPI-DPVIEAFQQ------IYTEKDTE-VILMADITYSDHIPTILERVTS-LGYNKVFAPSIIHDPA----------------------------------------------
+#=GR 405/4-231   PP 999************..............................****************************.****************.*********......9*******.*******************888.5*********999984..............................................
+405/247-559         --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#=GR 405/247-559 PP ........................................................................................................................................................................................................
+#=GC PP_cons        999************..............................****************************.****************.*********......9*******.*******************888.5*********999984..............................................
+#=GC RF             xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+405/4-231           --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#=GR 405/4-231   PP ........................................................................................................................................................................................................
+405/247-559         -------------------------------------------------------------ENKLQDYSLFHVSEPPP--------SLLLTLSSRLKSMYIYPTDA---A---KPQALEAQTSRLLMRRYATLTSLN--TCSIFGILINTLSVKNYMPTVDAIKAQIAAAGKKSYTFVVGKVNAAKVANFS-EIGGWVVI
+#=GR 405/247-559 PP .............................................................6789*************........***********884444444...4...5569********************..****************************************************.********
+#=GC PP_cons        .............................................................6789*************........***********884444444...4...5569********************..****************************************************.********
+#=GC RF             xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+405/4-231           --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#=GR 405/4-231   PP ........................................................................................................................................................................................................
+405/247-559         GCWESSLI--ESTEFFRPIITPFELGLALMSDEERVWTG--EWNGDFSDIINKPLVPRTVIKNAEEDSDG---------H----DEGSDDEEDSAPPEFDLRTGRYISHSRPMRHPKTTQSAS--------NDTPDETRATASSALMKRANGDLAM-INGTASPGAEYLRSQRTWKGLGSDFEVV----YDNDDGQLGAQ
+#=GR 405/247-559 PP ********..9****************************..**********9865333332233333333.........2....3444556899********************964444444........23345677899999****9****99.**************************99....9**********
+#=GC PP_cons        ********..9****************************..**********9865333332233333333.........2....3444556899********************964444444........23345677899999****9****99.**************************99....9**********
+#=GC RF             xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+405/4-231           ------------------------------------
+#=GR 405/4-231   PP ....................................
+405/247-559         VEQGRGGVARGYTVGGEGDRH---------------
+#=GR 405/247-559 PP ****************98765...............
+#=GC PP_cons        ****************98765...............
+#=GC RF             xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//

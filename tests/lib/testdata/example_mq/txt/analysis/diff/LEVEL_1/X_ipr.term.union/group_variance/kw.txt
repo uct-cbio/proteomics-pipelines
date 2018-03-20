@@ -1,0 +1,1 @@
+KruskalResult(statistic=4.6628626513171163, pvalue=0.030821763208114725)

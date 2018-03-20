@@ -1,0 +1,21 @@
+List of 3
+ $ method: chr "Benjamini-Hochberg"
+ $ res   :'data.frame':	10 obs. of  4 variables:
+  ..$ Comparison: Factor w/ 10 levels "Contaminant - Non-reference",..: 1 2 5 3 6 8 4 7 9 10
+  ..$ Z         : num [1:10] -10.61 -1.64 14.97 -11.44 -7.2 ...
+  ..$ P.unadj   : num [1:10] 2.59e-26 1.00e-01 1.11e-50 2.72e-30 6.07e-13 ...
+  ..$ P.adj     : num [1:10] 4.32e-26 1.00e-01 1.11e-49 6.81e-30 8.67e-13 ...
+ $ dtres : chr [1:23] "  Kruskal-Wallis rank sum test" "" "data: x and g" "Kruskal-Wallis chi-squared = 356.4738, df = 4, p-value = 0" ...
+ - attr(*, "class")= chr "dunnTest"
+NULL
+                    Comparison          Z      P.unadj        P.adj
+1  Contaminant - Non-reference -10.612967 2.593803e-26 4.323005e-26
+2      Contaminant - Reference  -1.644679 1.000360e-01 1.000360e-01
+3    Non-reference - Reference  14.972637 1.108383e-50 1.108383e-49
+4        Contaminant - Reverse -11.437266 2.723314e-30 6.808286e-30
+5      Non-reference - Reverse  -7.198910 6.069584e-13 8.670834e-13
+6          Reference - Reverse -11.503590 1.265402e-30 4.218006e-30
+7         Contaminant - Target  -2.671651 7.547919e-03 8.386577e-03
+8       Non-reference - Target  13.705720 9.383192e-43 4.691596e-42
+9           Reference - Target  -3.120816 1.803504e-03 2.254380e-03
+10            Reverse - Target  11.133755 8.593767e-29 1.718753e-28

@@ -1,0 +1,2 @@
+"","p.geomean","stat.mean","p.val","q.val","set.size","iBAQ.E15","iBAQ.E14","iBAQ.E16","iBAQ.E13","RowName","Exposed","Control","Coregulated","SameDir"
+"GO:0016491 oxidoreductase activity",0.177003759089491,0.90045365944084,0.0392573792421326,0.667375447116255,14,0.131770755883833,0.275035477877794,0.0932387129483002,0.314919362798973,"GO:0016491 oxidoreductase activity","After_B","Before_B","Up","True"
