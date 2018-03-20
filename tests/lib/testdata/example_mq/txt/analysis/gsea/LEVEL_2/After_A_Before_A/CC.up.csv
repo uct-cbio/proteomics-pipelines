@@ -1,2 +1,0 @@
-"","p.geomean","stat.mean","p.val","q.val","set.size","iBAQ.E10","iBAQ.E9","iBAQ.E11","iBAQ.E12","RowName","Exposed","Control","Coregulated","SameDir"
-"GO:0005840 ribosome",0.139755818209495,1.10626757699756,0.0158940298977845,0.0794701494889227,11,0.139592226494602,0.138451485761291,0.140237443889703,0.147914003585014,"GO:0005840 ribosome","After_A","Before_A","Up","True"

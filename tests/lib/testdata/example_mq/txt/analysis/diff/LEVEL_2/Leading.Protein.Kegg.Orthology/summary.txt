@@ -1,9 +1,0 @@
-Kruskal-Wallis test did not show a significant difference in the variance between groups (p-value 0.2572709079582468).
-
-Comparison After_A-Before_A:
-Out of 71 comparisons, 0 were significantly different with qval <  0.05.
-
-Comparison After_B-Before_B:
-Out of 71 comparisons, 0 were significantly different with qval <  0.05.
-
-
