@@ -94,7 +94,7 @@ RUN apt-get update && apt-get -y install ruby-full
 RUN gem install unipept
 
 # Install BLAST
-ENV blast_ftp ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.6.0+-x64-linux.tar.gz
+ENV blast_ftp ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.7.1+-x64-linux.tar.gz
 RUN mkdir /root/blast && cd /root/blast && wget ${blast_ftp} && tar -zxvf * && rm -rf *.tar.gz 
 RUN cd /root/blast/ncbi*/bin && cp * /usr/local/bin
 
@@ -117,5 +117,5 @@ RUN apt-get update
 RUN apt-get -y install python3-tk
 RUN pip3 install rpy2
 RUN pip3 install datrie
-RUN pip3 install posthocs
+RUN pip3 install scikit-posthocs
 
