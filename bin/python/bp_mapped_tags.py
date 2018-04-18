@@ -33,8 +33,12 @@ seqs = {}
 f = sys.argv[1].split('.csv')[0] + '.gz'
 with gzip.open(f, "rt") as handle:
         for i in SeqIO.parse(handle, "fasta"):
-            acc = i.id.split('|')[1]
+            try:
+                acc = i.id.split('|')[1]
+            except:
+                acc = i.description
             seqs[acc] = i
+
 
 passed_tags = set()
 matched_tags = defaultdict(set)
