@@ -1,2 +1,0 @@
-"","p.geomean","stat.mean","p.val","q.val","set.size","iBAQ.E10","iBAQ.E9","iBAQ.E11","iBAQ.E12","RowName","Exposed","Control","Coregulated","SameDir"
-"GO:0003735 structural constituent of ribosome",0.101726740479478,1.30263369712396,0.0055928392685414,0.0950782675652038,14,0.0974026880163166,0.0942817576115802,0.120119375257695,0.0988793597543411,"GO:0003735 structural constituent of ribosome","After_A","Before_A","Up","True"

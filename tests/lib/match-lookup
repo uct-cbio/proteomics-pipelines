@@ -1,9 +1,0 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>InterProScan 5 Pre-calculated Match Lookup Service</title>
-</head>
-<body>
-<h3>InterProScan 5 Pre-calculated Match Lookup Service</h3><p>This is the landing page of the InterProScan 5 Pre-calculated Match Lookup Service.</p><p>Please note that this is a REST web service that has been designed specifically for use by InterProScan 5 installations.</p>
-</body>
-</html>
