@@ -21,10 +21,11 @@ import os
 import rfunc
 import subprocess
 import yaml
-import posthocs as ph
+import scikit_posthocs as ph
 import scipy
 import pickle
 import mygene
+import rpy2.robjects as ro
 
 def name_dct():
     names = {'sf_novel_m':'Six Frame Novel Only\n(M start)',
@@ -149,6 +150,7 @@ def parse_ids(ids):
 
 class mq_txt:
     def __init__(self, config, exclude_contaminants=False):
+        c = "library('FSA')"; ro.r(c)
         with open(config) as f:
             self.config = yaml.load(f.read())
 
@@ -157,16 +159,12 @@ class mq_txt:
         self.txt_path = self.config['mq_txt']
         self.peptides = pd.read_csv(self.txt_path +'/peptides.txt', sep='\t')
         self.peptides['Identifier'] = self.peptides['Sequence']
-        
-
         self.proteingroups = self.create_protein_group_identifier(pd.read_csv(self.txt_path +'/proteinGroups.txt', sep='\t'))
         self.proteingroups['Leading Protein'] = self.proteingroups['Protein IDs'].apply(parse_ids).apply(lambda x : x.split(';')[0])
-        self.proteingroups = self.leading_protein_mygene(self.proteingroups)
-
+        #self.proteingroups = self.leading_protein_mygene(self.proteingroups)
         assert len(self.proteingroups['Identifier'].tolist()) == len(set(self.proteingroups['Identifier'].tolist()))
-        self.proteingroups = self.leading_protein_ko(self.proteingroups)
+        #self.proteingroups = self.leading_protein_ko(self.proteingroups)
         assert len(self.proteingroups['Identifier'].tolist()) == len(set(self.proteingroups['Identifier'].tolist()))
-
         self.msms = pd.read_csv(self.txt_path +'/msms.txt', sep='\t')
         self.summary = pd.read_csv(self.txt_path +'/summary.txt', sep='\t')
         self.target_proteingroups = self.exclude_reverse(self.proteingroups)
@@ -180,18 +178,14 @@ class mq_txt:
         self.target_msms = self.exclude_reverse(self.msms)
         self.target_peptides = self.exclude_reverse(self.peptides)
         self.target_proteingroups = self.exclude_reverse(self.proteingroups)
-        
         if exclude_contaminants == True:
             self.target_peptides = self.exclude_contaminants(self.target_peptides)
             self.target_proteingroups = self.exclude_contaminants(self.target_proteingroups)
-        
         self.peptide_txt = self.peptide_dir +'target_peptides.txt'
         self.target_peptides.to_csv(self.peptide_txt, sep='\t')
-        
         self.protein_txt = self.protein_dir + 'target_proteins.txt'
         self.target_proteingroups.to_csv(self.protein_txt, sep='\t')
         self.protein_id_lists(self.target_proteingroups, self.protein_dir +'/protein_ids.txt')
-        
         self.target_peptides_list = self.target_peptides['Sequence'].tolist()
         self.target_msms = self.target_msms[self.target_msms['Sequence'].isin(self.target_peptides_list)]
         self.reference_fasta = list(SeqIO.parse(self.config['reference_fasta'], 'fasta'))
@@ -201,7 +195,6 @@ class mq_txt:
         self.non_reference_peptides = self.target_peptides[self.target_peptides['Sequence'].isin(self.non_reference_peptides_list)]
         self.reference_msms = self.target_msms[self.target_msms['Sequence'].isin(self.reference_peptides_list)]
         self.non_reference_msms = self.target_msms[self.target_msms['Sequence'].isin(self.non_reference_peptides_list)]
-    
         self.target_msms_pep = self.target_msms['PEP'].tolist()
         self.target_peptides_pep = self.target_peptides['PEP'].tolist()
         self.reverse_msms_pep = self.reverse_msms['PEP'].tolist()
@@ -296,7 +289,6 @@ class mq_txt:
             table=self.diff_dir + '/protein_normalization/msnbase/normalized.csv'
             genecol='Mygene.entrez'
             kocol='Leading.Protein.Kegg.Orthology.ID'
-
             self.ips_gsea(outpath, gsea_dir, design, table, genecol=genecol , kocol=kocol)
             self.summarize_gsea(gsea_dir, gsea_dir + '/summary.txt', self.config, level)
 
@@ -427,9 +419,9 @@ class mq_txt:
     def pep_kw(self):
         data = [self.target_msms_pep, self.contaminant_msms_pep, self.reference_msms_pep, self.non_reference_msms_pep, self.reverse_msms_pep]
         names = ['Target', 'Contaminant', "Reference", "Non-reference", "Reverse"]
-        outpath = self.pep_dir + '/pep_score_kw_dunn.txt'
+        outpath = self.pep_dir 
         if not os.path.exists(outpath):
-            rfunc.list_kw_dunn(names, data, 'PEP', 'Category', outpath)
+            list_kw_dunn(names, data, 'PEP', 'Category', outpath)
     
 
     def unipept(self):

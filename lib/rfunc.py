@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import mygene
-
 import numpy as np
 import scipy as sp
 import pandas as pd
@@ -291,7 +290,7 @@ def ANOVA_RM(dataframe, val, var, subject):   # pandas df, col to do anova on
 
 def KW_DUNN(dataframe, dep_var, dep_fac, outpath):   # pandas df, col to do anova on
     c = "sink('{}')".format(outpath); ro.r(c)
-    c = "library('FSA')"; ro.r(c)
+    c = "library(FSA)"; ro.r(c)
     rdf =pandas2ri.py2ri(dataframe); ro.globalenv['data'] = rdf
     c = "library(plyr)";ro.r(c)
     c = "your.kw = kruskal.test(data${} ~ data${})".format(dep_var, dep_fac); ro.r(c)

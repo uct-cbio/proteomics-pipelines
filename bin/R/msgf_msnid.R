@@ -21,6 +21,9 @@ opt = parse_args(opt_parser);
 acc_fdr = opt$accession_fdr / 100.0   # convert percentage to ratio
 pep_fdr = opt$peptide_fdr / 100.0   # convert percentage to ratio
 psm_fdr = opt$psm_fdr / 100.0   # convert percentage to ratio
+
+print(acc_fdr)
+print(pep_fdr)
 print(psm_fdr)
 
 if (is.null(opt$indir)){
@@ -151,7 +154,6 @@ msnid.psms <- merge(msnid.psms, repcount)
 
 msnid$unf.pepSeq.repcount <- msnid.psms$unf.pepSeq.repcount[match(msnid$pepSeq, msnid.psms$pepSeq)]
 
-
 repCount <- unique(psms(msnid)[,c("pepSeq", "isDecoy", "unf.pepSeq.repcount")])
 repCount <- as.data.frame(table(repCount[,c("unf.pepSeq.repcount", "isDecoy")]))
 ggplot(repCount, aes(x=unf.pepSeq.repcount, y=Freq, fill=isDecoy)) + geom_bar(stat='identity', position='dodge') + ggtitle("Distribution of peptide replicate counts")
@@ -204,32 +206,35 @@ msnid$minPepLength <- msnid$PepLength
 print('Creating MSnIDFilter object:')
 msnid$expect <- as.numeric(msnid$`X\\!Tandem:expect`)
 msnid$hyperscore <- as.numeric(msnid$`X\\!Tandem:hyperscore`)
-
-
 filtObj <- MSnIDFilter(msnid)
-
-
-filtObj$absParentMassErrorPPM <- list(comparison="<", threshold=10.000)
-filtObj$hyperscore  <- list(comparison=">", threshold=10.000)
-filtObj$expect  <- list(comparison="<", threshold=0.05)
+filtObj$absParentMassErrorPPM <- list(comparison="<", threshold=10.0)
+filtObj$hyperscore  <- list(comparison="<", threshold=0.000000005)
+filtObj$expect  <- list(comparison="<", threshold=0.000000005)
 
 ###############################
 # FDR filtering #
 ###############################
-acc.filtObj.grid <- optimize_filter(filtObj, msnid, fdr.max= acc_fdr, method="Grid",level='accession', n.iter=1000) 
-acc.filtObj.nm <- optimize_filter(acc.filtObj.grid, msnid, fdr.max=acc_fdr, method="Nelder-Mead",level='accession', n.iter=1000) 
-acc.filtObj.sa <- optimize_filter(acc.filtObj.nm, msnid, fdr.max=acc_fdr, method="SANN",level='accession', n.iter=1000) 
+#acc_fdr <- 0.001
 
-pep.filtObj.grid <- optimize_filter(filtObj, msnid, fdr.max= pep_fdr, method="Grid",level='peptide', n.iter=1000) 
-pep.filtObj.nm <- optimize_filter(pep.filtObj.grid, msnid, fdr.max=pep_fdr, method="Nelder-Mead",level='peptide', n.iter=1000) 
-pep.filtObj.sa <- optimize_filter(pep.filtObj.nm, msnid, fdr.max=pep_fdr, method="SANN",level='peptide', n.iter=1000) 
+filtObj.grid <- optimize_filter(filtObj, msnid, fdr.max= acc_fdr, method="Grid",  level='accession', n.iter=1000) 
+show(apply_filter(msnid, filtObj.grid))
+filtObj.nm   <- optimize_filter(filtObj.grid, msnid, fdr.max=acc_fdr, method="Nelder-Mead",level='accession', n.iter=1000) 
+show(apply_filter(msnid, filtObj.nm))
+filtObj.sa   <- optimize_filter(filtObj.nm, msnid, fdr.max=acc_fdr, method="SANN",level='accession', n.iter=1000) 
+show(apply_filter(msnid, filtObj.sa))
+msnid <- apply_filter(msnid, filtObj.sa) # peptide fdr filter
+
+
+
+#pep.filtObj.grid <- optimize_filter(filtObj, msnid, fdr.max= pep_fdr, method="Grid",level='peptide', n.iter=1000) 
+#pep.filtObj.nm <- optimize_filter(pep.filtObj.grid, msnid, fdr.max=pep_fdr, method="Nelder-Mead",level='peptide', n.iter=1000) 
+#pep.filtObj.sa <- optimize_filter(pep.filtObj.nm, msnid, fdr.max=pep_fdr, method="SANN",level='peptide', n.iter=1000) 
 
 #psm.filtObj.grid <- optimize_filter(filtObj, msnid, fdr.max= psm_fdr, method="Grid",level='PSM', n.iter=1000)
 #psm.filtObj.nm <- optimize_filter(psm.filtObj.grid, msnid, fdr.max=psm_fdr, method="Nelder-Mead",level='PSM', n.iter=1000) 
 #psm.filtObj.sa <- optimize_filter(psm.filtObj.nm, msnid, fdr.max=psm_fdr, method="SANN",level='PSM', n.iter=1000) 
 
-msnid <- apply_filter(msnid, acc.filtObj.sa) # protein fdr filter
-msnid <- apply_filter(msnid, pep.filtObj.sa) # peptide fdr filter
+#msnid <- apply_filter(msnid, acc.filtObj.sa) # protein fdr filter
 #msnid <- apply_filter(msnid, psm.filtObj.sa) # psm fdr filter
 
 show(msnid)

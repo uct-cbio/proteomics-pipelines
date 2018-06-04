@@ -1,4 +1,5 @@
 #/usr/bin/env python
+import rpy2.robjects as ro
 import collections
 from collections import Counter
 import multiprocessing
