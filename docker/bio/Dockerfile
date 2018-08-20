@@ -118,4 +118,5 @@ RUN apt-get -y install python3-tk
 RUN pip3 install rpy2
 RUN pip3 install datrie
 RUN pip3 install scikit-posthocs
+RUN R -e "install.packages('FSA') "
 

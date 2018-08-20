@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-
+#options(error=traceback)
 library('optparse')
 library('GO.db')
 option_list = list(
@@ -28,26 +28,20 @@ vct <- function(chars) { return(as.vector(strsplit(chars, '|', fixed=TRUE))[[1]]
 ###################
 go.term <- function(goid)
 {
-    go <- GOTERM[[goid]]
-    return(go@Term)  }
+    go <- GOTERM[goid]
+    return(Term(go)[1] ) }
 
-go.ontology <- function(goid)
-{
-    go <- GOTERM[[goid]]
-    return(go@Ontology) }
-
-
+go.ontology <- function(goid ) {
+    go <- GOTERM[goid]
+    ontology <- Ontology(go)[1]
+    return(ontology)}
 gopath <- paste(outpath,'/go2proteingroups.csv', sep='') 
 gtab <- read.csv(gopath)
 gtab <- data.frame(lapply(gtab, as.character), stringsAsFactors=FALSE)
-#gtab <- head(gtab)
-
 gtab$GO_TERM <- lapply(gtab$GO_ID, go.term)
 gtab$GO_ONTOLOGY <- lapply(gtab$GO_ID, go.ontology)
 gtab$ID<- with(gtab, paste0(GO_ID, " ", GO_TERM))
 gtab$GENES <- lapply(gtab$GENES, vct)
-
-
 # BIOLOGICAL PROCESS
 bp <- gtab[gtab$GO_ONTOLOGY == 'BP',]
 bp.set <- as.list(bp$GENES)

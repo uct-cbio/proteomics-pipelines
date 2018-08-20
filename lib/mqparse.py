@@ -148,12 +148,23 @@ def parse_ids(ids):
     new_ids = ';'.join(new_ids)
     return new_ids
 
+def parse_groups(ids):
+    ids = ids.split(';')
+    new_ids = []
+    for i in ids:
+        if '|' in i:
+            new = i.split('|')[2].split('_')[1]
+        else:
+            new = i
+        new_ids.append(new)
+    new_ids = ';'.join(new_ids)
+    return new_ids
+
 class mq_txt:
     def __init__(self, config, exclude_contaminants=False):
         c = "library('FSA')"; ro.r(c)
         with open(config) as f:
             self.config = yaml.load(f.read())
-
         self.outdir = self.config['outdir']
         self.create_folders()
         self.txt_path = self.config['mq_txt']
@@ -161,9 +172,12 @@ class mq_txt:
         self.peptides['Identifier'] = self.peptides['Sequence']
         self.proteingroups = self.create_protein_group_identifier(pd.read_csv(self.txt_path +'/proteinGroups.txt', sep='\t'))
         self.proteingroups['Leading Protein'] = self.proteingroups['Protein IDs'].apply(parse_ids).apply(lambda x : x.split(';')[0])
-        #self.proteingroups = self.leading_protein_mygene(self.proteingroups)
+        self.proteingroups['Leading Species'] = self.proteingroups['Protein IDs'].apply(parse_groups).apply(lambda x : x.split(';')[0])
+        self.proteingroups = self.leading_protein_mygene(self.proteingroups)
         assert len(self.proteingroups['Identifier'].tolist()) == len(set(self.proteingroups['Identifier'].tolist()))
-        #self.proteingroups = self.leading_protein_ko(self.proteingroups)
+        self.proteingroups = self.leading_protein_ko(self.proteingroups)
+        self.reference_fasta = list(SeqIO.parse(self.config['reference_fasta'], 'fasta'))
+        self.proteingroups = self.host_proteins(self.proteingroups, self.reference_fasta)
         assert len(self.proteingroups['Identifier'].tolist()) == len(set(self.proteingroups['Identifier'].tolist()))
         self.msms = pd.read_csv(self.txt_path +'/msms.txt', sep='\t')
         self.summary = pd.read_csv(self.txt_path +'/summary.txt', sep='\t')
@@ -188,7 +202,6 @@ class mq_txt:
         self.protein_id_lists(self.target_proteingroups, self.protein_dir +'/protein_ids.txt')
         self.target_peptides_list = self.target_peptides['Sequence'].tolist()
         self.target_msms = self.target_msms[self.target_msms['Sequence'].isin(self.target_peptides_list)]
-        self.reference_fasta = list(SeqIO.parse(self.config['reference_fasta'], 'fasta'))
         self.search_fasta = list(SeqIO.parse(self.config['search_fasta'],'fasta'))
         self.get_reference_peptides()
         self.reference_peptides = self.target_peptides[self.target_peptides['Sequence'].isin(self.reference_peptides_list)]
@@ -267,7 +280,6 @@ class mq_txt:
                                        outfile=outfile, 
                                        quant='iBAQ',
                                        group_level=level)
-
         # Normalize proteins
         outdir = self.diff_dir + 'protein_normalization'
         infile = self.gsea_dir +'/ipr_target_proteins.txt'
@@ -285,8 +297,8 @@ class mq_txt:
         for level in self.config['group_levels']:
             gsea_dir = outpath + '/' + level
             os.mkdir(gsea_dir)
-            design = self.diff_dir + '/protein_experimental_design_{}.R'.format(level)
-            table=self.diff_dir + '/protein_normalization/msnbase/normalized.csv'
+            table=self.diff_dir+'/protein_normalization/msnbase/normalized.csv'
+            design = self.diff_dir+'/protein_experimental_design_{}.R'.format(level)
             genecol='Mygene.entrez'
             kocol='Leading.Protein.Kegg.Orthology.ID'
             self.ips_gsea(outpath, gsea_dir, design, table, genecol=genecol , kocol=kocol)
@@ -305,6 +317,13 @@ class mq_txt:
         d = str(self.summary[-1:].stack())
         w.write(d)
         w.close()
+    def host_proteins(self, data, host_fasta):
+        ids = []
+        for p in host_fasta:
+            id = p.id.split('|')[1]
+            ids.append(id)
+        data['Component'] = np.where(data['Leading Protein'].isin(ids), 'host', 'other')
+        return data
 
     def create_folders(self):
         self.unipept_dir = self.outdir + '/unipept/'
@@ -602,11 +621,21 @@ class mq_txt:
         #pept2taxa_sc.to_csv(self.unipept_dir + '/pept2taxa_family_sc.csv')
       
     def ips_gsea(self, indir, outpath, design, table, genecol, kocol, keggid='hsa', pval=0.05):
-        print(pval)
-        cmd = 'gage.R --indir {} --outdir {} --keggid {} --design {} --table {} --genecol {} --kocol {} --pval {}'.format(indir, outpath, keggid, design, table, genecol, kocol,  pval)
+        table = pd.read_csv(table)
+        table.to_csv(indir + '/combined.csv')    
+        group_table = indir + '/combined.csv'
+        cmd = 'gage.R --indir {} --outdir {} --keggid {} --design {} --table {} --genecol {} --kocol {} --pval {}'.format(indir, outpath, keggid, design, group_table, genecol, kocol,  pval)
         process = subprocess.Popen(cmd, shell=True)
         process.wait()
         assert process.returncode == 0
+    
+        for name, group in table.groupby('Component'):
+            group_table = indir + '/{}.csv'.format(name)
+            group.to_csv(indir + '/{}.csv'.format(name))    
+            cmd = 'gage.R --indir {} --outdir {} --keggid {} --design {} --table {} --genecol {} --kocol {} --pval {}'.format(indir, outpath, keggid, design, group_table, genecol, kocol,  pval)
+            process = subprocess.Popen(cmd, shell=True)
+            process.wait()
+            assert process.returncode == 0
     
     def ips_genesets(self, ipr, proteins, outpath, keggid='ko', id_col="Leading Protein"):
         cols = ['ProteinAccession', 
@@ -1100,6 +1129,7 @@ class mq_txt:
         process = subprocess.Popen(cmd, shell=True)
         process.wait()
         var = pd.read_csv(outpath +'/group_variance/group_variance.txt',sep='\t')
+        var = var.dropna(axis=1, how='all')
         if len(var) > 0:
             names = []
             data = []
@@ -1167,7 +1197,7 @@ class mq_txt:
             w.write('Comparison between {} and {}:\n\n'.format(comp[1], comp[0]))
             mcp = '{}_{}'.format(comp[0], comp[1])
             for fl in os.listdir(inpath + '/' + mcp):
-                if fl.endswith('.csv'):
+                if fl.strip().rstrip().endswith('.csv'):
                     w.write(fl + '\n')
                     data = pd.read_csv(inpath + '/' + mcp + '/' + fl)
                     qdata = data[data['q.val'] < 0.05 ]
@@ -1248,6 +1278,13 @@ class mq_txt:
             self.diff(protein_exp, table, diff_dir)
             self.summarize_diff(diff_dir , diff_dir + '/summary.txt')
 
+            # LEADING SPECIES
+            col = 'Leading.Species'
+            diff_dir = self.diff_dir + '/' + level + '/' + col
+            self.aggregate_quant(self.normalized_target_proteins, col, 'iBAQ.', diff_dir )
+            table = diff_dir + '/' + col + '.csv'
+            self.diff(protein_exp, table, diff_dir)
+            self.summarize_diff(diff_dir , diff_dir + '/summary.txt')
 
     def ec2ko(self, ec):
         ko = rfunc.string2ko('[EC:{}]'.format(ec))
