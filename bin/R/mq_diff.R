@@ -31,7 +31,7 @@ exp_design=opt$d
 source(exp_design)
 
 data <- read.csv(path)
-data <- data[with(data, order(-rowSums(data[,cols]))), ]
+data <- data[with(data, order(-rowSums(data[,cols, drop=FALSE]))), ]
 
 #ratios <- t(t(data[, cols])/colSums(data[, cols]))
 
@@ -52,7 +52,7 @@ orig_data <- data
 data <- data[,cols]
 
 fpie <- function( df , names, valcols, outfile) {
-    df$slices <- rowSums(df[,valcols] )
+    df$slices <- rowSums(df[,valcols, drop=FALSE] )
     df$slices <- df$slices/sum(df$slices) * 100
     df$slices <- round(df$slices, 2)
     df$label <- paste(names, " ", df$slices, ' %', sep="")
@@ -66,20 +66,16 @@ out <- paste(outdir, 'summed_intensity_all.jpeg', sep='')
 fpie(intensities, Identifier, cols, out)
 f <- f # Defined in experimental design template
 refmap <- data.frame(f, cols)
-
 comparisons <- colnames(contrast.matrix)
-
 groups <- rownames(contrast.matrix)
-
 group_variance_values <- vector("list", length(groups))
 group_variance_names <- vector("list", length(groups))
-
 #variances <- data.frame()
 vardata <- data
 vardata$Identifier <- Identifier
-vardata$sums  <- rowSums(intensities[,cols] ) # sum the raw intensity to exclude proteins that contribute less than 1 percent
+vardata$sums  <- rowSums(intensities[,cols, drop=FALSE] ) # sum the raw intensity to exclude proteins that contribute less than 1 percent
 total <- sum(vardata$sums)
-vardata$percentage <- lapply(vardata$sums, function(x){ (x/total) * 100})
+vardata$percentage <- lapply(vardata$sums, function(x){(x/total)*100})
 vardata <- vardata[vardata$percentage >= 1,]
 
 variances <- data.frame(matrix(, nrow=nrow(vardata), ncol=0))
@@ -90,7 +86,7 @@ for (group in groups){
     groupcols <- as.numeric(rownames(groupdf))
     out <- paste(outdir, 'summed_intensity_',group,'.jpeg' , sep='')
     fpie(intensities, Identifier, groupcols, out) 
-    variances <- cbind(variances, var = apply(vardata[,groupcols], 1, function(x) var(na.omit(x))))
+    variances <- cbind(variances, var = apply(vardata[,groupcols, drop=FALSE], 1, function(x) var(na.omit(x))))
     names(variances)[names(variances) == 'var'] <- group 
 }
 

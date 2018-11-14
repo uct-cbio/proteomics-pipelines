@@ -122,6 +122,8 @@ if(file.exists(reactome_path)){
 }
 
 table_path <- opt$table 
+infile <- basename(table_path)
+
 table <- read.csv(table_path)
 row.names(table) <- table$Row.names
 
@@ -215,12 +217,12 @@ process <- function(table , refcols, sampcols, outpath, refdata, samp, ref) {
   gt <- greater(res, samp, ref)
   if (length(row.names(gt)) > 0) {
     gt$SameDir <- "True"
-    write.csv(gt, 'IPR.up.csv')
+    write.csv(gt, paste('IPR.up.', infile, sep=''))
   }
   ls <- less(res, samp, ref)
   if (length(row.names(ls)) > 0) {
     ls$SameDir <- "True"
-    write.csv(ls,'IPR.down.csv')
+    write.csv(ls, paste('IPR.down.', infile, sep=''))
   }
  
 
@@ -231,12 +233,12 @@ process <- function(table , refcols, sampcols, outpath, refdata, samp, ref) {
   gt <- greater(res, samp, ref)
   if (length(row.names(gt)) > 0) {
     gt$SameDir <- "True"
-    write.csv(gt, 'EC.up.csv')
+    write.csv(gt, paste('EC.up.', infile,sep=''))
   }
   ls <- less(res, samp, ref)
   if (length(row.names(ls)) > 0) {
     ls$SameDir <- "True"
-    write.csv(ls,'EC.down.csv')
+    write.csv(ls,paste('EC.down.', infile, sep=''))
   }
 
 
@@ -252,32 +254,29 @@ process <- function(table , refcols, sampcols, outpath, refdata, samp, ref) {
   #  write.csv(ls, paste(outpath, '/IPR.down.both.csv',sep=''))
   #}
 
-
-
-
   print("KEGG")
-  ref.d <- refdata[, sampcols]-rowMeans(refdata[, refcols])
-  ko.d <- kodata[, sampcols]-rowMeans(kodata[, refcols])
+  ref.d <- refdata[, sampcols]-rowMeans(refdata[, refcols, drop=FALSE])
+  ko.d <- kodata[, sampcols]-rowMeans(kodata[, refcols, drop=FALSE])
   
   res <- analyse(table, kegg.set, refcols, sampcols, T)
   ls <- less(res, samp, ref)
   if (length(row.names(ls)) > 0) {
     ls$SameDir <- "True"
     ls$RowName = paste(species, ls$RowName,sep = "")
-    write.csv(ls, 'KEGG.down.csv')
+    write.csv(ls, paste('KEGG.down.', infile, sep=''))
     less_ids <- row.names(ls) 
-    try(pv.out.list <- sapply(less_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = 'keggView', same.layer = F, pathway.id = paste(species, pid, sep=''), species = species)))
-    try(pv.out.list <- sapply(less_ids, function(pid) pathview(gene.data = ko.d, kegg.native = T, out.suffix = 'keggView', same.layer = F, pathway.id = paste('ko', pid, sep=''), species = 'ko')))
+    try(pv.out.list <- sapply(less_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste(species, pid, sep=''), species = species)))
+    try(pv.out.list <- sapply(less_ids, function(pid) pathview(gene.data = ko.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste('ko', pid, sep=''), species = 'ko')))
   }
   
   gt <- greater(res, samp, ref)
   if (length(row.names(gt)) > 0) {
     gt$SameDir <- "True"
     gt$RowName = paste(species, gt$RowName,sep = "")
-    write.csv(gt,'KEGG.up.csv')
+    write.csv(gt, paste('KEGG.up.', infile, sep=''))
     greater_ids <- row.names(gt)
-    try(pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = 'keggView', same.layer = F, pathway.id = paste(species, pid, sep=''), species = species)))
-    try(pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ko.d, kegg.native = T, out.suffix = 'keggView', same.layer = F, pathway.id = paste('ko', pid, sep=''), species = 'ko')))
+    try(pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste(species, pid, sep=''), species = species)))
+    try(pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ko.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste('ko', pid, sep=''), species = 'ko')))
   }
   
   res <- analyse(table, kegg.set, refcols, sampcols, F)
@@ -288,10 +287,10 @@ process <- function(table , refcols, sampcols, outpath, refdata, samp, ref) {
   if (length(row.names(gt)) > 0) {
     gt$SameDir <- "False"
     gt$RowName = paste(species, gt$RowName,sep = "")
-    write.csv(gt, 'KEGG.both.csv')
+    write.csv(gt, paste('KEGG.both.', infile,sep= ''))
     greater_ids <- row.names(gt)
-  try(pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = 'keggView', same.layer = F, pathway.id = paste(species, pid, sep=''), species = species)))
-  try(pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ko.d, kegg.native = T, out.suffix = 'keggView', same.layer = F, pathway.id = paste('ko', pid, sep=''), species = 'ko')))
+  try(pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste(species, pid, sep=''), species = species)))
+  try(pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ko.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste('ko', pid, sep=''), species = 'ko')))
   } 
   
   # BP
@@ -300,12 +299,12 @@ process <- function(table , refcols, sampcols, outpath, refdata, samp, ref) {
   gt <- greater(res, samp, ref)
   if (length(row.names(gt)) > 0) {
       gt$SameDir <- "True"
-      write.csv(gt,'BP.up.csv')
+      write.csv(gt,paste('BP.up.',infile, sep=''))
   }
   ls <- less(res, samp, ref)
   if (length(row.names(ls)) > 0) {
     ls$SameDir <- "True"
-    write.csv(ls, 'BP.down.csv')
+    write.csv(ls, paste('BP.down.', infile, sep=''))
   }
  
   # MF
@@ -314,12 +313,12 @@ process <- function(table , refcols, sampcols, outpath, refdata, samp, ref) {
   gt <- greater(res, samp, ref)
   if (length(row.names(gt)) > 0) {
     gt$SameDir <- "True"
-    write.csv(gt, 'MF.up.csv')
+    write.csv(gt, paste( 'MF.up.', infile, sep=''))
   }
   ls <- less(res, samp, ref)
   if (length(row.names(ls)) > 0) {
     ls$SameDir <- "True"
-    write.csv(ls, 'MF.down.csv')
+    write.csv(ls, paste( 'MF.down.', infile,sep= ''))
   }
  
   # CC
@@ -328,12 +327,12 @@ process <- function(table , refcols, sampcols, outpath, refdata, samp, ref) {
   gt <- greater(res, samp, ref)
   if (length(row.names(gt)) > 0) {
     gt$SameDir <- "True"
-    write.csv(gt, 'CC.up.csv')
+    write.csv(gt, paste('CC.up.', infile, sep=''))
   }
   ls <- less(res, samp, ref)
   if (length(row.names(ls)) > 0) {
     ls$SameDir <- "True"
-    write.csv(ls, 'CC.down.csv')
+    write.csv(ls, paste('CC.down.',infile,sep= ''))
   }
 
   # OPERONS
@@ -344,12 +343,12 @@ process <- function(table , refcols, sampcols, outpath, refdata, samp, ref) {
   gt <- greater(res, samp, ref)
   if (length(row.names(gt)) > 0) {
     gt$SameDir <- "True"
-    write.csv(gt, 'OPERON.up.csv')
+    write.csv(gt, paste('OPERON.up.',infile, sep=''))
   }
   ls <- less(res, samp, ref)
   if (length(row.names(ls)) > 0) {
     ls$SameDir <- "True"
-    write.csv(ls, 'OPERON.down.csv')
+    write.csv(ls, paste('OPERON.down.', infile, sep=''))
    }}
   # RECTOME
   if (reactome == 'true') {
@@ -358,12 +357,12 @@ process <- function(table , refcols, sampcols, outpath, refdata, samp, ref) {
   gt <- greater(res, samp, ref)
   if (length(row.names(gt)) > 0) {
     gt$SameDir <- "True"
-    write.csv(gt, 'REACTOME.up.csv')
+    write.csv(gt, paste('REACTOME.up.', infile,sep= ''))
   }
   ls <- less(res, samp, ref)
   if (length(row.names(ls)) > 0) {
     ls$SameDir <- "True"
-    write.csv(ls, 'REACTOME.down.csv')
+    write.csv(ls,paste( 'REACTOME.down.', infile , sep=''))
    }}
   # METACYC
   if (metacyc == 'true') {
@@ -372,12 +371,12 @@ process <- function(table , refcols, sampcols, outpath, refdata, samp, ref) {
   gt <- greater(res, samp, ref)
   if (length(row.names(gt)) > 0) {
     gt$SameDir <- "True"
-    write.csv(gt, 'METACYC.up.csv')
+    write.csv(gt, paste( 'METACYC.up.', infile, sep=''))
   }
   ls <- less(res, samp, ref)
   if (length(row.names(ls)) > 0) {
     ls$SameDir <- "True"
-    write.csv(ls, 'METACYC.down.csv')
+    write.csv(ls, paste('METACYC.down.', infile, sep=''))
    }}
 }
 

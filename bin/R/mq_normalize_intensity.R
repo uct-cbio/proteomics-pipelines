@@ -54,7 +54,7 @@ orig_data <- data
 data[, cols] <- lapply(data[, cols], function(x){replace(x, x == 0,  NA)})
 data[, cols] <- lapply(data[, cols], function(x){ log2(x)})
 
-#data <- data[rowSums(is.na(data[,cols])) < length(cols)/2, ]
+#data <- data[rowSums(is.na(data[,cols]))<= length(cols)-length(cols)/4, ]
 #data <- data[rowSums(is.na(data[,cols])) < 1,]
 
 #######################################################
