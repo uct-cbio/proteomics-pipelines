@@ -1,13 +1,16 @@
 
-## Test suite
+# Test suite
 
-Access the proteogenomics test suite and data from public repository available here::
+Access the proteogenomics test suite and data from public repository available here:
 https://thys_potgieter@bitbucket.org/thys_potgieter/cbio-proteogenomics-tests.git
+
+# MetaNovo 
 
 ## MetaNovo with PBS on a cluster
 
-### Install metanovo dependencies
-`in/bash/install_metanovo.sh`
+### 1 . Install metanovo dependencies
+`cd proteomics-pipelines/bin/bash/`
+`./install_metanovo.sh`
 
 ### Create MetaNovo config file for your analysis
 Copy the metanovo config file in bin/config/metanovo_config.sh to the project folder and edit
