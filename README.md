@@ -8,8 +8,26 @@ https://thys_potgieter@bitbucket.org/thys_potgieter/cbio-proteogenomics-tests.gi
 
 ## MetaNovo with PBS on a cluster
 
-### 1 . Install metanovo dependencies
+### 1. Clone the repository
+
 `git clone https://github.com/uct-cbio/proteomics-pipelines.git`
+
+### 2. Install metanovo dependencies
+
+
+The following dependencies will be installed (skip this step if they are already installed):
+
+
+http://genesis.ugent.be/maven2/com/compomics/utilities/4.11.19/utilities-4.11.19.zip
+
+http://www.proteoannotator.org/datasets/releases/ProteoAnnotator-1.7.86.zip
+
+http://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/3.2.20/SearchGUI-3.2.20-mac_and_linux.tar.gz
+
+http://genesis.ugent.be/maven2/com/compomics/denovogui/DeNovoGUI/1.15.11/DeNovoGUI-1.15.11-mac_and_linux.tar.gz
+
+https://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.5.tar.gz
+
 
 `cd proteomics-pipelines/bin/bash/`
 
