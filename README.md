@@ -9,8 +9,11 @@ https://thys_potgieter@bitbucket.org/thys_potgieter/cbio-proteogenomics-tests.gi
 ## MetaNovo with PBS on a cluster
 
 ### 1 . Install metanovo dependencies
+`git clone https://github.com/uct-cbio/proteomics-pipelines.git`
+
 `cd proteomics-pipelines/bin/bash/`
-`./install_metanovo.sh`
+
+`./install_metanovo.sh ${HOME}/metanovo_dependences # Change the path if needed`
 
 ### Create MetaNovo config file for your analysis
 Copy the metanovo config file in bin/config/metanovo_config.sh to the project folder and edit
