@@ -1,7 +1,7 @@
 
 # Test suite
 
-Access the proteogenomics test suite and data from public repository available here:
+Access the proteomics test suite and data from public repository available here:
 https://thys_potgieter@bitbucket.org/thys_potgieter/cbio-proteogenomics-tests.git
 
 # MetaNovo 
