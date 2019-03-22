@@ -13,7 +13,9 @@ https://thys_potgieter@bitbucket.org/thys_potgieter/cbio-proteogenomics-tests.gi
 
 `cd proteomics-pipelines/bin/bash/`
 
-`./install_metanovo.sh ${HOME}/metanovo_dependences # Change the path if needed`
+`export METANOVO_DEPENDENCIES=${HOME}/software/ # Change the path if needed`
+
+`./install_metanovo.sh`
 
 ### Create MetaNovo config file for your analysis
 Copy the metanovo config file in bin/config/metanovo_config.sh to the project folder and edit
