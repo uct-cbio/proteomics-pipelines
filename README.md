@@ -14,20 +14,13 @@ https://thys_potgieter@bitbucket.org/thys_potgieter/cbio-proteogenomics-tests.gi
 
 ### 2. Install metanovo dependencies
 
-
 The following dependencies will be installed (skip this step if they are already installed):
 
-
-http://genesis.ugent.be/maven2/com/compomics/utilities/4.11.19/utilities-4.11.19.zip
-
-http://www.proteoannotator.org/datasets/releases/ProteoAnnotator-1.7.86.zip
-
-http://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/3.2.20/SearchGUI-3.2.20-mac_and_linux.tar.gz
-
-http://genesis.ugent.be/maven2/com/compomics/denovogui/DeNovoGUI/1.15.11/DeNovoGUI-1.15.11-mac_and_linux.tar.gz
-
-https://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.5.tar.gz
-
+#### http://genesis.ugent.be/maven2/com/compomics/utilities/4.11.19/utilities-4.11.19.zip
+#### http://www.proteoannotator.org/datasets/releases/ProteoAnnotator-1.7.86.zip
+#### http://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/3.2.20/SearchGUI-3.2.20-mac_and_linux.tar.gz
+#### http://genesis.ugent.be/maven2/com/compomics/denovogui/DeNovoGUI/1.15.11/DeNovoGUI-1.15.11-mac_and_linux.tar.gz
+#### https://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.5.tar.gz
 
 ~~~~
 cd proteomics-pipelines/bin/bash/
@@ -48,7 +41,7 @@ Pull an example FASTA file from UniProt. Create your own by combining multiple s
 
 ~~~~
 wget ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
-tar -zxvf uniprot_sprot.fasta.gz
+gunzip uniprot_sprot.fasta.gz
 ~~~~
 
 Obtain some example mgf files from PRIDE (or use your own!). We will use files obtained from patients with colorectal cancer (https://www.ebi.ac.uk/pride/archive/projects/PXD00046).
