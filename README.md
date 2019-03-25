@@ -43,9 +43,14 @@ Create a project folder to run MetaNovo. Please change to a directory for data s
 
 `mkdir my_metanovo_project && cd my_metanovo_project` 
 
-Pull an example FASTA file from UniProt. Create your own by combining multiple species proteomes or use the whole of UniProt by combining FASTA files.
+Pull an example FASTA file from UniProt. Create your own by combining multiple species proteomes or use the whole of UniProt. For our example we will use only curated sequences avaiable in SwissProt.
 
 `wget ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz`
+
+`tar -zxvf uniprot_sprot.fasta.gz`
+
+Obtain some example mgf files from PRIDE (or use your own!). We will use files obtained from patients with colorectal cancer (https://www.ebi.ac.uk/pride/archive/projects/PXD00046).
+
 
 
 ### 2. Create MetaNovo config file for your analysis
