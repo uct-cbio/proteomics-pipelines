@@ -3,6 +3,8 @@
 Access the proteomics test suite and data from public repository available here:
 https://thys_potgieter@bitbucket.org/thys_potgieter/cbio-proteogenomics-tests.git
 # MetaNovo 
+A probabilistic database export tool with optional post-processing with !X Tandem.
+
 ## MetaNovo with PBS on a cluster
 ### 1. Clone the repository
 `git clone https://github.com/uct-cbio/proteomics-pipelines.git`
@@ -24,13 +26,13 @@ Using a dedicated python virtual environment is highly recommended.
 cd proteomics-pipelines/lib 
 pip3 install -r requirements.txt
 ~~~~
-#### 2.3 Install R dependencies (Optional to enable post-processing with !XTandem)
+#### 2.3 Install R dependencies (Optional to enable post-processing with !X Tandem)
 Required dependencies can be installed with a script:
 ~~~~
 cd proteomics-pipelines/bin/R
 ./install_R_modules.R
 ~~~~
-#### 2.4 Install UniPept (Optional, to allow for taxonomic characterization of !Xtandem results)
+#### 2.4 Install UniPept (Optional, to allow for taxonomic characterization of !X Tandem results)
 https://unipept.ugent.be/clidocs (MetaNovo is tested with UniPept version 1.1.1)
 
 ### 3. Create the project folder 
