@@ -35,15 +35,18 @@ https://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.5.tar.gz
 
 `./install_metanovo.sh`
 
-`cd ..`
-
 ### 3. Create the project folder 
 
-Create a project folder to run MetaNovo. Please change to a directory for datastorage on your cluster.
+Create a project folder to run MetaNovo. Please change to a directory for data storage on your cluster.
+
+`cd .. # Change to the folder for data storage here `
 
 `mkdir my_metanovo_project && cd my_metanovo_project` 
 
-`
+Pull an example fasta file from UniPro. Create your own by combining multiple species proteomes or use the whole of UniProt:
+
+ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/
+
 
 ### 2. Create MetaNovo config file for your analysis
 Copy the metanovo config file in bin/config/metanovo_config.sh to the project folder and edit
