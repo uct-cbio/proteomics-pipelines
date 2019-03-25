@@ -35,6 +35,16 @@ https://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.5.tar.gz
 
 `./install_metanovo.sh`
 
+`cd ..`
+
+### 3. Create the project folder 
+
+Create a project folder to run MetaNovo. Please change to a directory for datastorage on your cluster.
+
+`mkdir my_metanovo_project && cd my_metanovo_project` 
+
+`
+
 ### 2. Create MetaNovo config file for your analysis
 Copy the metanovo config file in bin/config/metanovo_config.sh to the project folder and edit
 
