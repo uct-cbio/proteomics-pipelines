@@ -43,7 +43,9 @@ Create a project folder to run MetaNovo. Please change to a directory for data s
 
 `mkdir my_metanovo_project && cd my_metanovo_project` 
 
-Pull an example FASTA file from UniProt. Create your own by combining multiple species proteomes or use the whole of UniProt by combining FASTA files available at ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/.
+Pull an example FASTA file from UniProt. Create your own by combining multiple species proteomes or use the whole of UniProt by combining FASTA files.
+
+`wget ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz`
 
 
 ### 2. Create MetaNovo config file for your analysis
