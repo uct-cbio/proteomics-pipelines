@@ -38,7 +38,7 @@ pip3 install -r requirements.txt
 Required dependencies can be installed with a script:
 ~~~~
 cd proteomics-pipelines/bin/R
-./install_R_models.R
+./install_R_modules.R
 ~~~~
 
 ### 3. Create the project folder 
