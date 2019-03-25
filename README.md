@@ -30,6 +30,10 @@ Required dependencies can be installed with a script:
 cd proteomics-pipelines/bin/R
 ./install_R_modules.R
 ~~~~
+#### 2.4 Install UniPept (Optional, to allow for taxonomic characterization of !Xtandem results)
+MetaNovo is tested with UniPept version 1.1.1
+https://unipept.ugent.be/clidocs
+
 ### 3. Create the project folder 
 Create a project folder to run MetaNovo. Please change to a directory for data storage on your cluster.
 ~~~~
