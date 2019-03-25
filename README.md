@@ -59,3 +59,7 @@ Copy the metanovo config file in bin/config/metanovo_config.sh to the project fo
 3) Copy the pbs script in bin/pbs/metanovo.pbs to project folder and edit
 4) Run the metanovo.pbs script "qsub metanovo.pbs", the job will end quickly, edit the X!tandem config files (default is ok)
 5) Restart the script "qsub metanovo.pbs"
+
+## MetaNovo with Docker
+Ensure docker is installed, and allocate 2 cores and 4 GB of RAM for this example.
+
