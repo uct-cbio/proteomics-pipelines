@@ -3,7 +3,7 @@
 Access the proteomics test suite and data from public repository available here:
 https://thys_potgieter@bitbucket.org/thys_potgieter/cbio-proteogenomics-tests.git
 # MetaNovo 
-A probabilistic database export tool with optional post-processing with !X Tandem.
+A probabilistic database export tool with optional post-processing using !X Tandem for complex mass spectrometry data.
 
 ## MetaNovo with PBS on a cluster
 ### 1. Clone the repository
