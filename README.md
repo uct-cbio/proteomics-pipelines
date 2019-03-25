@@ -14,18 +14,31 @@ https://thys_potgieter@bitbucket.org/thys_potgieter/cbio-proteogenomics-tests.gi
 
 ### 2. Install metanovo dependencies
 
-The following dependencies will be installed (skip this step if they are already installed):
-
-#### http://genesis.ugent.be/maven2/com/compomics/utilities/4.11.19/utilities-4.11.19.zip
-#### http://www.proteoannotator.org/datasets/releases/ProteoAnnotator-1.7.86.zip
-#### http://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/3.2.20/SearchGUI-3.2.20-mac_and_linux.tar.gz
-#### http://genesis.ugent.be/maven2/com/compomics/denovogui/DeNovoGUI/1.15.11/DeNovoGUI-1.15.11-mac_and_linux.tar.gz
-#### https://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.5.tar.gz
-
+#### 2.1 The following dependencies will be installed (skip this step if they are already installed):
+##### http://genesis.ugent.be/maven2/com/compomics/utilities/4.11.19/utilities-4.11.19.zip
+##### http://www.proteoannotator.org/datasets/releases/ProteoAnnotator-1.7.86.zip
+##### http://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/3.2.20/SearchGUI-3.2.20-mac_and_linux.tar.gz
+##### http://genesis.ugent.be/maven2/com/compomics/denovogui/DeNovoGUI/1.15.11/DeNovoGUI-1.15.11-mac_and_linux.tar.gz
+##### https://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.5.tar.gz
 ~~~~
 cd proteomics-pipelines/bin/bash/
 export METANOVO_DEPENDENCIES=${HOME}/software/ # Change the path if needed
 ./install_metanovo.sh
+~~~~
+
+#### 2.2 Install python dependencies (if not available on your cluster)
+Using a dedicated python virtual environemnt is highly recommended.
+~~~~
+cd proteomics-pipelines/lib 
+pip3 install -r requirements.txt
+~~~~
+
+
+#### 2.2 Install R dependencies (Optional to enable post-processing with !XTandem)
+Required dependencies can be installed with a script:
+~~~~
+cd proteomics-pipelines/bin/R
+./install_R_models.R
 ~~~~
 
 ### 3. Create the project folder 
