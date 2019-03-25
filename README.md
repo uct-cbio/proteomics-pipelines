@@ -27,14 +27,14 @@ export METANOVO_DEPENDENCIES=${HOME}/software/ # Change the path if needed
 ~~~~
 
 #### 2.2 Install python dependencies (if not available on your cluster)
-Using a dedicated python virtual environemnt is highly recommended.
+Using a dedicated python virtual environment is highly recommended.
 ~~~~
 cd proteomics-pipelines/lib 
 pip3 install -r requirements.txt
 ~~~~
 
 
-#### 2.2 Install R dependencies (Optional to enable post-processing with !XTandem)
+#### 2.3 Install R dependencies (Optional to enable post-processing with !XTandem)
 Required dependencies can be installed with a script:
 ~~~~
 cd proteomics-pipelines/bin/R
@@ -42,23 +42,17 @@ cd proteomics-pipelines/bin/R
 ~~~~
 
 ### 3. Create the project folder 
-
 Create a project folder to run MetaNovo. Please change to a directory for data storage on your cluster.
-
 ~~~~
 cd .. # Change to the folder for data storage here 
 mkdir my_metanovo_project && cd my_metanovo_project
 ~~~~
-
 Pull an example FASTA file from UniProt. Create your own by combining multiple species proteomes or use the whole of UniProt. For our example we will use only curated sequences avaiable in SwissProt.
-
 ~~~~
 wget ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
 gunzip uniprot_sprot.fasta.gz
 ~~~~
-
 Obtain some example mgf files from PRIDE (or use your own!). We will use files obtained from patients with colorectal cancer (https://www.ebi.ac.uk/pride/archive/projects/PXD00046).
-
 ~~~~
 mkdir mgf_files && cd mgf_files
 wget https://www.ebi.ac.uk/pride/data/archive/2014/08/PXD000467/YJC_100327SNOCRC_B11b372_N01.mgf
