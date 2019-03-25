@@ -61,5 +61,5 @@ Copy the metanovo config file in bin/config/metanovo_config.sh to the project fo
 5) Restart the script "qsub metanovo.pbs"
 
 ## MetaNovo with Docker
-Ensure docker is installed, and allocate at least 2 cores and 4 GB of RAM to the docker for this example.
+Ensure docker is installed, and allocate at least 2 cores and 4 GB of RAM to the docker engine for this example.
 
