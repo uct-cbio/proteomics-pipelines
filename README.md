@@ -29,11 +29,11 @@ http://genesis.ugent.be/maven2/com/compomics/denovogui/DeNovoGUI/1.15.11/DeNovoG
 https://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.5.tar.gz
 
 
-`cd proteomics-pipelines/bin/bash/`
-
-`export METANOVO_DEPENDENCIES=${HOME}/software/ # Change the path if needed`
-
-`./install_metanovo.sh`
+~~~~
+cd proteomics-pipelines/bin/bash/
+export METANOVO_DEPENDENCIES=${HOME}/software/ # Change the path if needed
+./install_metanovo.sh
+~~~~
 
 ### 3. Create the project folder 
 
