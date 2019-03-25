@@ -1,7 +1,3 @@
-
-# Test suite
-Access the proteomics test suite and data from public repository available here:
-https://thys_potgieter@bitbucket.org/thys_potgieter/cbio-proteogenomics-tests.git
 # MetaNovo 
 A probabilistic database export tool for peptide identification of complex mass spectrometry data.
 
@@ -60,3 +56,8 @@ Copy the metanovo config file in bin/config/metanovo_config.sh to the project fo
 5) Restart the script "qsub metanovo.pbs"
 ## MetaNovo with Docker
 Ensure docker is installed, and allocate at least 2 cores and 4 GB of RAM to the docker engine for this example.
+
+## Run the tests!
+~~~~
+git clone https://thys_potgieter@bitbucket.org/thys_potgieter/cbio-proteogenomics-tests.git
+~~~~
