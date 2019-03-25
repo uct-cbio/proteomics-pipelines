@@ -39,21 +39,25 @@ export METANOVO_DEPENDENCIES=${HOME}/software/ # Change the path if needed
 
 Create a project folder to run MetaNovo. Please change to a directory for data storage on your cluster.
 
-`cd .. # Change to the folder for data storage here `
-
-`mkdir my_metanovo_project && cd my_metanovo_project` 
+~~~~
+cd .. # Change to the folder for data storage here 
+mkdir my_metanovo_project && cd my_metanovo_project
+~~~~
 
 Pull an example FASTA file from UniProt. Create your own by combining multiple species proteomes or use the whole of UniProt. For our example we will use only curated sequences avaiable in SwissProt.
 
-`wget \
-ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz`
-`tar -zxvf uniprot_sprot.fasta.gz`
+~~~~
+wget ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
+tar -zxvf uniprot_sprot.fasta.gz
+~~~~
 
 Obtain some example mgf files from PRIDE (or use your own!). We will use files obtained from patients with colorectal cancer (https://www.ebi.ac.uk/pride/archive/projects/PXD00046).
 
-`mkdir mgf_files && cd mgf_files`
-`wget https://www.ebi.ac.uk/pride/data/archive/2014/08/PXD000467/YJC_100327SNOCRC_B11b372_N01.mgf`
-`wget https://www.ebi.ac.uk/pride/data/archive/2014/08/PXD000467/YJC_100327SNOCRC_B11b372_N02.mgf`
+~~~~
+mkdir mgf_files && cd mgf_files
+wget https://www.ebi.ac.uk/pride/data/archive/2014/08/PXD000467/YJC_100327SNOCRC_B11b372_N01.mgf
+wget https://www.ebi.ac.uk/pride/data/archive/2014/08/PXD000467/YJC_100327SNOCRC_B11b372_N02.mgf
+~~~~
 
 ### 2. Create MetaNovo config file for your analysis
 Copy the metanovo config file in bin/config/metanovo_config.sh to the project folder and edit
