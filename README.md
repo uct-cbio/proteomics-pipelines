@@ -55,6 +55,64 @@ Copy the metanovo config file in bin/config/metanovo_config.sh to the project fo
 cd ..
 cp proteomics-pipelines/bin/config/metanovo_config.sh my_metanovo_project/config.sh
 ~~~~
+
+The config file needs to have the following fields:
+~~~~
+#####################
+# Full paths please #
+#####################
+
+MGF_FOLDER='/home/mpotgieter1/lustre/ecoli_mgf'
+FASTA_FILE="/home/mpotgieter1/lustre/uniprot/uniprot_oct/uniprot_sprot.fasta"
+OUTPUT_FOLDER='/home/mpotgieter1/lustre/thys_out/ecoli_validation_without_metanovo'
+CHUNKSIZE=200000 # size to split fasta
+THREAD_LIMIT=1
+JVM_Xmx=10000M
+JVM_Xms=1024M
+
+#######################
+# MetaNovo parameters #
+#######################
+mn_specificity='specific'
+mn_enzymes='Trypsin'
+mn_max_missed_cleavages=3
+mn_filter_database=0
+mn_search_database=1
+mn_prot_fdr_value=1
+mn_pep_fdr_value=1
+
+######################
+# DeNovoGUI Settings #
+######################
+
+dg_pepnovo=0
+dg_pnovo=0
+dg_novor=0
+dg_directag=1
+
+#################################
+# Identification Parameters CLI #
+#################################
+
+# Spectrum matching parameters
+prec_tol=0.02
+prec_ppm=0
+frag_tol=0.02
+frag_ppm=0
+digestion=0
+enzyme='Trypsin'
+specificity=0
+mc=2
+fixed_mods="Carbamidomethylation of C"
+variable_mods="Oxidation of M, Acetylation of protein N-term"
+min_charge=2
+max_charge=4
+fi='b'
+ri='y'
+min_isotope='0'
+max_isotope='1'
+~~~~
+
 ### 3. Define the PBS job parameters
 3) Copy the pbs script in bin/pbs/metanovo.pbs to project folder and edit
 4) Run the metanovo.pbs script "qsub metanovo.pbs", the job will end quickly, edit the X!tandem config files (default is ok)
