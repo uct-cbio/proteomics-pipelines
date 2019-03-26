@@ -55,16 +55,14 @@ Copy the metanovo config file in bin/config/metanovo_config.sh to the project fo
 cd ..
 cp proteomics-pipelines/bin/config/metanovo_config.sh my_metanovo_project/config.sh
 ~~~~
-
-The config file needs to have the following fields:
+Configure the full system paths to the data to be analyzed. A folder containing the MGF files, a FASTA file to search, and and output folder needs to be specified.
 ~~~~
-#####################
-# Full paths please #
-#####################
-
 MGF_FOLDER='/home/mpotgieter1/lustre/ecoli_mgf'
-FASTA_FILE="/home/mpotgieter1/lustre/uniprot/uniprot_oct/uniprot_sprot.fasta"
+FASTA_FILE='/home/mpotgieter1/lustre/uniprot/uniprot_oct/uniprot_sprot.fasta'
 OUTPUT_FOLDER='/home/mpotgieter1/lustre/thys_out/ecoli_validation_without_metanovo'
+~~~~
+
+~~~~
 CHUNKSIZE=200000 # size to split fasta
 THREAD_LIMIT=1
 JVM_Xmx=10000M
