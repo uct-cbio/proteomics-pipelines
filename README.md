@@ -61,7 +61,7 @@ MGF_FOLDER=${HOME}/my_metanovo_project/mgf_files
 FASTA_FILE=${HOME}/my_metanovo_project/uniprot_sprot.fasta
 OUTPUT_FOLDER=${HOME}/my_metanovo_project
 ~~~~
-Configure general parameters. The THREAD_LIMIT multiplied by JVM_Xmx should not be higher than the total RAM available per node, and THREAD_LIMIT should be one less than the total number of available cores. Out of memory issues can be corrected by reducing CHUNKSIZE, assuming the THREAD_LIMIT and JVM_Xmx are correct.
+Configure general parameters. The THREAD_LIMIT multiplied by JVM_Xmx should be less than the total RAM available per node, and THREAD_LIMIT should be one less than the total number of available cores. Out of memory issues can be corrected by reducing CHUNKSIZE, assuming the THREAD_LIMIT and JVM_Xmx are correct.
 ~~~~
 CHUNKSIZE=100000 # size to split fasta for paralellel processing
 THREAD_LIMIT=2   # How many threads to use per node
