@@ -48,8 +48,13 @@ mkdir mgf_files && cd mgf_files
 wget https://www.ebi.ac.uk/pride/data/archive/2014/08/PXD000467/YJC_100327SNOCRC_B11b372_N01.mgf
 wget https://www.ebi.ac.uk/pride/data/archive/2014/08/PXD000467/YJC_100327SNOCRC_B11b372_N02.mgf
 ~~~~
-### 2. Create MetaNovo config file for your analysis
-Copy the metanovo config file in bin/config/metanovo_config.sh to the project folder and edit
+### 4. Create MetaNovo config file for your analysis
+Copy the metanovo config file in bin/config/metanovo_config.sh to the project folder and edit.
+
+~~~~
+cd ..
+cp proteomics-pipelines/bin/config/metanovo_config.sh my_metanovo_project/config.sh
+~~~~
 ### 3. Define the PBS job parameters
 3) Copy the pbs script in bin/pbs/metanovo.pbs to project folder and edit
 4) Run the metanovo.pbs script "qsub metanovo.pbs", the job will end quickly, edit the X!tandem config files (default is ok)
