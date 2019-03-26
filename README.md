@@ -55,12 +55,30 @@ Copy the metanovo config file in bin/config/metanovo_config.sh to the project fo
 cd ..
 cp proteomics-pipelines/bin/config/metanovo_config.sh my_metanovo_project/config.sh
 ~~~~
-Configure the full system paths to the data to be analyzed. A folder containing the MGF files, a FASTA file to search, and and output folder needs to be specified.
+Configure the full system paths to the data to be analyzed. A folder containing the MGF files, a FASTA file to search, and and output folder needs to be specified. Please modify the paths for your specific system and data storage requirements. Data files do not all need to be in the same location, but are done so here for simplicity.
 ~~~~
-MGF_FOLDER='/home/mpotgieter1/lustre/ecoli_mgf'
-FASTA_FILE='/home/mpotgieter1/lustre/uniprot/uniprot_oct/uniprot_sprot.fasta'
-OUTPUT_FOLDER='/home/mpotgieter1/lustre/thys_out/ecoli_validation_without_metanovo'
+######################
+# Full paths to data #
+######################
+
+MGF_FOLDER=${HOME}/my_metanovo_project/mgf_files
+FASTA_FILE=${HOME}/my_metanovo_project/uniprot_sprot.fasta
+OUTPUT_FOLDER=${HOME}/my_metanovo_project
 ~~~~
+Configure general parameters. The THREAD_LIMIT multiplied by JVM_Xmx should not be higher than the total RAM available per node, and THREAD_LIMIT should be one less than the total number of available cores.
+~~~~
+######################
+# Processing Control #
+######################
+ 
+CHUNKSIZE=100000 # size to split fasta for paralellel processing
+THREAD_LIMIT=2   # How many threads to use per node
+JVM_Xmx=10000M   # Maximum memory allocated to each Java thread
+JVM_Xms=1024M    # Minimum memory allocated to each Java thread
+~~~~
+
+
+
 
 ~~~~
 CHUNKSIZE=200000 # size to split fasta
