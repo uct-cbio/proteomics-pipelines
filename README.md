@@ -171,7 +171,7 @@ directag_max_tag_count='5'
 directag_intensity_weight='1.0'
 directag_fidelity_weight='1.0'
 directag_complement_weight='1.0'
-~~~~
+~~~~~
 
 ### 3. Define the PBS job parameters
 3) Copy the pbs script in bin/pbs/metanovo.pbs to project folder and edit
