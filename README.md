@@ -215,8 +215,8 @@ module add chpc/gnu/parallel-20160422
 export SG_PATH=${HOME}/software/SearchGUI/SearchGUI-3.2.20
 export DG_PATH=${HOME}/software/DeNovoGUI/DeNovoGUI-1.15.11
 export CU_PATH=${HOME}/software/utilities/utilities-4.11.19
-export TANDEM_DEFAULT_INPUT_PATH=${HOME}/cbio-pipelines/proteomics/docker/metanovo/default_input.xml
-export TANDEM_INPUT_STYLE_PATH=${HOME}/cbio-pipelines/proteomics/docker/metanovo/tandem-input-style.xsl
+export TANDEM_DEFAULT_INPUT_PATH=${HOME}/proteomics-pipeline/docker/metanovo/default_input.xml
+export TANDEM_INPUT_STYLE_PATH=${HOME}/proteomics-pipelines/docker/metanovo/tandem-input-style.xsl
 export MZIDLIB_PATH=${HOME}/software/ProteoAnnotator/mzidlib-1.7
 ~~~~
 
@@ -231,7 +231,7 @@ Wait for it to complete...
 nano metanovo/default_input.xml
 ~~~~
 #### 5.6 Restart the pipeline
-If the pipeline failes at any step, simply restart and the pipeline will continue where is left off.
+If the pipeline failes at any step, simply restart and the pipeline will continue where it left off.
 ~~~~
 qsub metanovo.pbs
 ~~~~
