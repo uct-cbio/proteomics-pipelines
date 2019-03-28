@@ -75,14 +75,14 @@ mn_search_database=1           # Wether to run an !X Tandem search. if 'mn_filte
 mn_prot_fdr_value=1            # Protein level FDR for !X Tandem post-processing
 mn_pep_fdr_value=1             # Peptide level FDR for !X Tandme post-processing
 ~~~~
-Configure wich sequencing engines to use with DeNovoGUI. Currently only DirecTag is supported by MetaNovo. 
+Configure wich sequencing engines to use with DeNovoGUI. Currently only DirecTag is supported by MetaNovo. http://compomics.github.io/projects/denovogui/wiki/denovocli.html
 ~~~~
 dg_pepnovo=0
 dg_pnovo=0
 dg_novor=0
 dg_directag=1
 ~~~~~
-Configure the identification parameters for DenovoGUI.
+Configure the identification parameters for DenovoGUI. https://github.com/compomics/compomics-utilities/wiki/IdentificationParametersCLI
 ~~~~~
 prec_tol=0.02
 prec_ppm=0
