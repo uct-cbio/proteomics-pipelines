@@ -235,8 +235,7 @@ If the pipeline failes at any step, simply restart and the pipeline will continu
 ~~~~
 qsub metanovo.pbs
 ~~~~
-4) Run the metanovo.pbs script "qsub metanovo.pbs", the job will end quickly, edit the X!tandem config files (default is ok)
-5) Restart the script "qsub metanovo.pbs"
+
 ## MetaNovo with Docker
 Ensure docker is installed, and allocate at least 2 cores and 4 GB of RAM to the docker engine for this example.
 # Run the tests!
