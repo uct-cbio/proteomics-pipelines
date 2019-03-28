@@ -184,8 +184,57 @@ directag_complement_weight='1.0'
 novor_fragmentation=HCD
 novor_mass_analyzer=Trap
 ~~~~~
-### 3. Define the PBS job parameters
-3) Copy the pbs script in bin/pbs/metanovo.pbs to project folder and edit
+### 5. Define the PBS job parameters
+#### 5.1 Copy the pbs script in bin/pbs/metanovo.pbs to project folder
+~~~~
+cd ..
+cp proteomics-pipelines/bin/pbs/metanovo.pbs my_metanovo_project/metanovo.pbs
+nano my_metanovo_project/metanovo.pbs
+~~~~
+#### 5.2 Define the PBS job settings 
+The below are only examples, please adjust accordingly.
+~~~~
+#PBS -P CBBI0825 
+#PBS -M matthys.potgieter@gmail.com 
+#PBS -l select=1:ncpus=24:nodetype=haswell_reg
+#PBS -l walltime=48:00:00
+#PBS -N my_metanovo_example
+#PBS -q smp
+#PBS -W group_list=largeq
+#PBS -m be
+~~~~
+
+#### 5.3 Load any required dependencies
+eg.
+~~~~
+module add chpc/gnu/parallel-20160422
+~~~~
+
+#### 5.4 Define paths to software dependencies installed above
+~~~~
+export SG_PATH=${HOME}/software/SearchGUI/SearchGUI-3.2.20
+export DG_PATH=${HOME}/software/DeNovoGUI/DeNovoGUI-1.15.11
+export CU_PATH=${HOME}/software/utilities/utilities-4.11.19
+export TANDEM_DEFAULT_INPUT_PATH=${HOME}/cbio-pipelines/proteomics/docker/metanovo/default_input.xml
+export TANDEM_INPUT_STYLE_PATH=${HOME}/cbio-pipelines/proteomics/docker/metanovo/tandem-input-style.xsl
+export MZIDLIB_PATH=${HOME}/software/ProteoAnnotator/mzidlib-1.7
+~~~~
+
+#### 5.5 Create !X Tandem config
+When runnng MetaNovo the first time in a project, if "mn_search_database" was selected above, the default !X Tandem configuration file will be created and place in the output folder. Please examine, edit and restart the pipeline. 
+~~~~
+cd my_metanovo_project 
+qsub metanovo.pbs
+~~~~
+Wait for it to complete...
+~~~~
+nano metanovo/default_input.xml
+~~~~
+#### 5.6 Restart the pipeline
+If the pipeline failes at any step, simply restart and the pipeline will continue where is left off.
+~~~~
+qsub metanovo.pbs
+~~~~
 4) Run the metanovo.pbs script "qsub metanovo.pbs", the job will end quickly, edit the X!tandem config files (default is ok)
 5) Restart the script "qsub metanovo.pbs"
 ## MetaNovo with Docker
