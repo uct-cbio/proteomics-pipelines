@@ -84,6 +84,7 @@ dg_directag=1
 ~~~~~
 Configure the identification parameters for DenovoGUI. https://github.com/compomics/compomics-utilities/wiki/IdentificationParametersCLI
 ~~~~~
+# Spectrum matching parameters
 prec_tol=0.02
 prec_ppm=0
 frag_tol=0.02
@@ -100,6 +101,88 @@ fi='b'
 ri='y'
 min_isotope='0'
 max_isotope='1'
+
+# Spectrum Annotation
+annotation_level=0.75
+annotation_high_resolution=1
+
+# Sequence Matching
+sequence_index_type=0
+sequence_matching_type=2
+sequence_matching_x=0.25
+
+# Import Filters
+import_peptide_length_min=8
+import_peptide_length_max=30
+import_precursor_mz_ppm=0
+exclude_unknown_ptms=1
+
+# Import Filters
+import_peptide_length_min=8
+import_peptide_length_max=30
+import_precursor_mz_ppm=0
+exclude_unknown_ptms=1
+
+# PTM Localization
+ptm_score=1
+score_neutral_losses=0
+ptm_sequence_matching_type=1
+ptm_alignment=1
+
+# Gene Annotation
+useGeneMapping=1
+updateGeneMapping=1
+
+# Protein Inference
+simplify_groups=1
+simplify_score=1
+simplify_enzymaticity=1
+simplify_evidence=1
+simplify_uncharacterized=1
+
+# Validation Levels
+psm_fdr=1
+peptide_fdr=1
+protein_fdr=1
+group_psms=1
+group_peptides=1
+merge_subgroups=1
+
+# Fraction Analysis
+protein_fraction_mw_confidence='95.0'
+
+#PepNovo advanced parameters
+pepnovo_hitlist_length=1
+pepnovo_estimate_charge=1
+pepnovo_correct_prec_mass=1
+pepnovo_discard_spectra=1
+pepnovo_fragmentation_model='CID_IT_TRYP'
+pepnovo_generate_blast=0
+
+#DirecTag
+directag_tic_cutoff=85
+directag_max_peak_count=400
+directag_intensity_classes=3
+directag_adjust_precursor=0
+directag_min_adjustment='-2.5'
+directag_max_adjustment='2.5'
+directag_adjustment_step='0.1'
+directag_charge_states='3'
+directag_ms_charge_state='0'
+directag_duplicate_spectra='1'
+directag_deisotoping='0'
+directag_isotope_tolerance='0.25'
+directag_complement_tolerance='0.5'
+directag_tag_length='4'
+directag_max_var_mods='2'
+directag_max_tag_count='5'
+directag_intensity_weight='1.0'
+directag_fidelity_weight='1.0'
+directag_complement_weight='1.0'
+
+#Novor
+novor_fragmentation=HCD
+novor_mass_analyzer=Trap
 ~~~~
 
 ### 3. Define the PBS job parameters
