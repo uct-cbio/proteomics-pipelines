@@ -1,6 +1,5 @@
 # MetaNovo 
 A probabilistic database export tool for peptide identification of complex mass spectrometry data.
-
 ## MetaNovo with PBS on a cluster
 ### 1. Clone the repository
 `git clone https://github.com/uct-cbio/proteomics-pipelines.git`
@@ -30,7 +29,6 @@ cd proteomics-pipelines/bin/R
 ~~~~
 #### 2.4 Install UniPept (Optional, to allow for taxonomic characterization of !X Tandem results)
 https://unipept.ugent.be/clidocs (MetaNovo is tested with UniPept version 1.1.1)
-
 ### 3. Create the project folder 
 Create a project folder to run MetaNovo. Please change to a directory for data storage on your cluster.
 ~~~~
@@ -50,7 +48,6 @@ wget https://www.ebi.ac.uk/pride/data/archive/2014/08/PXD000467/YJC_100327SNOCRC
 ~~~~
 ### 4. Create MetaNovo config file for your analysis
 Copy the metanovo config file in bin/config/metanovo_config.sh to the project folder and edit.
-
 ~~~~
 cd ..
 cp proteomics-pipelines/bin/config/metanovo_config.sh my_metanovo_project/config.sh
@@ -69,40 +66,24 @@ JVM_Xmx=10000M   # Maximum memory allocated to each Java thread
 JVM_Xms=1024M    # Minimum memory allocated to each Java thread
 ~~~~
 Configure general parameters for the MetaNovo pipeline.
-
-
-
 ~~~~
-CHUNKSIZE=200000 # size to split fasta
-THREAD_LIMIT=1
-JVM_Xmx=10000M
-JVM_Xms=1024M
-
-#######################
-# MetaNovo parameters #
-#######################
-mn_specificity='specific'
-mn_enzymes='Trypsin'
-mn_max_missed_cleavages=3
-mn_filter_database=0
-mn_search_database=1
-mn_prot_fdr_value=1
-mn_pep_fdr_value=1
-
-######################
-# DeNovoGUI Settings #
-######################
-
+mn_specificity='specific'      # specific|semi-specific|unspecific   (Enzyme specificity)
+mn_enzymes='Trypsin'           # 'Trypsin, no P rule'|'Trypsin'|'Whole protein' (Enzyme rule)
+mn_max_missed_cleavages=3      # Number of enzymatic missed cleavages
+mn_filter_database=1           # Wether  to filter the database using MetaNovo algorithm (1=yes, 0=no)
+mn_search_database=1           # Wether to run an !X Tandem search. if 'mn_filter_database=0', then the search will run against the original database without MetaNovo (1=yes, 0=no)
+mn_prot_fdr_value=1            # Protein level FDR for !X Tandem post-processing
+mn_pep_fdr_value=1             # Peptide level FDR for !X Tandme post-processing
+~~~~
+Configure wich sequencing engines to use with DeNovoGUI. Currently only DirecTag is supported by MetaNovo. 
+~~~~
 dg_pepnovo=0
 dg_pnovo=0
 dg_novor=0
 dg_directag=1
-
-#################################
-# Identification Parameters CLI #
-#################################
-
-# Spectrum matching parameters
+~~~~~
+Configure the identification parameters for DenovoGUI.
+~~~~~
 prec_tol=0.02
 prec_ppm=0
 frag_tol=0.02
