@@ -159,8 +159,6 @@ pepnovo_discard_spectra=1
 pepnovo_fragmentation_model='CID_IT_TRYP'
 pepnovo_generate_blast=0
 
-
-
 # DirecTag
 directag_tic_cutoff=85
 directag_max_peak_count=400
@@ -185,16 +183,13 @@ directag_complement_weight='1.0'
 # Novor
 novor_fragmentation=HCD
 novor_mass_analyzer=Trap
-
 ~~~~~
-
 ### 3. Define the PBS job parameters
 3) Copy the pbs script in bin/pbs/metanovo.pbs to project folder and edit
 4) Run the metanovo.pbs script "qsub metanovo.pbs", the job will end quickly, edit the X!tandem config files (default is ok)
 5) Restart the script "qsub metanovo.pbs"
 ## MetaNovo with Docker
 Ensure docker is installed, and allocate at least 2 cores and 4 GB of RAM to the docker engine for this example.
-
 # Run the tests!
 ~~~~
 git clone https://thys_potgieter@bitbucket.org/thys_potgieter/cbio-proteogenomics-tests.git
