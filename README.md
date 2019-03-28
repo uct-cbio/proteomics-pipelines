@@ -151,15 +151,7 @@ merge_subgroups=1
 # Fraction Analysis
 protein_fraction_mw_confidence='95.0'
 
-#PepNovo advanced parameters
-pepnovo_hitlist_length=1
-pepnovo_estimate_charge=1
-pepnovo_correct_prec_mass=1
-pepnovo_discard_spectra=1
-pepnovo_fragmentation_model='CID_IT_TRYP'
-pepnovo_generate_blast=0
-
-#DirecTag
+# DirecTag
 directag_tic_cutoff=85
 directag_max_peak_count=400
 directag_intensity_classes=3
@@ -179,10 +171,6 @@ directag_max_tag_count='5'
 directag_intensity_weight='1.0'
 directag_fidelity_weight='1.0'
 directag_complement_weight='1.0'
-
-#Novor
-novor_fragmentation=HCD
-novor_mass_analyzer=Trap
 ~~~~
 
 ### 3. Define the PBS job parameters
