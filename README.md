@@ -82,7 +82,7 @@ dg_pnovo=0
 dg_novor=0
 dg_directag=1
 ~~~~~
-Configure the identification parameters for DenovoGUI. https://github.com/compomics/compomics-utilities/wiki/IdentificationParametersCLI
+Configure the identification parameters for DenovoGUI. The DirecTag 'directag_max_tag_count' can be reduced to 1 for very large datasets. The default settings below should be sufficient for most applications. The output of other seearch engines than DirecTag are not currently used by the algorithm, and can be left as-is. https://github.com/compomics/compomics-utilities/wiki/IdentificationParametersCLI
 ~~~~~
 # Spectrum matching parameters
 prec_tol=0.02
