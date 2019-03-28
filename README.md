@@ -82,7 +82,7 @@ dg_pnovo=0
 dg_novor=0
 dg_directag=1
 ~~~~~
-Configure the identification parameters for DenovoGUI. The DirecTag 'directag_max_tag_count' can be reduced to 1 for very large datasets. The default settings below should be sufficient for most applications. The output of other seearch engines than DirecTag are not currently used by the algorithm, and can be left as-is. https://github.com/compomics/compomics-utilities/wiki/IdentificationParametersCLI
+Configure the identification parameters for DenovoGUI. The DirecTag 'directag_max_tag_count' can be reduced to 1 for very large datasets. Support for other search engines is in progress. The default settings below should be sufficient for most applications.  https://github.com/compomics/compomics-utilities/wiki/IdentificationParametersCLI
 ~~~~~
 # Spectrum matching parameters
 prec_tol=0.02
@@ -151,6 +151,16 @@ merge_subgroups=1
 # Fraction Analysis
 protein_fraction_mw_confidence='95.0'
 
+# PepNovo advanced parameters
+pepnovo_hitlist_length=1
+pepnovo_estimate_charge=1
+pepnovo_correct_prec_mass=1
+pepnovo_discard_spectra=1
+pepnovo_fragmentation_model='CID_IT_TRYP'
+pepnovo_generate_blast=0
+
+
+
 # DirecTag
 directag_tic_cutoff=85
 directag_max_peak_count=400
@@ -171,6 +181,11 @@ directag_max_tag_count='5'
 directag_intensity_weight='1.0'
 directag_fidelity_weight='1.0'
 directag_complement_weight='1.0'
+
+# Novor
+novor_fragmentation=HCD
+novor_mass_analyzer=Trap
+
 ~~~~~
 
 ### 3. Define the PBS job parameters
