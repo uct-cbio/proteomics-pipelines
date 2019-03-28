@@ -82,7 +82,7 @@ dg_pnovo=0
 dg_novor=0
 dg_directag=1
 ~~~~~
-Configure the identification parameters for DenovoGUI. The DirecTag 'directag_max_tag_count' can be reduced to 1 for very large datasets. Support for other search engines is in progress. The default settings below should be sufficient for most applications.  https://github.com/compomics/compomics-utilities/wiki/IdentificationParametersCLI
+Configure the identification parameters for DenovoGUI and PeptideMapper. The DirecTag 'directag_max_tag_count' can be reduced to 1 for very large datasets. Support for other search engines is in progress. The default settings below should be sufficient for most applications.  https://github.com/compomics/compomics-utilities/wiki/IdentificationParametersCLI
 ~~~~~
 # Spectrum matching parameters
 prec_tol=0.02
