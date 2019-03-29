@@ -1,5 +1,10 @@
 # MetaNovo 
-A probabilistic database export tool for peptide identification of complex mass spectrometry data.
+MetaNovo is an open-source pipeline that integrates existing tools with a custom algorithm to produce targeted databases for mass spectrometry analysis. As inputs it requires raw mass spectrometry data in MGF format, and a UniProt FASTA file to search. 
+
+MetaNovo uses open-source tools to match raw spectra to database entries in a paralallized and scalable pipeline that can be installed in a cluster or standalone on a linux machine.
+
+
+
 ## MetaNovo with PBS on a cluster
 ### 1. Clone the repository
 `git clone https://github.com/uct-cbio/proteomics-pipelines.git`
