@@ -61,9 +61,16 @@ for seq in orf_sequence:
     export.append(record)
     count += 1
 
-pickle.dump(mapping, open(path +'/id_mapping.p','wb'))
 
 SeqIO.write(export, path +'/nr_translated_pg_orfs.fasta','fasta')
+outpath = path +'/id_mapping.json'
+mapping = json.dumps(mapping)
+with open(outpath,'w') as f:
+    f.write(mapping)
+
+
+
+
 
 
 

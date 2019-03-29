@@ -29,11 +29,10 @@ outdir=paste(opt$o,'/',sep='')
 dir.create(outdir, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 
 path=opt$p
-data <- read.csv(path)
+data <- read.csv(path, sep='\t')
 
 exp_design=opt$d
 source(exp_design)
-
 
 rownames(data) <- data$Identifier
 
@@ -179,7 +178,9 @@ for ( i in seq_along(colnames(contrast.matrix))) {
 
     pval_lists[[cntrst]] <- table[ which(table$P.Value < 0.05), ]$Row.names  
     qval_lists[[cntrst]] <- table[ which(table$adj.P.Val < 0.05), ]$Row.names  
-    #print(qval_lists) 
+    print(cntrst)
+    print(qval_lists) 
+    print("***")
     pval_lists_0_005[[cntrst]] <- table[ which(table$P.Value < 0.005), ]$Row.names  
     table <- table[with(table, order(P.Value)), ]
     write.table(table, paste(limma_dir,'limma_', cntrst, '_iBAQ.csv',sep=''), sep='\t', row.names=FALSE)
@@ -232,63 +233,6 @@ cnd_pval_data_0_005 <- data[rownames(data) %in% intra_pvals_0_005, ]
 data <- data[complete.cases(data),]
 data <- na.omit(data) # listwise deletion of missing
 
-###########################
-# Paralell coordinates    #
-###########################
-
-par_data <- orig_data
-par_path=paste(outdir,'parcoords/',sep='')
-dir.create(par_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
-pcp <- function (df_, rows, valcols, labels, path, name) {
-    df <- df_
-    #png(paste(path,name,sep=''),units="in",width=20,height=20,res=300)
-    pdf(paste(path,name,sep=''), width=15, height = 10)
-    
-    df$temp <-labels
-    
-    df <- df[df$temp!= '' , ]  
-    df <- df[rownames(df) %in% rows, ]
-    
-    write.csv(df, file=paste(path,name, '.csv',sep=''))
-    df <- read.csv(file=paste(path,name, '.csv',sep=''))
-    
-    row_labels <- df$temp
-    df <- df[, valcols]
-    #print(str(row_labels))
-
-    row_cols <- rev(rainbow_hcl(length(row_labels)))[as.numeric(row_labels)]
-    #print(row_cols)
-    
-    
-
-    par(las = 2, mar = c(10,5, 5, 5) + 0.1, cex = .8)
-    
-    MASS::parcoord(df, col = row_cols, var.label = TRUE, lwd = 3)
-    
-    par(xpd = TRUE)
-    legend(x = 0.75,y=1,cex=0.8,
-       legend = as.character(levels(row_labels)),
-       fill = unique(row_cols), horiz = FALSE,  bty = "n") 
-    
-    dev.off() 
-    # http://blog.safaribooksonline.com/2014/03/31/mastering-parallel-coordinate-charts-r/
-    }
-
-#pcp(par_data,row.names(par_data),cols,par_data$Protein.families,par_path,"all_proteins_families_par_coord.pdf")
-#pcp(par_data,row.names(par_data),cols,par_data$Pathway,par_path,"all_proteins_pathway_par_coord.pdf")
-# Strains
-par_path=paste(outdir,'parcoords/strains/',sep='')
-dir.create(par_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
-
-pcp(par_data,inter_pvals_0_005,cols,par_data$Identifier,par_path,"str_parcoord_p_0_005.pdf")
-pcp(par_data,inter_pvals,cols,par_data$Identifier,par_path,"str_parcoord_p_0_05.pdf")
-pcp(par_data,inter_pvals_duplicated,cols,par_data$Identifier,par_path,"str_parcoord_p_0_05_mult.pdf")
-#pcp(par_data,inter_pvals,cols,par_data$Protein.families,par_path,"str_parcoord_p_0_05_families.pdf")
-#pcp(par_data,inter_pvals,cols,par_data$Pathways,par_path,"str_parcoord_p_0_05_pathways.png")
-
-#pcp(par_data,inter_pvals_0_005,cols,par_data$Protein.families,par_path,"str_parcoord_p_0_005_families.pdf")
-
-
 #########################################################
 # Hierarchical clustering and correlation of replicates #
 ######################################################### 
@@ -320,7 +264,6 @@ names(data_dendlist) <- hclust_methods
 cophenetic_cors <- cor.dendlist(data_dendlist)
 corrplot::corrplot(cophenetic_cors, "pie", "lower")
 dev.off()
-
 
 ############
 # Heatmaps #
@@ -382,6 +325,7 @@ hm(cnd_pval_data_0_005, heatmap_path, "heatmap_cnd_005_iBAQ.jpeg", title, "log2(
 title="Log2(iBAQ intensity) - condition comparisons (q < 0.05)"
 hm(cnd_qval_data, heatmap_path, "heatmap_conditions_q05_iBAQ.jpeg", title, "log2(iBAQ intensity", dend_c, dend_r)
 
+quit()
 #######
 # PCA #
 #######

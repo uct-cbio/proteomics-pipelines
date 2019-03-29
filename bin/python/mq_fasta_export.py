@@ -32,8 +32,8 @@ def export_fasta(df):
 
 for strain in config['strains']:
     if config['strains'][strain]['sf_genome'] != None:
-        datum=output + '/strains/{}/{}_mapped_peptides.p'.format(strain,strain)
-        table = pickle.load(open(datum,'rb'))
+        datum=output + '/strains/{}/{}_mapped_peptides.csv'.format(strain,strain)
+        table = pd.read_csv(datum)
         table = table[['ORF_id', 'ORF_translation']].drop_duplicates()
         recs = table.apply(export_fasta, axis=1).tolist()
         combined_fasta += recs

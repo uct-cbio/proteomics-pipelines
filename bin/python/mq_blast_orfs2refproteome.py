@@ -43,7 +43,7 @@ out=output + '/blast/orfs2proteins/{}.xml'.format(config['reference_proteome_id'
 
 db = newfolder + '/{}'.format(config['reference_proteome_id'])
 
-num_threads=10
+num_threads=5
 
 cmd="blastp -query {} -outfmt {} -out {} -db {} -max_target_seqs 500 -max_hsps 1 -num_threads {} -evalue 0.0001".format(query, outfmt, out, db, num_threads)
 

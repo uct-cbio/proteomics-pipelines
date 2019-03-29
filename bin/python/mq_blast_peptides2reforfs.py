@@ -64,9 +64,9 @@ process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 process.wait()
 assert process.returncode == 0
 
-num_threads=10
+num_threads=5
 
-cmd ="cd {} && blastp -query {} -db {} -out={} -outfmt 5 -max_target_seqs 50 -max_hsps 1 -num_threads {} -evalue 200000 -matrix PAM30 -gapopen 9 -word_size 2 -gapextend 1 -comp_based_stats 0 -window_size 15 -threshold 16 -seg 'no'".format(blastdir, pepfasta,  blastname, out, num_threads) 
+cmd ="cd {} && blastp -query {} -db {} -out={} -outfmt 5 -max_hsps 1 -num_threads {} -evalue 200000 -matrix PAM30 -gapopen 9 -word_size 2 -gapextend 1 -comp_based_stats 0 -window_size 15 -threshold 16 -seg 'no'".format(blastdir, pepfasta,  blastname, out, num_threads) 
 
 #cmd ="cd {} && tblastn -query {} -db {} -out={} -outfmt 5 -max_target_seqs 50 -max_hsps 1 -num_threads {} -evalue 200000".format(blastdir, pepfasta,  blastname, out, num_threads) 
 
