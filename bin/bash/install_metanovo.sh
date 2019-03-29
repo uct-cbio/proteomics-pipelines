@@ -21,7 +21,8 @@ blast='ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.5
 #############################
 
 set -e
-dir=$HOME/software
+dir=${METANOVO_DEPENDENCIES}
+echo "Installing dependencies to ${dir}"
 if [ ! -d "$dir" ]; then 
     mkdir $dir
 fi 
@@ -30,18 +31,18 @@ fi
 # PeptideShaker #
 #################
 
-url=$peptideshaker
-file="${url##*/}"
-name="${file%.zip}"
-base=$(echo $name | cut -f 1 -d '-')
-if [ ! -d "$dir/$base" ]; then 
-    mkdir $dir/$base
-fi 
-cd $dir/$base 
-echo $name
-if [ ! -d "$name" ]; then 
-    wget $url && unzip *.zip && rm -rf *.zip 
-fi 
+#url=$peptideshaker
+#file="${url##*/}"
+#name="${file%.zip}"
+#base=$(echo $name | cut -f 1 -d '-')
+#if [ ! -d "$dir/$base" ]; then 
+#    mkdir $dir/$base
+#fi 
+#cd $dir/$base 
+#echo $name
+#if [ ! -d "$name" ]; then 
+#    wget $url && unzip *.zip && rm -rf *.zip 
+#fi 
 
 #################
 # utilties      #
@@ -127,22 +128,22 @@ if [ ! -d "$name" ]; then
     mkdir $name && cd $name && wget $url && tar -zxvf *.tar.gz && rm -rf *.tar.gz && cd ruby* && ./configure --prefix=$dir/$base/$name && make && make install 
 fi 
 
-##########
-## BLAST #
-##########
+###########
+### BLAST #
+###########
 
-url=$blast
-file="${url##*/}"
-name="${file%.tar.gz}"
-base=$(echo $name | cut -f 1 -d '-')
-if [ ! -d "$dir/$base" ]; then 
-    mkdir $dir/$base
-fi 
-cd $dir/$base 
-echo $name
-if [ ! -d "$name" ]; then 
-    mkdir $name && cd $name && wget $url && tar -zxvf *.tar.gz && rm -rf *.tar.gz  
-fi 
+#url=$blast
+#file="${url##*/}"
+#name="${file%.tar.gz}"
+#base=$(echo $name | cut -f 1 -d '-')
+#if [ ! -d "$dir/$base" ]; then 
+#    mkdir $dir/$base
+#fi 
+#cd $dir/$base 
+#echo $name
+#if [ ! -d "$name" ]; then 
+#    mkdir $name && cd $name && wget $url && tar -zxvf *.tar.gz && rm -rf *.tar.gz  
+#fi 
 
 
 

@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+
+import pandas as pd
+import sys
+from collections import Counter
+
+infile= sys.argv[1]
+outfile = sys.argv[2]
+
+hits = pd.read_csv(infile, nrows=1000)
+hits['MatchProb'] = hits['hsp.score'] / hits['hsp.score'].sum()
+
+# Protein Prior Prob
+protein_counts = Counter(hits['alignment.accession'])
+protein_probs = pd.Series(protein_counts, name='alignment.accession')
+protein_probs = protein_probs/protein_probs.sum()
+protein_probs = pd.DataFrame(protein_probs)
+protein_probs.rename(columns={'alignment.accession':"AccessionProb"}, inplace=True)
+protein_probs.sort_values('AccessionProb', ascending=False, inplace=True)
+print(protein_probs.head())
+print(hits.head())
+
