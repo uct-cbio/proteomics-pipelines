@@ -5,7 +5,6 @@ set -a
 echo "MetaNovo version 10.0"
 res1=$(date +%s.%N)
 
-
 mgf_folder=$1
 fasta_file=$2
 output_folder=$3/metanovo
@@ -129,7 +128,10 @@ if [ "$mn_search_database" -eq "1" ] ; then
        mkdir $output_folder/mgf && cp ${mgf_folder}/*.mgf ${output_folder}/mgf || { rm -rf $output_folder/mgf/ && echo "error copying mgf files"; exit 1; } 
     fi
     
-    # Xtandem
+    ###########
+    # Xtandem #
+    ###########
+
     cmd="rm -rf {}.*.xml && xtandem.R --mgf {} --fasta $input_fasta --input_xml $output_folder/default_input.xml --input_xsl $output_folder/tandem-input-style.xsl --output_xml {}.xml && gzip --best {}" 
     if [ -z "${PBS_NODEFILE}" ]; then
         find ${output_folder}/mgf -name "*.mgf" \
@@ -139,7 +141,10 @@ if [ "$mn_search_database" -eq "1" ] ; then
             | env_parallel -j${THREAD_LIMIT} --sshloginfile ${PBS_NODEFILE} ${cmd}
     fi
     
-    # MZID
+    ###################
+    # MZID Generation #
+    ###################
+
     cmd="java -Xms1024m -jar ${MZIDLIB_PATH}/mzidlib-*.jar Tandem2mzid {} {}.mzid -outputFragmentation false -idsStartAtZero false -decoyRegex :reversed -massSpecFileFormatID MS:1001062 -databaseFileFormatID MS:1001348 && gzip --best {}"
     if [ -z "${PBS_NODEFILE}" ]; then
         find ${output_folder}/mgf -name "*.xml" \
@@ -148,8 +153,6 @@ if [ "$mn_search_database" -eq "1" ] ; then
         find ${output_folder}/mgf -name "*.xml" \
             | env_parallel -j${THREAD_LIMIT} --sshloginfile ${PBS_NODEFILE} ${cmd}
     fi
-
-
     if [ ! -d ${output_folder}/mgf/analysis ] ; then
         cd ${output_folder} && msgf_msnid.R -i mgf --accession_fdr ${mn_prot_fdr_value} --peptide_fdr ${mn_pep_fdr_value} || rm -rf ${output_folder}/mgf/analysis
     fi
@@ -167,16 +170,6 @@ if [ "$mn_search_database" -eq "1" ] ; then
     #cd ${output_folder} && find lfq -name "*.mgf" \
     #    | parallel -j${THREAD_LIMIT} "msnbase.R --mgf {} --psms ${output_folder}/mgf/analysis/tables/psms.txt"
 fi
-
-
-#if [ ! -f ${output_folder}/tags/trie.p ] ; then
-#   create_trie.py $tagdb tags sequence /${output_folder}/tags/trie.p || { rm -rf ${output_folder}/tags/trie.p ; exit 1 ; }
-#fi
-
-#if [ ! -f ${output_folder}/tags/search.txt ] ; then
-#    bp_triematching.py ${input_fasta} ${output_folder}/tags/trie.p ${tagdb} 
-#fi
-
 
 ###################
 # time the script #
