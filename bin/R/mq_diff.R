@@ -15,7 +15,7 @@ library("dplyr")
 
 option_list = list(
 make_option(c("-d", "--design"), type="character", default=NULL,
-        help="Experimntal design template", metavar="character"),
+        help="Experimental design template", metavar="character"),
 make_option(c("-f", "--file"), type="character", default=NULL,
         help="Path to the quantification file", metavar="character"),
 make_option(c("-o","--output"), type="character", default=NULL,
@@ -79,7 +79,6 @@ vardata$percentage <- lapply(vardata$sums, function(x){(x/total)*100})
 vardata <- vardata[vardata$percentage >= 1,]
 
 variances <- data.frame(matrix(, nrow=nrow(vardata), ncol=0))
-print(length(vardata))
 dir.create(paste(outdir,'/group_variance',sep=''), showWarnings = TRUE, recursive = FALSE, mode = "0777")
 for (group in groups){
     groupdf <- refmap[refmap$f==group,]
@@ -133,8 +132,6 @@ for ( i in seq_along(colnames(contrast.matrix))) {
     cntrst_ <- strsplit(cntrst, '-')
     Exposed <- cntrst_[[1]][1]
     Control <- cntrst_[[1]][2]
-    print(cntrst)
-    print('*') 
     table <- topTable(fit2,adjust="BH", coef=i, n=Inf)
     table <- merge(orig_data, table, by=0)
     table$Exposed <- Exposed
@@ -144,6 +141,9 @@ for ( i in seq_along(colnames(contrast.matrix))) {
     sig_table <- table[ which(table$adj.P.Val < 0.05), ]
     
     sig_list <- sig_table$Row.names  
+    print(cntrst)
+    print(sig_list)
+    print('*') 
     pval_lists[[cntrst]] <- sig_list
     
     write.table(table, paste(limma_dir,'limma_', cntrst, '_intensity.txt',sep=''), sep='\t', row.names=FALSE)
@@ -204,9 +204,10 @@ dir.create(heatmap_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 
 #dend_c <- t(data) %>% dist(method="man") %>% hclust(method="ward.D") %>% as.dendrogram %>% ladderize%>% color_branches(k=num_groups)
 
-hm <- function( df, heatmap_path, file,  main, xlab ) {
+hm <- function( df, heatmap_path, file,  main, xlab , factors) {
+    num_groups <- length(unique(factors))
     some_col_func<-function(n)(colorspace::diverge_hcl(n,h=c(246, 40), c = 96, l = c(65, 90)))
-    col_colors<-rainbow_hcl(length(unique(f)))[sort_levels_values(as.numeric(f))]
+    col_colors<-rainbow_hcl(length(unique(factors)))[sort_levels_values(as.numeric(factors))]
     #dend_r <- df %>% dist(method="man") %>% hclust(method="ward.D") %>% as.dendrogram %>% ladderize %>% color_branches(k=10)
     dend_c <- t(df) %>% dist(method="man") %>% hclust(method="ward.D") %>% as.dendrogram %>% ladderize%>% color_branches(k=num_groups)
     png(paste(heatmap_path, file, sep=''), units="in", width=11, height=8.5, res=300)
@@ -217,7 +218,7 @@ hm <- function( df, heatmap_path, file,  main, xlab ) {
     Colv = dend_c,
     ColSideColors = col_colors,
     trace="none",
-    margins =c(10,17),
+    margins =c(15,15),
     key.xlab = xlab,
     denscol = "grey",
     density.info = "density",
@@ -226,19 +227,44 @@ hm <- function( df, heatmap_path, file,  main, xlab ) {
     colCol= col_colors )
     par(lend = 1)           # square line ends for the color legend
     legend("topright",      # location of the legend on the heatmap plot
-               legend = unique(f), # category labels
-              col =unique(col_colors),  # color key
-                   lty= 1,             # line style
+               legend = unique(factors), # category labels
+               col =unique(col_colors),  # color key
+                  lty= 1,             # line style
                        lwd = 10            # line width
                    )
     dev.off() }
 
 # Heatmap of global data set
-hm(data, heatmap_path, "heatmap_intensity_all.jpeg", "Log2(Intensity) - All", "log2(Intensity)")
+hm(data, heatmap_path, "heatmap_intensity_all.png", "Log2(Intensity) - All", "log2(Intensity)", f)
 
 if (length(rownames(pval_data)) >=2) {
-    hm(pval_data, heatmap_path, "heatmap_significant.jpeg", "Log2(Intensity) - Adj. p-value < 0.05", "log2(Intensity)")
+    hm(pval_data, heatmap_path, "heatmap_significant.png", "Log2(Intensity) - Adj. p-value < 0.05", "log2(Intensity)", f)
 }
+for ( i in seq_along(colnames(contrast.matrix))) {
+    cntrst <-  colnames(contrast.matrix)[i]
+    cntrst_ <- strsplit(cntrst, '-')
+    fields <- c()
+    levels <- c()
+
+    for (group in cntrst_[[1]] ) {
+        groupdf <- refmap[refmap$f==group,]
+        groupcols <- as.numeric(rownames(groupdf))
+        grouplen <- length(groupcols)
+        glevels   <- rep(group, grouplen) 
+        fields <- c(fields, groupcols)
+        levels <- c(levels, glevels)
+    }
+
+    compdata <- data[,fields]
+    sig_list <- pval_lists[[cntrst]]
+    group_pval_data <- compdata[rownames(compdata) %in% sig_list, ]
+    newf <- droplevels(f[fields])
+    #levels(newf) <- levels
+    if (length(rownames(group_pval_data)) >=2) {
+        hm(group_pval_data, heatmap_path, paste(cntrst, "heatmap_significant.png",sep='_'), "Log2(Intensity) - Adj. p-value < 0.05", "log2(Intensity)", newf)
+    }
+}
+
 
 #######
 # PCA #
@@ -252,7 +278,6 @@ pc <- function( df, path, file, var.axes ) {
     groups=f, ellipse=TRUE, circle=TRUE, var.axes=var.axes, varname.abbrev = FALSE)
     g <- g + scale_color_discrete(name = '')
     g <- g + theme(legend.direction = 'horizontal',legend.position = 'top')
-    print(g)
     dev.off() }
 pc(data, pca_path, "all_identified_pca.png", FALSE)
 pc(data, pca_path, "all_identified_pca_labelled.png", TRUE)

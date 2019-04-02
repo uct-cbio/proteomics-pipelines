@@ -4,7 +4,7 @@ threads: 10
 translation_table: 11
 
 # Reference genome
-reference_genome: "/root/genomes/H37Rv.fasta"
+reference_genome: "/root/genomes/w_148.fasta"
 
 # Specify the full path to the maxquant output 'txt' file
 mq_txt: "/root/txt"
@@ -54,8 +54,6 @@ six_frame_translated: '/researchdata/fhgfs/ptgmat003/OUTPUT/S507_S5527_proteogen
 # orfs_raw: the stop-to-stop six frame nucleotide sequences
 # orfs_trans: the translated six frame sequences with alternative posible TSS sites included
 
-reference_strains: 
-    - H37Rv_WT1
 
 strains:
     S5527:

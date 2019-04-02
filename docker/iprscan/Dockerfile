@@ -11,40 +11,40 @@ ENV ipr_ftp "ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.30-69.0/interpros
 ENV panther_ftp "ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/data/panther-data-12.0.tar.gz"
 
 # 1. Obtaining the core InterProScan software
-RUN \
-  wget ${ipr_ftp}  && \
-  wget ${ipr_ftp}.md5 && \
-  md5sum -c $( basename ${ipr_ftp}.md5) && \
-  tar -pxvzf $(basename ${ipr_ftp}) && \
-  rm $(basename ${ipr_ftp}) && \
-  rm $( basename ${ipr_ftp}.md5)
+#RUN \
+#  wget ${ipr_ftp}  && \
+#  wget ${ipr_ftp}.md5 && \
+#  md5sum -c $( basename ${ipr_ftp}.md5) && \
+#  tar -pxvzf $(basename ${ipr_ftp}) && \
+#  rm $(basename ${ipr_ftp}) && \
+#  rm $( basename ${ipr_ftp}.md5)
 
 # 2. Installing Panther Models
-RUN \
-  cd /interproscan-*/data && \
-  wget ${panther_ftp} && wget ${panther_ftp}.md5
+#RUN \
+#  cd /interproscan-*/data && \
+#  wget ${panther_ftp} && wget ${panther_ftp}.md5
 
-RUN \
-  cd /interproscan-*/data && \
-  md5sum -c $( basename ${panther_ftp}.md5) 
+#RUN \
+#  cd /interproscan-*/data && \
+#  md5sum -c $( basename ${panther_ftp}.md5) 
 
-RUN \
-  cd /interproscan-*/data && \
-  tar -pxvzf $( basename ${panther_ftp})
+#RUN \
+#  cd /interproscan-*/data && \
+#  tar -pxvzf $( basename ${panther_ftp})
 
 #RUN mv /interproscan-* /interproscan
 #RUN ls
 #ENV PATH ${PATH}::/interproscan-5.26-65.0  
-RUN ln -s /interproscan-* /interproscan
+#RUN ln -s /interproscan-* /interproscan
 
-RUN cd /interproscan && wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.6.0/ncbi-blast-2.6.0+-x64-linux.tar.gz && tar xvf ncbi-blast-2.6.0+-x64-linux.tar.gz
-RUN cd /interproscan && cp bin/blast/ncbi-blast-2.6.0+/rpsblast bin/blast/ncbi-blast-2.6.0+/rpsblast.bak
-RUN cd /interproscan && cp ncbi-blast-2.6.0+/bin/rpsblast bin/blast/ncbi-blast-2.6.0+/rpsblast
+#RUN cd /interproscan && wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.6.0/ncbi-blast-2.6.0+-x64-linux.tar.gz && tar xvf ncbi-blast-2.6.0+-x64-linux.tar.gz
+#RUN cd /interproscan && cp bin/blast/ncbi-blast-2.6.0+/rpsblast bin/blast/ncbi-blast-2.6.0+/rpsblast.bak
+#RUN cd /interproscan && cp ncbi-blast-2.6.0+/bin/rpsblast bin/blast/ncbi-blast-2.6.0+/rpsblast
 
-ENV PATH ${PATH}::/interproscan 
+#ENV PATH ${PATH}::/interproscan 
 # make sure the package repository is up to date
-RUN apt-get update
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install software-properties-common
+#RUN apt-get update
+#RUN DEBIAN_FRONTEND=noninteractive apt-get -y install software-properties-common
 
 # Install Oracle Java 8
 #RUN wget --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u162-b12/0da788060d494f5095bf8624735fa2f1/jdk-8u162-linux-x64.tar.gz
@@ -65,7 +65,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install software-properties-common
 RUN pip3 install mygene
 
 ENV DOCKER_JAVA_ARGS -XX:+UseParallelGC -XX:ParallelGCThreads= -XX:+AggressiveOpts -XX:+UseFastAccessorMethods -Xms128M -Xmx2048M
-COPY interproscan.properties /interproscan/interproscan.properties
+#COPY interproscan.properties /interproscan/interproscan.properties
 
 RUN pip3 install tzlocal rpy2
 ENV PYTHONPATH $PYTHONPATH::/root/proteomics-pipelines/lib

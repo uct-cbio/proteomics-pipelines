@@ -36,7 +36,10 @@ evidence=pd.read_csv(config['mq_txt'] +'/evidence.txt',sep='\t')
 
 evidence=evidence[(evidence['Potential contaminant'].isnull()) & (evidence['Reverse'].isnull())]
 
-reference_peptides=pickle.load(open(output +'/mapping/{}_peptides.p'.format(config['reference_proteome_id']), 'rb'))
+#reference_peptides=pickle.load(open(output +'/mapping/{}_peptides.p'.format(config['reference_proteome_id']), 'rb'))
+with open(output +'/mapping/{}_peptides.json'.format(config['reference_proteome_id'])) as f:
+    reference_peptides = json.loads(f.read())
+
 
 for key in reference_peptides:
     print(key)
@@ -59,7 +62,8 @@ blast_mapping = json.loads(open(output +'/blast/orfs2proteins/{}_mapping.json'.f
 reference_features = sequtils.gff3(output +'/uniprot/features/{}.gff'.format(config['reference_taxid']))
 
 orf_features = sequtils.gff3(output +'/fasta/nr_translated_pg_orfs.fasta.gff3')
-orf_feature_mapping = pickle.load(open(output + '/fasta/id_mapping.p','rb'))
+with open(output + '/fasta/id_mapping.json') as f:
+    orf_feature_mapping = json.loads(f.read())
 orf_features.expand_table(orf_feature_mapping)
 
 samples = config['samples']
@@ -101,12 +105,23 @@ global_non_specific_peptides = set(global_non_specific_peptides)
 
 print(global_specific_paralog_peptides)
 
+strain_sets_nterm_acetylated = {}
+
 for strain in config['strains']:
     if config['strains'][strain]['sf_genome'] != None:
         peptide_map = strain_map[strain]
         st = peptide_map.mapping
-        strain_non_tryptic_nterm = set(st[st['Peptide_tryptic_nterm']=='False']['Peptide_sequence'])
-        strain_non_tryptic_cterm = set(st[st['Peptide_tryptic_cterm']=='False']['Peptide_sequence'])
+        nterm_acetylated = set(st[st['Strain_Nterm_Acetylated'] == '+']['Peptide_sequence'].tolist())
+        strain_sets_nterm_acetylated[strain] = nterm_acetylated
+
+for strain in config['strains']:
+    if config['strains'][strain]['sf_genome'] != None:
+        peptide_map = strain_map[strain]
+        st = peptide_map.mapping
+        #print(strain)
+        #print(st['Peptide_tryptic_nterm'])
+        strain_non_tryptic_nterm = set(st[st['Peptide_tryptic_nterm'].apply(str) == 'False' ]['Peptide_sequence'])
+        strain_non_tryptic_cterm = set(st[st['Peptide_tryptic_cterm'].apply(str) == 'False' ]['Peptide_sequence'])
         strain_non_atg_starts    = peptide_map.non_atg_m()
         global_non_tryptic_nterm = global_non_tryptic_nterm & strain_non_tryptic_nterm
         global_non_tryptic_cterm = global_non_tryptic_cterm & strain_non_tryptic_cterm
@@ -118,7 +133,6 @@ novel_peptides = global_specific_peptides - annotated_peptides
 
 # Get strain_exclusive
 strain_sets_exclusive={}
-
 for strain in strain_sets:
     tmp = strain_sets[strain] 
     for comparison_strain in strain_sets:
@@ -189,8 +203,11 @@ strain_columns = defaultdict(list)
 strain_peptides = defaultdict(set)
 strain_evidences = defaultdict(set)
 
+orf_start_codons = {}
 for strain in config['strains']:
     
+    orf_start_codons[strain] = defaultdict(list)
+
     samplecols = []
     
     groupcols = []
@@ -235,6 +252,7 @@ for strain in config['strains']:
 #pg = pg.head(100)
 
 combined = pg
+
 
 for row in combined.iterrows():
     print(row[0]) 
@@ -282,8 +300,8 @@ for row in combined.iterrows():
         
         group_evs[group] += sample_evs
         
-        if strain in config['reference_strains']:
-            row_ref_strain_peps.update(sample_peps)
+        #if strain in config['reference_strains']:
+        #    row_ref_strain_peps.update(sample_peps)
     
     row_ref_strain_peps = row_ref_strain_peps & row_specific
     
@@ -352,7 +370,6 @@ for row in combined.iterrows():
 
         for rf in x:
             orf_ids.append(rf.id)
-
             rf_id = rf.id.split('|')[1]
             if rf_id in blast_mapping:
                 rfmap=set(blast_mapping[rf_id])
@@ -361,9 +378,8 @@ for row in combined.iterrows():
         
         all_orf_ids += orf_ids
 
-        orfs_peps = set(strain_map[strain].get_peptides(orf_ids)) & strain_peptides[strain] 
+        orfs_peps = set(strain_map[strain].get_peptides(orf_ids)) & strain_peptides[strain]  # Combined all identified peptides for the orf and strain
         
-
         st_peps = orfs_peps
         
         specific_strain_peps = st_peps & global_specific_peptides
@@ -373,6 +389,8 @@ for row in combined.iterrows():
         row_specific_strain_peps[strain] = specific_strain_peps
         genome_unmapped = specific_strain_peps - strain_sets[strain]
         strain_exclusive_novel = specific_strain_peps & strain_sets_exclusive[strain]
+        
+        strain_n_term_acetylated= specific_strain_peps & strain_sets_nterm_acetylated[strain]
         
         all_orfs_fasta += x
         all_prot_fasta += y
@@ -384,7 +402,8 @@ for row in combined.iterrows():
         
         if len(refps) > 0:
             for _ in x:
-                pgomics = sequtils.proteogenomics(specific_strain_peps, _, refps[0])
+                pgomics = sequtils.proteogenomics(specific_strain_peps, _, refps[0], n_term_acetylated=strain_n_term_acetylated) # all peptides for the strain.
+                orf_start_codons[strain][_.id] = pgomics.start_codons_found
                 annotation_trie += pgomics.variant_sequences_trie
                 annotation_type += pgomics.annotation_type
         
@@ -612,7 +631,13 @@ for row in combined.iterrows():
 #    #break
 
 combined = combined.sort_values('iBAQ', ascending=False).drop_duplicates('All ORF IDs', keep='first')
-combined.to_csv(output+'/combined.csv')
+combined.to_csv(output+'/combined.csv', sep='\t')
+
+# Save the start codonms found
+orf_start_codons = json.dumps(orf_start_codons)
+with open(output +'/start_codons_found.json','w') as w:
+    w.write(orf_start_codons)
+    print(orf_start_codons)
 
 
 

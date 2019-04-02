@@ -1326,6 +1326,7 @@ class proteogenomics:
         os.removedirs(temp_dir)
 
         self.start_codons = start_codons
+        self.start_codons_found = []
         
         self.cleavage_aminos = cleavage_aminos
 
@@ -1461,7 +1462,11 @@ class proteogenomics:
 
             positions[pepstart].update(peptide[0])
             pep_starts.append(pepstart)
-        
+
+        for start in self.identified_tss_sites:
+            first_codon = self.orf_sequence[start * 3: start * 3 + 3]
+            self.start_codons_found.append(first_codon)
+
         most_upstream    = min(pep_starts)
         upstream_start = True
         if len(self.identified_tss_sites) > 0:

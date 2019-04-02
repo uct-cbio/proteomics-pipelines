@@ -18,7 +18,7 @@ RUN pip3 install datrie
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
 # Leave to end
-ENV PATH $PATH::/root/bin/python:/root/bin/R:/root/bin/bash
+ENV PATH $PATH::/root/bin/python:/root/bin/R:/root/bin/bash:/interproscan
 ENV PYTHONPATH $PYTHONPATH::/root/lib
 
 COPY lib /root/lib

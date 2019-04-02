@@ -204,7 +204,7 @@ class blast2genome:
             return newstart, newend, new_hit_amino_offset
 
 class pblast_mult:
-    def __init__(self, query_recs, target_recs, outdir, evalue=0.0000000001, num_threads=10, max_target_seqs=500, max_hsps=1, matrix='BLOSUM62', gapopen=11, word_size=3, gapextend=1, comp_based_stats=2, window_size=15, threshold=11, seg='no', pairwise=True, perc_identity_cutoff=90):
+    def __init__(self, query_recs, target_recs, outdir, evalue=0.0000000001, num_threads=5, max_target_seqs=500, max_hsps=1, matrix='BLOSUM62', gapopen=11, word_size=3, gapextend=1, comp_based_stats=2, window_size=15, threshold=11, seg='no', pairwise=True, perc_identity_cutoff=90):
         
         self.query_recs = query_recs
         self.target_recs = target_recs

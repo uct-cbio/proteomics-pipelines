@@ -24,6 +24,10 @@ peptides = peptides[(peptides['Reverse'].isnull()) & (peptides['Potential contam
 
 mapped = sequtils.peptides2proteome(proteome, peptides['Sequence'].tolist(), threads=config['threads'])
 
-outpath = output + '/mapping/{}_peptides.p'.format(config['reference_proteome_id'])
-pickle.dump( mapped.pepdict, open( outpath, "wb" ) )
+outpath = output + '/mapping/{}_peptides.json'.format(config['reference_proteome_id'])
+jstr = json.dumps(mapped.pepdict)
+
+with open(outpath, 'w') as w:
+    w.write(jstr)
+
 

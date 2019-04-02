@@ -2384,3 +2384,40 @@ def venn(dct, row, col, worksheet, names):
     plt.clf()
     worksheet.insert_image(row, col, temp_out)
 
+class Evidence:
+    
+    def __init__(self, table):
+        self.table  = table
+        self.modifications = self.table['Modifications'].tolist()
+        self.sequences = self.table['Sequence'].tolist()
+        self.experiments = self.table['Experiment'].tolist()
+        self.n_term_acetylated = self.table['Modified sequence'].apply(lambda x : '_(ac)' in str(x)) 
+        self.methionine_oxidation = self.table['Modified sequence'].apply(lambda x : 'M(ox)' in str(x)) 
+
+        self.modification_map = {}
+        self.experiment_modification_map = {}
+
+        for index in range(len(self.sequences)):
+            peptide = self.sequences[index]
+            experiment = self.experiments[index]
+            n_term_acetylated = self.n_term_acetylated[index]
+            methionine_oxidation = self.methionine_oxidation[index]
+
+            if not experiment in self.modification_map:
+                self.modification_map[experiment] = defaultdict(set)
+            if n_term_acetylated == True:
+                self.modification_map[experiment]['_(ac)'].add(peptide)
+            if methionine_oxidation == True:
+                self.modification_map[experiment]['M(ox)'].add(peptide)
+
+            self.modification_map[experiment]['All'].add(peptide)
+    
+    def export_peptides(self, experiments, modifications):
+        export = set()
+        for experiment in experiments:
+            for modification in modifications:
+                export.update(self.modification_map[experiment][modification])
+        return export
+
+
+

@@ -8,7 +8,7 @@ import os
 import shutil
 
 outpath = sys.argv[1]
-data = pd.read_csv(outpath +'/combined.csv')
+data = pd.read_csv(outpath +'/combined.csv', sep='\t')
 
 id2go = pickle.load( open( outpath +'/gsea/id2go.p', 'rb' ) )
 id2kegg = pickle.load( open( outpath +'/gsea/id2kegg.p', 'rb' ) )
