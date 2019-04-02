@@ -1,25 +1,30 @@
-#####################
-# Full paths please #
-#####################
+######################
+# Full paths to data #
+######################
 
-MGF_FOLDER='/home/mpotgieter1/lustre/ecoli_mgf'
-FASTA_FILE="/home/mpotgieter1/lustre/uniprot/uniprot_oct/uniprot_sprot.fasta"
-OUTPUT_FOLDER='/home/mpotgieter1/lustre/thys_out/ecoli_validation_without_metanovo'
-CHUNKSIZE=200000 # size to split fasta
-THREAD_LIMIT=1
-JVM_Xmx=10000M
-JVM_Xms=1024M
+MGF_FOLDER=${HOME}/my_metanovo_project/mgf_files
+FASTA_FILE=${HOME}/my_metanovo_project/uniprot_sprot.fasta
+OUTPUT_FOLDER=${HOME}/my_metanovo_project
+######################
+# Processing Control #
+######################
+
+CHUNKSIZE=100000 # size to split fasta for paralellel processing
+THREAD_LIMIT=2   # How many threads to use per node
+JVM_Xmx=10000M   # Maximum memory allocated to each Java thread
+JVM_Xms=1024M    # Minimum memory allocated to each Java thread
 
 #######################
 # MetaNovo parameters #
 #######################
-mn_specificity='specific'
-mn_enzymes='Trypsin'
-mn_max_missed_cleavages=3
-mn_filter_database=0
-mn_search_database=1
-mn_prot_fdr_value=1
-mn_pep_fdr_value=1
+
+mn_specificity='specific'      # specific|semi-specific|unspecific   (Enzyme specificity)
+mn_enzymes='Trypsin'           # 'Trypsin, no P rule'|'Trypsin'|'Whole protein' (Enzyme rule)
+mn_max_missed_cleavages=3      # Number of enzymatic missed cleavages
+mn_filter_database=0           # Wether  to filter the database using MetaNovo algorithm (1=yes, 0=no)
+mn_search_database=1           # Wether to run an !X Tandem search. if 'mn_filter_database=0', then the search will run against the original database without MetaNovo (1=yes, 0=no)
+mn_prot_fdr_value=1            # Protein level FDR for !X Tandem post-processing
+mn_pep_fdr_value=1             # Peptide level FDR for !X Tandme post-processing
 
 ######################
 # DeNovoGUI Settings #
@@ -95,14 +100,6 @@ merge_subgroups=1
 # Fraction Analysis
 protein_fraction_mw_confidence='95.0'
 
-# XTandem advanced parameters
-# MyriMatch advanced parameters
-# MS Amanda advanced parameters
-# MS-GF advanced parameters
-# OMSSA advanced parameters
-# Comet advanced parameters
-# Tide advanced parameters
-
 #PepNovo advanced parameters
 pepnovo_hitlist_length=1
 pepnovo_estimate_charge=1
@@ -135,30 +132,6 @@ directag_complement_weight='1.0'
 #Novor
 novor_fragmentation=HCD
 novor_mass_analyzer=Trap
-
-
-############
-# MSGFPlus #
-############
-
-msgfplus_t="0.02Da"
-msgfplus_ti="0,1"
-msgfplus_tda=1
-msgfplus_m=3 
-msgfplus_inst=3 
-msgfplus_e=1
-msgfplus_protocol=0 
-msgfplus_ntt=2 
-msgfplus_minLength=6 
-msgfplus_maxLength=40 
-msgfplus_minCharge=2 
-msgfplus_maxCharge=3 
-msgfplus_n=1
-msgfplus_addFeatures=0
-msgfplus_ccm=1.00727649
-
-
-
 
 
 
