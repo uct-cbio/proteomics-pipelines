@@ -1,3 +1,7 @@
+# MQMetaproteomics Pipeline
+
+A pipeline for metaproteomics analysis of MaxQuant output.
+
 1. First create the singularity image:
 
 ~~~
