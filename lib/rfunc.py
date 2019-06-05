@@ -352,12 +352,13 @@ class entrez2ko: # uniprot id
         self.entrez = entrez
         c = 'library(KEGGREST)';ro.r(c)
         c = 'conv <- keggConv("genes", "ncbi-geneid:{}")'.format(self.entrez); ro.r(c) 
+        c = 'print(conv)'; ro.r(c) 
         c = 'ko <- keggGet(conv)'; ro.r(c)
+        c = 'print(ko)'; ro.r(c) 
         c = 'names(ko[[1]]$ORTHOLOGY)'
         self.ko = ';'.join(robjects.r(c))
         c = 'ko[[1]]$ORTHOLOGY'
         self.name= ';'.join(robjects.r(c))
-        
 
     # keggConv("genes", "uniprot:Q05025"))
     # q <- keggGet("cjo:107318960")

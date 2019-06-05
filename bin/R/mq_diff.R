@@ -272,13 +272,15 @@ for ( i in seq_along(colnames(contrast.matrix))) {
 pca_path=paste(outdir,'PCA/',sep='')
 dir.create(pca_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 pc <- function( df, path, file, var.axes ) {
-    png(paste(path,file,sep=''), units="in", width=18.5, height=18.5, res=300)
+    fp = paste(path,file,sep='')
     pca <- prcomp(t(df), center=TRUE, scale=TRUE)
     g <- ggbiplot(pca, obs.scale = 1, var.scale = 1,
     groups=f, ellipse=TRUE, circle=TRUE, var.axes=var.axes, varname.abbrev = FALSE)
     g <- g + scale_color_discrete(name = '')
-    g <- g + theme(legend.direction = 'horizontal',legend.position = 'top')
-    dev.off() }
+    g <- g + theme(legend.direction = 'horizontal',legend.position = 'top') 
+    ggsave(fp, g, device = png)
+    }
+
 pc(data, pca_path, "all_identified_pca.png", FALSE)
 pc(data, pca_path, "all_identified_pca_labelled.png", TRUE)
 
