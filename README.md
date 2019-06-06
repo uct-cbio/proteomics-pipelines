@@ -251,7 +251,7 @@ cd proteomics-pipelines/singularity/metanovo
 Proceed with Step 3 and 4 above.
 
 ~~~
-singularity shell metanovo_v1.0.img
+singularity shell metanovo_v1.3.img
 Singularity metanovo_v1.3.img:~/my_metanovo_project> metanovo.sh  mgf_files/ uniprot_sprot.fasta output/ config.sh
 ~~~
 This will give the output:
