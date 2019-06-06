@@ -251,12 +251,12 @@ cd proteomics-pipelines/singularity/metanovo
 Proceed with Step 3 and 4 above.
 
 ~~~
-singularity shell metanovo_v1.3.img
-Singularity metanovo_v1.3.img:~/my_metanovo_project> metanovo.sh  mgf_files/ uniprot_sprot.fasta output/ config.sh
+singularity shell metanovo_v1.4.img
+Singularity metanovo_v1.4.img:~/my_metanovo_project> metanovo.sh  mgf_files/ uniprot_sprot.fasta output/ config.sh
 ~~~
 This will give the output:
 ~~~
-MetaNovo version 10.0
+MetaNovo version 1.4
 'output//metanovo/config.sh' unchanged.
 Please edit X!Tandem default_input.xml and tandem-input-style.xsl in OUTPUT_FOLDER/metanovo and restart the pipeline
 ~~~
