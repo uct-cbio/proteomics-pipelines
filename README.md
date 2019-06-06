@@ -5,7 +5,6 @@ MetaNovo uses open-source tools to match raw spectra to database entries in a pa
 
 Database matches are stored in an SQLite database, and used to estimate the abundance of proteins using sequence tag matches, taking into account protein length using a normalized spectral abundance factor estimation for each protein in each sample. The MetaNovo algorithm uses the protein abundance level estimation to rank the data, producing a parsimonious list of protein identifiers that can explain all the database matches (such that each spectral match maps to at least one protein in the non-redundant list). Taxonomic representation in this list is calculated using the UniProt FASTA header "OS" entry, and a score for each organism is obtained. Database proteins are re-ranked based on the combined scores for spectral and organism abundance, and a database is exported.
 
-The database is saved as <output_folder>/metanovo/metanovo.fasta
 
 ## MetaNovo with PBS on a cluster
 ### 1. Clone the repository
@@ -266,7 +265,8 @@ Examine the default X!Tandem configuration files, and proceed if all defaults ar
 ~~~
 metanovo.sh  mgf_files/ uniprot_sprot.fasta output/ config.sh
 ~~~
-This process can be performed on local workstatiuon, and Singularity compatible High Performance clusters.
+This process can be performed on local workstatiuon, and Singularity compatible High Performance clusters. 
+The database is saved as <output_folder>/metanovo/metanovo.fasta.
 
 # Run the tests!
 ~~~~
