@@ -241,8 +241,31 @@ If the pipeline failes at any step, simply restart and the pipeline will continu
 qsub metanovo.pbs
 ~~~~
 
-## MetaNovo with Docker
-Ensure docker is installed, and allocate at least 2 cores and 4 GB of RAM to the docker engine for this example.
+## MetaNovo with Singularity 
+Ensure singularity is installed, and allocate at least 2 cores and 4 GB of RAM to the docker engine for this example.
+
+~~~
+cd singularity/metanovo 
+./create_image.sh
+~~~
+Proceed with Step 3 and 4 above.
+
+~~~
+singularity shell metanovo_v1.0.img
+Singularity metanovo_v1.3.img:~/my_metanovo_project> metanovo.sh  mgf_files/ uniprot_sprot.fasta output/ config.sh
+~~~
+This will give the output:
+~~~
+MetaNovo version 10.0
+'output//metanovo/config.sh' unchanged.
+Please edit X!Tandem default_input.xml and tandem-input-style.xsl in OUTPUT_FOLDER/metanovo and restart the pipeline
+~~~
+Examine the default X!Tandem configuration files, and proceed if all defaults are suitable.
+~~~
+metanovo.sh  mgf_files/ uniprot_sprot.fasta output/ config.sh
+~~~
+This process can be performed on local workstatiuon, and Singularity compatible High Performance clusters.
+
 # Run the tests!
 ~~~~
 git clone https://thys_potgieter@bitbucket.org/thys_potgieter/cbio-proteogenomics-tests.git
