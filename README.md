@@ -266,7 +266,8 @@ Examine the default X!Tandem configuration files, and proceed if all defaults ar
 metanovo.sh  mgf_files/ uniprot_sprot.fasta output/ config.sh
 ~~~
 This process can be performed on local workstatiuon, and Singularity compatible High Performance clusters. 
-The database is saved as <output_folder>/metanovo/metanovo.fasta.
+
+The database is saved as <output_folder>/metanovo/metanovo.fasta
 
 # Run the tests!
 ~~~~
