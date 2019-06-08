@@ -10,6 +10,8 @@ ENV ftp_proxy ${ftp_proxy}
 ENV ipr_ftp "ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.30-69.0/interproscan-5.30-69.0-64-bit.tar.gz"
 ENV panther_ftp "ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/data/panther-data-12.0.tar.gz"
 
+RUN groupadd -r bio && useradd -r -g bio bio
+
 # 1. Obtaining the core InterProScan software
 #RUN \
 #  wget ${ipr_ftp}  && \
@@ -68,7 +70,9 @@ ENV DOCKER_JAVA_ARGS -XX:+UseParallelGC -XX:ParallelGCThreads= -XX:+AggressiveOp
 #COPY interproscan.properties /interproscan/interproscan.properties
 
 RUN pip3 install tzlocal rpy2
-ENV PYTHONPATH $PYTHONPATH::/root/proteomics-pipelines/lib
-ENV PATH $PATH::/root/proteomics-pipelines/bin/R:/root/proteomics-pipelines/bin/bash
-ENV python2ve /root/ve27
+ENV PYTHONPATH $PYTHONPATH::/home/bio/proteomics-pipelines/lib
+ENV PATH $PATH::/home/bio/proteomics-pipelines/bin/R:/home/bio/proteomics-pipelines/bin/bash
+ENV python2ve /home/bio/ve27
+RUN virtualenv -p python2.7 /home/bio/ve27
+WORKDIR /home/bio/
 

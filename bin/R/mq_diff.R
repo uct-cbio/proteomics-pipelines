@@ -133,7 +133,7 @@ for ( i in seq_along(colnames(contrast.matrix))) {
     Exposed <- cntrst_[[1]][1]
     Control <- cntrst_[[1]][2]
     table <- topTable(fit2,adjust="BH", coef=i, n=Inf)
-    table <- merge(orig_data, table, by=0)
+    #table <- merge(orig_data, table, by=0)
     table$Exposed <- Exposed
     table$Control <- Control
     table <- setDT(table, keep.rownames = TRUE)[]
@@ -146,8 +146,8 @@ for ( i in seq_along(colnames(contrast.matrix))) {
     print('*') 
     pval_lists[[cntrst]] <- sig_list
     
-    write.table(table, paste(limma_dir,'limma_', cntrst, '_intensity.txt',sep=''), sep='\t', row.names=FALSE)
-    write.table(sig_table, paste(limma_dir,'limma_', cntrst, '_intensity_qval_0.05.txt',sep=''), sep='\t', row.names=FALSE)
+    write.table(table, paste(limma_dir,'limma_', cntrst, '_intensity.csv',sep=''), sep=',', row.names=FALSE)
+    write.table(sig_table, paste(limma_dir,'limma_', cntrst, '_intensity_qval_0.05.csv',sep=''), sep=',', row.names=FALSE)
     sig_list = paste(sig_list, '\n')
     write(sig_list, paste(limma_dir,'limma_', cntrst, '_intensity_qval_0.05_list.txt',sep=''))
     

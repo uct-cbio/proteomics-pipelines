@@ -7,9 +7,8 @@ ENV ftp_proxy ${ftp_proxy}
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
 # Leave to end
-ENV PATH $PATH::/root/bin/python:/root/bin/R:/root/bin/bash:/root/bin/python
-ENV PYTHONPATH $PYTHONPATH::/root/lib
+ENV PATH $PATH::/home/bio/bin/python:/home/bio/bin/R:/home/bio/bin/bash:/home/bio/bin/python
+ENV PYTHONPATH $PYTHONPATH::/home/bio/lib
 
-COPY lib /root/lib
-COPY bin /root/bin
-CMD mqmetaproteomics.sh /root/txt/config.yaml
+COPY lib /home/bio/lib
+COPY bin /home/bio/bin
