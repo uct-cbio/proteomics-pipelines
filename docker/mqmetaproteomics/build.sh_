@@ -1,0 +1,7 @@
+# last version: v3
+version=v11.89
+
+docker pull 192.168.7.7:5000/ame/biometrics:${version} && echo "version exists" && exit 1 || echo "Gonna build."
+docker build -t 192.168.7.7:5000/ame/biometrics:${version} .
+docker push 192.168.7.7:5000/ame/biometrics:${version}
+
