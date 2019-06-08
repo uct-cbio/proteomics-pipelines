@@ -5,6 +5,7 @@ MetaNovo uses open-source tools to match raw spectra to database entries in a pa
 
 Database matches are stored in an SQLite database, and used to estimate the abundance of proteins using sequence tag matches, taking into account protein length using a normalized spectral abundance factor estimation for each protein in each sample. The MetaNovo algorithm uses the protein abundance level estimation to rank the data, producing a parsimonious list of protein identifiers that can explain all the database matches (such that each spectral match maps to at least one protein in the non-redundant list). Taxonomic representation in this list is calculated using the UniProt FASTA header "OS" entry, and a score for each organism is obtained. Database proteins are re-ranked based on the combined scores for spectral and organism abundance, and a database is exported.
 
+
 ## MetaNovo with PBS on a cluster
 ### 1. Clone the repository
 `git clone https://github.com/uct-cbio/proteomics-pipelines.git`
@@ -241,8 +242,33 @@ If the pipeline failes at any step, simply restart and the pipeline will continu
 qsub metanovo.pbs
 ~~~~
 
-## MetaNovo with Docker
-Ensure docker is installed, and allocate at least 2 cores and 4 GB of RAM to the docker engine for this example.
+## MetaNovo with Singularity 
+Ensure singularity is installed, and allocate at least 2 cores and 4 GB of RAM to the docker engine for this example.
+
+~~~
+cd proteomics-pipelines/singularity/metanovo 
+./create_image.sh
+~~~
+Proceed with Step 3 and 4 above.
+
+~~~
+singularity shell metanovo_v1.4.img
+Singularity metanovo_v1.4.img:~/my_metanovo_project> metanovo.sh  mgf_files/ uniprot_sprot.fasta output/ config.sh
+~~~
+This will give the output:
+~~~
+MetaNovo version 1.4
+'output//metanovo/config.sh' unchanged.
+Please edit X!Tandem default_input.xml and tandem-input-style.xsl in OUTPUT_FOLDER/metanovo and restart the pipeline
+~~~
+Examine the default X!Tandem configuration files, and proceed if all defaults are suitable.
+~~~
+metanovo.sh  mgf_files/ uniprot_sprot.fasta output/ config.sh
+~~~
+This process can be performed on local workstatiuon, and Singularity compatible High Performance clusters. 
+
+The database is saved as <output_folder>/metanovo/metanovo.fasta
+
 # Run the tests!
 ~~~~
 git clone https://thys_potgieter@bitbucket.org/thys_potgieter/cbio-proteogenomics-tests.git

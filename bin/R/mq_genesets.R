@@ -26,6 +26,8 @@ vct <- function(chars) { return(as.vector(strsplit(chars, '|', fixed=TRUE))[[1]]
 ###################
 #  GO Genesets    #
 ###################
+goterms = keys(GO.db)
+
 go.term <- function(goid)
 {
     go <- GOTERM[goid]
@@ -38,6 +40,8 @@ go.ontology <- function(goid ) {
 gopath <- paste(outpath,'/go2proteingroups.csv', sep='') 
 gtab <- read.csv(gopath)
 gtab <- data.frame(lapply(gtab, as.character), stringsAsFactors=FALSE)
+gtab <- subset(gtab, GO_ID %in% goterms)
+
 gtab$GO_TERM <- lapply(gtab$GO_ID, go.term)
 gtab$GO_ONTOLOGY <- lapply(gtab$GO_ID, go.ontology)
 gtab$ID<- with(gtab, paste0(GO_ID, " ", GO_TERM))
