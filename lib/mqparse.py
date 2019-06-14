@@ -165,12 +165,31 @@ class mq_txt:
         c = "library('FSA')"; ro.r(c)
         with open(config) as f:
             self.config = yaml.load(f.read())
+        
+        print(self.config)
+        rename_columns = {}
+        for sample in self.config['samples']:
+            if 'rename' in self.config['samples'][sample]:
+                frm = 'Intensity {}'.format(sample)
+                to = 'Intensity {}'.format(self.config['samples'][sample]['rename'])
+                rename_columns[frm] = to
+
+                frm = 'iBAQ {}'.format(sample)
+                to = 'iBAQ {}'.format(self.config['samples'][sample]['rename'])
+                rename_columns[frm] = to
+        
+        self.rename_columns = rename_columns
+
         self.outdir = self.config['outdir']
         self.create_folders()
         self.txt_path = self.config['mq_txt']
         self.peptides = pd.read_csv(self.txt_path +'/peptides.txt', sep='\t')
+        self.peptides.rename(columns=rename_columns, inplace=True)
+
         self.peptides['Identifier'] = self.peptides['Sequence']
         self.proteingroups = self.create_protein_group_identifier(pd.read_csv(self.txt_path +'/proteinGroups.txt', sep='\t'))
+        self.proteingroups.rename(columns=rename_columns, inplace=True)
+
         self.proteingroups['Leading Protein'] = self.proteingroups['Protein IDs'].apply(parse_ids).apply(lambda x : x.split(';')[0])
         self.proteingroups['Leading Species'] = self.proteingroups['Protein IDs'].apply(parse_groups).apply(lambda x : x.split(';')[0])
         self.proteingroups = self.leading_protein_mygene(self.proteingroups)
@@ -1017,6 +1036,8 @@ class mq_txt:
         for group in experiment:
             groups.append(group)
             for sample in experiment[group]:
+                if 'rename' in config['samples'][sample]:
+                    sample = config['samples'][sample]['rename']
                 rep = "'{}.{}'".format(quant, sample)
                 reps.append(rep)
         reps = ','.join(reps)
