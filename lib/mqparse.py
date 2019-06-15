@@ -27,6 +27,8 @@ import pickle
 import mygene
 import rpy2.robjects as ro
 
+# Library to parse MaxQuant txt
+
 def name_dct():
     names = {'sf_novel_m':'Six Frame Novel Only\n(M start)',
             'sf_novel':'Six Frame Novel Only',
