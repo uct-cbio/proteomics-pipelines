@@ -1,5 +1,4 @@
 #!/usr/bin/env Rscript
-
 library('limma')
 library('ggbiplot')
 library('gplots')
@@ -273,12 +272,16 @@ pca_path=paste(outdir,'PCA/',sep='')
 dir.create(pca_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 pc <- function( df, path, file, var.axes ) {
     fp = paste(path,file,sep='')
+    dev.new()
+    png(fp)
     pca <- prcomp(t(df), center=TRUE, scale=TRUE)
     g <- ggbiplot(pca, obs.scale = 1, var.scale = 1,
     groups=f, ellipse=TRUE, circle=TRUE, var.axes=var.axes, varname.abbrev = FALSE)
     g <- g + scale_color_discrete(name = '')
     g <- g + theme(legend.direction = 'horizontal',legend.position = 'top') 
-    ggsave(fp, g, device = png)
+    print(g)
+    dev.off()
+    #suppressGraphics(ggsave(fp, g, device = png))
     }
 
 pc(data, pca_path, "all_identified_pca.png", FALSE)

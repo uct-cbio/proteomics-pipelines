@@ -366,8 +366,8 @@ class mq_txt:
             os.mkdir(self.gsea_dir)
    
     def get_reference_peptides(self):
-        peptides = self.exclude_contaminants(self.target_peptides)
-        seqs = peptides['Sequence'].tolist()
+        #peptides = self.exclude_contaminants(self.target_peptides)
+        seqs = self.target_peptides['Sequence'].tolist()
         refstr = '-'.join([str(s.seq) for s in self.reference_fasta])
         refseqs = []
         nonrefseqs = []
