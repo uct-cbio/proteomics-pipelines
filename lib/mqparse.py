@@ -640,6 +640,13 @@ class mq_txt:
         #pept2taxa_sc.to_csv(self.unipept_dir + '/pept2taxa_family_sc.csv')
       
     def ips_gsea(self, indir, outpath, design, table, genecol, kocol, keggid='hsa', pval=0.05):
+        print(indir, outpath, design, table, genecol, kocol, keggid, pval)
+        indir = '/'.join(indir.split('//'))
+        outpath = '/'.join(outpath.split('//'))
+        
+        if not os.path.exists(outpath):
+            os.mkdir(outpath)
+
         table = pd.read_csv(table)
         table.to_csv(indir + '/combined.csv')    
         group_table = indir + '/combined.csv'

@@ -5,7 +5,7 @@ library('limma')
 library('pathview')
 library('optparse')
 
-
+print("Starting gene set enrichment")
 option_list = list(
 make_option(c("-o", "--outdir"),
        type="character",
@@ -178,6 +178,8 @@ analyse <- function(data, gset, refcols, sampcols, samedir) {
 cutoff <- pval
 print(cutoff)
 
+current_wd = getwd()
+
 less <- function(res, samp, ref) {
   less <- as.data.frame(res$less)
   #less <- less[!is.na(less$`p.val`),]
@@ -207,10 +209,12 @@ greater <- function(res, samp, ref) {
   return(greater)
 }
 
+
 process <- function(table , refcols, sampcols, outpath, refdata, samp, ref) {
   # IPR
   print("IPR")
   dir.create(outpath, showWarnings = FALSE)
+  print(outpath)
   setwd(outpath)
   #operon_table <- table[row.names(table) %in% operon.set,]
   res <- analyse(table, ipr.set, refcols, sampcols, TRUE)
@@ -225,7 +229,6 @@ process <- function(table , refcols, sampcols, outpath, refdata, samp, ref) {
     write.csv(ls, paste('IPR.down.', infile, sep=''))
   }
  
-
   # EC
   print("EC")
   #operon_table <- table[row.names(table) %in% operon.set,]
@@ -387,6 +390,8 @@ refmap <- data.frame(f, cols)
 comparisons <- colnames(contrast.matrix)
 
 for ( comp in comparisons){
+    print(comp)
+    setwd(current_wd)
     vals <- strsplit(comp,'-')
     # Get the reference cols
     ref  = as.character(vals[[1]][2])
