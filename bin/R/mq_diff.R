@@ -137,11 +137,13 @@ for ( i in seq_along(colnames(contrast.matrix))) {
     table$Control <- Control
     table <- setDT(table, keep.rownames = TRUE)[]
     table <- table[with(table, order(P.Value)), ]
+
     sig_table <- table[ which(table$adj.P.Val < 0.05), ]
-    
-    sig_list <- sig_table$Row.names  
+        
+    sig_list <- sig_table$rn 
+
     print(cntrst)
-    print(sig_list)
+    #print(sig_list)
     print('*') 
     pval_lists[[cntrst]] <- sig_list
     
@@ -272,9 +274,11 @@ pca_path=paste(outdir,'PCA/',sep='')
 dir.create(pca_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 pc <- function( df, path, file, var.axes ) {
     fp = paste(path,file,sep='')
-    dev.new()
+    #dev.new()
     png(fp)
-    pca <- prcomp(t(df), center=TRUE, scale=TRUE)
+    tdf <- t(df)
+    tdf <- tdf[ , apply(tdf, 2, var) != 0]
+    pca <- prcomp( tdf,  center=TRUE, scale=TRUE)
     g <- ggbiplot(pca, obs.scale = 1, var.scale = 1,
     groups=f, ellipse=TRUE, circle=TRUE, var.axes=var.axes, varname.abbrev = FALSE)
     g <- g + scale_color_discrete(name = '')
