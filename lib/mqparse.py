@@ -198,29 +198,21 @@ class mq_txt:
 
         rename_columns = {}
         group_levels = self.config['group_levels']
-        self.config['samples'] = {}
-
         for row in self.design.iterrows():
             rename = row[1]['rename']
             sample = row[1]['sample']
-            self.config['samples'][rename] = {}
-
             frm = 'Intensity {}'.format(sample)
             to = 'Intensity {}'.format(rename)
             rename_columns[frm] = to
-
             frm = 'iBAQ {}'.format(sample)
             to = 'iBAQ {}'.format(rename)
             rename_columns[frm] = to
             for level in group_levels:
-                if level in row[1].index:
-                    self.config['samples'][rename][level] = row[1][level]
-                else:
+                if not level in row[1].index:
                     print('Group level {} is not defined in design {}'.format(level, design))
                     return
-
+        self.config = self.update_config(self.config, self.design)
         self.rename_columns = rename_columns
-
         self.peptides.rename(columns=rename_columns, inplace=True)
         self.peptides['Identifier'] = self.peptides['Sequence']
         self.proteingroups = self.create_protein_group_identifier(pd.read_csv(self.txt_path +'/proteinGroups.txt', sep='\t'))
@@ -358,6 +350,19 @@ class mq_txt:
             kocol='Leading.Protein.Kegg.Orthology.ID'
             self.ips_gsea(outpath, gsea_dir, design, table, genecol=genecol , kocol=kocol)
             self.summarize_gsea(gsea_dir, gsea_dir + '/summary.txt', self.config, level)
+    
+    def update_config(self, config, design):
+        config['samples'] = {}
+        for row in design.iterrows():
+            rename = row[1]['rename']
+            sample = row[1]['sample']
+            config['samples'][rename] = {}
+            for level in config['group_levels']:
+                assert level in row[1].index
+                config['samples'][rename][level] = row[1][level]
+        return config
+
+
 
     def create_protein_group_identifier(self, proteingroups):
         proteingroups['Identifier'] = ' (Protein group ' + proteingroups['id'].apply(str)+')'
@@ -1066,14 +1071,11 @@ class mq_txt:
         d = "cols <- c("
         vals.append(d)
         samples = config['samples']
-        
         experiment = defaultdict(list)
-
         for sample in samples:
             if group_level in samples[sample]:
                 group = samples[sample][group_level]
                 experiment[group].append(sample)
-        
         groups = []
         reps = []
         for group in experiment:
