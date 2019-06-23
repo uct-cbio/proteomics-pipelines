@@ -4,7 +4,15 @@ ENV http_proxy ${http_proxy}
 ENV https_proxy ${https_proxy}
 ENV ftp_proxy ${ftp_proxy}
 
-RUN apt-get update
+RUN apt-get update && apt install -y apt-transport-https software-properties-common wget debconf multiarch-support
+
+RUN wget http://launchpadlibrarian.net/222159415/openjdk-8-jre-headless_8u66-b17-1build1_amd64.deb
+RUN dpkg -i openjdk-8-jre-headless_8u66-b17-1build1_amd64.deb || apt-get -y install -f && dpkg -i openjdk-8-jre-headless_8u66-b17-1build1_amd64.deb
+
+#RUN wget https://launchpad.net/~openjdk-r/+archive/ubuntu/ppa/+build/8156693/+files/openjdk-8-jdk_8u66-b17-1_amd64.deb
+#RUN dpkg -i openjdk-8-jre_8u66-b17-1_amd64.deb || apt-get -y install -f && dpkg -i openjdk-8-jdk_8u66-b17-1_amd64.deb
+
+RUN java -version
 
 # PYTHON 3
 RUN apt-get install -y python3-dev python3-pip
@@ -16,72 +24,56 @@ RUN pip3 install BioPython
 RUN apt-get install -y python-dev python-pip
 RUN virtualenv -p python2.7 /root/ve27
 
-# Tools
-RUN apt-get install -y software-properties-common
 
-# Install Oracle Java 8
-RUN \
-  echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | debconf-set-selections && \
-  add-apt-repository -y ppa:webupd8team/java && \
-  apt-get update && \
-  apt-get install -y oracle-java8-installer && \
-  rm -rf /var/lib/apt/lists/* && \
-  rm -rf /var/cache/oracle-jdk8-installer
-ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
-
-# R
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
-RUN add-apt-repository 'deb [arch=amd64,i386] http://cran.rstudio.com/bin/linux/ubuntu xenial/'
-RUN apt-get update && apt-get install -y r-base r-base-dev
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite()"
+RUN add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu xenial-cran35/'
+
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt update && apt -y install r-base r-base-dev
+# R
+#RUN apt-get install -y sudo dirmngr
+#RUN sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+
+
+#RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+#RUN add-apt-repository 'deb [arch=amd64,i386] http://cran.rstudio.com/bin/linux/ubuntu xenial/'
+
+#RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv E084DAB9
+
+#RUN add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/'
+
+#RUN apt-get update && apt-get install -y r-base r-base-dev
+RUN apt-get install -y curl libssl-dev libxml2-dev libcurl4-openssl-dev libssh2-1-dev openssl curl openssl
+RUN R -e "install.packages('BiocManager')"
 RUN R -e "install.packages('Rcpp', dependencies=TRUE, repos='http://cran.us.r-project.org')"
 RUN R -e "install.packages('mime', dependencies=TRUE, repos='http://cran.us.r-project.org')"
 RUN R -e "install.packages('optparse', dependencies=TRUE, repos='http://cran.us.r-project.org')"
-RUN apt-get install -y curl libssl-dev libxml2-dev libcurl4-openssl-dev libssh2-1-dev 
 RUN R -e "install.packages('devtools', dependencies=TRUE, repos='http://cran.us.r-project.org')"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('cluster',dependencies=TRUE)"
+RUN R -e "BiocManager::install('cluster',dependencies=TRUE)"
 RUN apt-get install -y octave liboctave-dev
-RUN apt-get install -y r-cran-rmpi openmpi-bin openmpi-doc libopenmpi-dev
+RUN apt-get install -y openmpi-bin openmpi-doc libopenmpi-dev
 RUN R -e "install.packages('Rmpi', dependencies=TRUE, repos='http://cran.us.r-project.org')"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('NMF',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('Matrix',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('irlba',dependencies=TRUE)"
-RUN apt-get install -y mesa-common-dev libglu1-mesa-dev freeglut3-dev bwidget
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('igraph',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('lintr',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('curl',dependencies=TRUE)"
-RUN apt-get install -y libnetcdf-dev libnetcdf11  
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('mzR',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('kernlab',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('robustbase',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('mclust',dependencies=TRUE)"
+RUN R -e "BiocManager::install( c('NMF', 'Matrix', 'irlba'), dependencies=TRUE)"
+
+RUN apt-get install -y mesa-common-dev libglu1-mesa-dev freeglut3-dev bwidget libfreetype6-dev
+RUN R -e "BiocManager::install( c('igraph', 'lintr', 'curl'), dependencies=TRUE)"
+
+RUN apt-get install -y libnetcdf-dev  
+RUN R -e "BiocManager::install( c('mzR', 'kernlab', 'robustbase', 'mclust'), dependencies=TRUE)"
+
 RUN apt-get -y install ed
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('MLInterfaces',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('S4Vectors',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('htmltools',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('preprocessCore',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('pRoloc',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('MSnbase',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('rTANDEM',dependencies=TRUE)"
+RUN R -e "BiocManager::install( c('MLInterfaces', 'S4Vectors', 'htmltools', 'preprocessCore', 'pRoloc', 'MSmbase', 'rTANDEM'), dependencies=TRUE)"
+
 RUN R CMD javareconf
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('rJava',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('RforProteomics',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('gage',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('limma',dependencies=TRUE)"
+RUN R -e "BiocManager::install( c('rJava', 'RforProteomics', 'gage', 'limma', 'ggplot', 'dendextend', 'mvtnorm', 'tmvtnorm'), dependencies=TRUE)"
 RUN R -e "library(devtools); install_github('vqv/ggbiplot')"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('gplots',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('dendextend',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('imputeLCMD',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('pvclust',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('colorspace',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('data.table',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('qvalue',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('dplyr',dependencies=TRUE)"
+
+RUN R -e "BiocManager::install( c('imputeLCMD', 'pvclust', 'colorspace', 'data.table', 'qvalue', 'dplyr'), dependencies=TRUE)"
+
 RUN apt-get install -y libcairo2-dev
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('gdtools',dependencies=TRUE)"
-RUN R -e "source('http://bioconductor.org/biocLite.R'); biocLite('ggplot2',dependencies=TRUE)"
+RUN R -e "BiocManager::install( c('gdtools', 'rngtools', 'ggplot2'), dependencies=TRUE)"
+
 RUN pip3 install matplotlib
-RUN pip3 install rpy2
 RUN R -e "install.packages('epitools', dependencies=TRUE, repos='http://cran.us.r-project.org')"
 RUN R -e "install.packages('plotrix', dependencies=TRUE, repos='http://cran.us.r-project.org')"
 RUN R -e "install.packages('sciplot', dependencies=TRUE, repos='http://cran.us.r-project.org')"
@@ -93,20 +85,24 @@ RUN pip3 install urllib3
 RUN apt-get update && apt-get -y install ruby-full
 RUN gem install unipept
 
+RUN groupadd -r bio && useradd -r -g bio bio
+WORKDIR /home/bio/
+
 # Install BLAST
-ENV blast_ftp ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.7.1+-x64-linux.tar.gz
-RUN mkdir /root/blast && cd /root/blast && wget ${blast_ftp} && tar -zxvf * && rm -rf *.tar.gz 
-RUN cd /root/blast/ncbi*/bin && cp * /usr/local/bin
+RUN apt-get -y install wget
+ENV blast_ftp ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.9.0+-x64-linux.tar.gz
+RUN mkdir /home/bio/blast && cd /home/bio/blast && wget ${blast_ftp} && tar -zxvf * && rm -rf *.tar.gz 
+RUN cd /home/bio/blast/ncbi*/bin && cp * /usr/local/bin
 
 # Clustalw
 ENV clustalw_ftp ftp://ftp.ebi.ac.uk/pub/software/clustalw2/2.1/clustalw-2.1-linux-x86_64-libcppstatic.tar.gz
-RUN mkdir /root/clustalw && cd /root/clustalw && wget ${clustalw_ftp} && tar -zxvf * && rm -rf *.tar.gz
-RUN cd /root/clustalw/clustalw* && cp * /usr/local/bin
+RUN mkdir /home/bio/clustalw && cd /home/bio/clustalw && wget ${clustalw_ftp} && tar -zxvf * && rm -rf *.tar.gz
+RUN cd /home/bio/clustalw/clustalw* && cp * /usr/local/bin
 
 # MUSCLE
 ENV muscle_ftp http://www.drive5.com/muscle/downloads3.8.31/muscle3.8.31_i86linux32.tar.gz
-RUN mkdir /root/muscle && cd /root/muscle && wget ${muscle_ftp} && tar -zxvf * && rm -rf *.tar.gz
-RUN cd /root/muscle/ && cp muscle* /usr/local/bin/muscle
+RUN mkdir /home/bio/muscle && cd /home/bio/muscle && wget ${muscle_ftp} && tar -zxvf * && rm -rf *.tar.gz
+RUN cd /home/bio/muscle/ && cp muscle* /usr/local/bin/muscle
 
 # Python deps
 RUN pip3 install natsort 
@@ -114,9 +110,16 @@ RUN pip3 install PyYAML
 RUN apt-get update
 RUN pip3 install matplotlib_venn
 RUN apt-get update
-RUN apt-get -y install python3-tk
+RUN apt-get -y install python3-tk python3-cffi
+
 RUN pip3 install rpy2
 RUN pip3 install datrie
+
 RUN pip3 install scikit-posthocs
+RUN R -e "install.packages('Rcpp')"
+#RUN R -e "devtools::install_version('car', version = '2.1-6', repos = 'http://cran.us.r-project.org')"
+RUN R -e "devtools::install_version('car', dependencies=TRUE, repos='http://cran.us.r-project.org')"
+
+#RUN R -e "install.packages('tvtnorm', type='source', repos=NULL) "
 RUN R -e "install.packages('FSA') "
 

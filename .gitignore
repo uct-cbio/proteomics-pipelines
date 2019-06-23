@@ -4,3 +4,5 @@
 *.csv
 *.txt
 *.img
+docker/iprscan/interproscan/
+
