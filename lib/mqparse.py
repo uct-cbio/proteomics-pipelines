@@ -26,6 +26,7 @@ import scipy
 import pickle
 import mygene
 import rpy2.robjects as ro
+import sys
 
 # Library to parse MaxQuant txt
 
@@ -169,27 +170,61 @@ class mq_txt:
             self.config = yaml.load(f.read())
         
         print(self.config)
-        rename_columns = {}
-        for sample in self.config['samples']:
-            if 'rename' in self.config['samples'][sample]:
-                frm = 'Intensity {}'.format(sample)
-                to = 'Intensity {}'.format(self.config['samples'][sample]['rename'])
-                rename_columns[frm] = to
+        self.txt_path = self.config['mq_txt']
+        self.outdir = self.config['outdir']
+        design = self.config['design']
 
-                frm = 'iBAQ {}'.format(sample)
-                to = 'iBAQ {}'.format(self.config['samples'][sample]['rename'])
-                rename_columns[frm] = to
-        
+        self.summary = pd.read_csv(self.txt_path +'/summary.txt', sep='\t')
+        print(self.summary)
+        self.create_folders()
+        self.peptides = pd.read_csv(self.txt_path +'/peptides.txt', sep='\t')
+        samples = []
+        for column in self.peptides.columns:
+            if column.startswith('Intensity '):
+                name = column.split('Intensity ')[1]
+                samples.append(name)
+
+        if not os.path.exists(design):
+            self.design = pd.DataFrame()
+            self.design['sample'] = pd.Series(samples)
+            self.design['rename'] = pd.Series(samples)
+            self.design['LEVEL_1'] = 'Group_1'
+            self.design.to_csv(design, index=False)
+            print("Please edit {}/design.csv, then restart the analysis.".format(self.outdir))
+            return
+        else:
+            self.design=pd.read_csv(design)
+            print(self.design)
+
+        rename_columns = {}
+        group_levels = self.config['group_levels']
+        self.config['samples'] = {}
+
+        for row in self.design.iterrows():
+            rename = row[1]['rename']
+            sample = row[1]['sample']
+            self.config['samples'][rename] = {}
+
+            frm = 'Intensity {}'.format(sample)
+            to = 'Intensity {}'.format(rename)
+            rename_columns[frm] = to
+
+            frm = 'iBAQ {}'.format(sample)
+            to = 'iBAQ {}'.format(rename)
+            rename_columns[frm] = to
+            for level in group_levels:
+                if level in row[1].index:
+                    self.config['samples'][rename][level] = row[1][level]
+                else:
+                    print('Group level {} is not defined in design {}'.format(level, design))
+                    return
+
         self.rename_columns = rename_columns
 
-        self.outdir = self.config['outdir']
-        self.create_folders()
-        self.txt_path = self.config['mq_txt']
-        self.peptides = pd.read_csv(self.txt_path +'/peptides.txt', sep='\t')
         self.peptides.rename(columns=rename_columns, inplace=True)
-
         self.peptides['Identifier'] = self.peptides['Sequence']
         self.proteingroups = self.create_protein_group_identifier(pd.read_csv(self.txt_path +'/proteinGroups.txt', sep='\t'))
+
         self.proteingroups.rename(columns=rename_columns, inplace=True)
 
         self.proteingroups['Leading Protein'] = self.proteingroups['Protein IDs'].apply(parse_ids).apply(lambda x : x.split(';')[0])
@@ -201,7 +236,6 @@ class mq_txt:
         self.proteingroups = self.host_proteins(self.proteingroups, self.reference_fasta)
         assert len(self.proteingroups['Identifier'].tolist()) == len(set(self.proteingroups['Identifier'].tolist()))
         self.msms = pd.read_csv(self.txt_path +'/msms.txt', sep='\t')
-        self.summary = pd.read_csv(self.txt_path +'/summary.txt', sep='\t')
         self.target_proteingroups = self.exclude_reverse(self.proteingroups)
         self.reverse_msms = self.get_reverse(self.msms)
         self.reverse_peptides = self.get_reverse(self.peptides)
@@ -1045,8 +1079,6 @@ class mq_txt:
         for group in experiment:
             groups.append(group)
             for sample in experiment[group]:
-                if 'rename' in config['samples'][sample]:
-                    sample = config['samples'][sample]['rename']
                 rep = "'{}.{}'".format(quant, sample)
                 reps.append(rep)
         reps = ','.join(reps)
