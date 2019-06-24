@@ -2,7 +2,7 @@
 
 set -e
 set -a
-echo "MetaNovo version 1.4"
+
 res1=$(date +%s.%N)
 
 mgf_folder=$1

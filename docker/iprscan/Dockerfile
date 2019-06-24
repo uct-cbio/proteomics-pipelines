@@ -11,7 +11,7 @@ ENV ftp_proxy ${ftp_proxy}
 
 RUN pip3 install mygene
 
-ENV DOCKER_JAVA_ARGS -XX:+UseParallelGC -XX:ParallelGCThreads= -XX:+AggressiveOpts -XX:+UseFastAccessorMethods -Xms128M -Xmx2048M
+ENV DOCKER_JAVA_ARGS -XX:+UseParallelGC -XX:ParallelGCThreads= -XX:+AggressiveOpts -XX:+UseFastAccessorMethods -Xms128M -Xmx10128M
 #COPY interproscan.properties /interproscan/interproscan.properties
 
 RUN pip3 install tzlocal rpy2

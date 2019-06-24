@@ -8,9 +8,9 @@ RUN apt-get update
 RUN apt-get install -y wget tar bc parallel 
 
 
-RUN groupadd -r bio && useradd -r -g bio bio
+#RUN groupadd -r bio && useradd -r -g bio bio
 
-WORKDIR /home/bio
+#WORKDIR /home/bio
 
 COPY bin/python/chunkfasta.py /home/bio/chunkfasta.py
 # Get UniProt
