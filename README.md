@@ -5,10 +5,14 @@ MetaNovo uses open-source tools to match raw spectra to database entries in a pa
 
 Database matches are stored in an SQLite database, and used to estimate the abundance of proteins using sequence tag matches, taking into account protein length using a normalized spectral abundance factor estimation for each protein in each sample. The MetaNovo algorithm uses the protein abundance level estimation to rank the data, producing a parsimonious list of protein identifiers that can explain all the database matches (such that each spectral match maps to at least one protein in the non-redundant list). Taxonomic representation in this list is calculated using the UniProt FASTA header "OS" entry, and a score for each organism is obtained. Database proteins are re-ranked based on the combined scores for spectral and organism abundance, and a database is exported.
 
+## Recomended use - MetaNovo with Singularity. Please follow steps 3,4 and 6 below.
 
-## MetaNovo with PBS on a cluster
+
+## MetaNovo installation
+
 ### 1. Clone the repository
 `git clone https://github.com/uct-cbio/proteomics-pipelines.git`
+
 ### 2. Install metanovo dependencies
 #### 2.1 The following dependencies will be installed (skip this step if they are already installed):
 ##### http://genesis.ugent.be/maven2/com/compomics/utilities/4.11.19/utilities-4.11.19.zip
@@ -242,7 +246,7 @@ If the pipeline failes at any step, simply restart and the pipeline will continu
 qsub metanovo.pbs
 ~~~~
 
-## MetaNovo with Singularity 
+#### 6. MetaNovo with Singularity (Recommended)
 Ensure singularity is installed, and allocate at least 2 cores and 4 GB of RAM to the docker engine for this example.
 
 ~~~
@@ -252,12 +256,11 @@ cd proteomics-pipelines/singularity/metanovo
 Proceed with Step 3 and 4 above.
 
 ~~~
-singularity shell metanovo_v1.4.img
-Singularity metanovo_v1.4.img:~/my_metanovo_project> metanovo.sh  mgf_files/ uniprot_sprot.fasta output/ config.sh
+singularity shell metanovo_v1.6.img
+Singularity metanovo_v1.6.img:~/my_metanovo_project> metanovo.sh  mgf_files/ uniprot_sprot.fasta output/ config.sh
 ~~~
 This will give the output:
 ~~~
-MetaNovo version 1.4
 'output//metanovo/config.sh' unchanged.
 Please edit X!Tandem default_input.xml and tandem-input-style.xsl in OUTPUT_FOLDER/metanovo and restart the pipeline
 ~~~
