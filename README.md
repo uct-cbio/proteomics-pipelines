@@ -257,7 +257,7 @@ Proceed with Step 3 and 4 above.
 
 ~~~
 singularity shell metanovo_v1.6.img
-Singularity metanovo_v1.6.img:~/my_metanovo_project> metanovo.sh  mgf_files/ uniprot_sprot.fasta output/ config.sh
+Singularity metanovo_v1.6.img:~/my_metanovo_project> metanovo.sh  mgf_files/ uniprot_sprot.fasta /full/path/to/my_metanovo_project/output/ config.sh # Please use the full path to the output folder
 ~~~
 This will give the output:
 ~~~
