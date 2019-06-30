@@ -202,28 +202,65 @@ class mq_txt:
             rename = row[1]['rename']
             sample = row[1]['sample']
             frm = 'Intensity {}'.format(sample)
+            assert frm in self.peptides.columns # Check that the column exists
             to = 'Intensity {}'.format(rename)
             rename_columns[frm] = to
             frm = 'iBAQ {}'.format(sample)
             to = 'iBAQ {}'.format(rename)
             rename_columns[frm] = to
-            for level in group_levels:
-                if not level in row[1].index:
-                    print('Group level {} is not defined in design {}'.format(level, design))
-                    return
+        for level in group_levels:
+            if not level in self.design.columns:
+                print('Group level {} is not defined in design {}'.format(level, design))
+                return
+
         self.config = self.update_config(self.config, self.design)
         self.rename_columns = rename_columns
-        self.peptides.rename(columns=rename_columns, inplace=True)
         self.peptides['Identifier'] = self.peptides['Sequence']
         self.proteingroups = self.create_protein_group_identifier(pd.read_csv(self.txt_path +'/proteinGroups.txt', sep='\t'))
 
-        self.proteingroups.rename(columns=rename_columns, inplace=True)
 
         self.proteingroups['Leading Protein'] = self.proteingroups['Protein IDs'].apply(parse_ids).apply(lambda x : x.split(';')[0])
         self.proteingroups['Leading Species'] = self.proteingroups['Protein IDs'].apply(parse_groups).apply(lambda x : x.split(';')[0])
-        self.proteingroups = self.leading_protein_mygene(self.proteingroups)
+        
+        mgfile = self.outdir +'/proteingroups.mygene.csv'
+        if not os.path.exists(mgfile):
+            self.proteingroups = self.leading_protein_mygene(self.proteingroups)
+            self.proteingroups.to_csv(mgfile)
+        else:
+            self.proteingroups = pd.read_csv(mgfile)
+
+        
         assert len(self.proteingroups['Identifier'].tolist()) == len(set(self.proteingroups['Identifier'].tolist()))
-        self.proteingroups = self.leading_protein_ko(self.proteingroups)
+        
+        kofile =self.outdir + '/proteingroups.ko.csv'
+        if not os.path.exists( kofile):
+            self.proteingroups = self.leading_protein_ko(self.proteingroups)
+            self.proteingroups.to_csv(kofile)
+        else:
+            self.proteingroups = pd.read_csv(kofile)
+        print(list(rename_columns.keys()))
+        for sample in samples:
+            pepcol = 'Intensity {}'.format(sample)
+            protcol = 'iBAQ {}'.format(sample)
+            if not pepcol in rename_columns:
+                del self.proteingroups[protcol]
+                del self.peptides[pepcol]
+            else:
+                r = self.proteingroups[protcol]
+                _ = len([i for i in r if not i == 0]) /  len(r)
+                print(protcol, _)
+                assert _ * 100 > 20
+                #r = self.peptides[pepcol]
+                #_ = len([i for i in r if not i == 0]) /  len(r)
+                #print(pepcol, _)
+                #assert _ * 100 > 20
+
+
+        self.peptides.rename(columns=rename_columns, inplace=True)
+            
+        self.proteingroups.rename(columns=rename_columns, inplace=True)
+            
+
         self.reference_fasta = list(SeqIO.parse(self.config['reference_fasta'], 'fasta'))
         self.proteingroups = self.host_proteins(self.proteingroups, self.reference_fasta)
         assert len(self.proteingroups['Identifier'].tolist()) == len(set(self.proteingroups['Identifier'].tolist()))
@@ -317,9 +354,11 @@ class mq_txt:
         # Normalize peptides
         outdir = self.diff_dir + 'peptide_normalization'
         infile = self.peptide_txt
-        self.normalize('Intensity.', infile, outdir)
-        self.normalized_target_peptides = pd.read_csv(self.diff_dir + '/peptide_normalization/msnbase/normalized.csv') 
-  
+        norm_peps=self.diff_dir + '/peptide_normalization/msnbase/normalized.csv'
+        if not os.path.exists(norm_peps):
+            self.normalize('Intensity.', infile, outdir)
+        self.normalized_target_peptides = pd.read_csv(norm_peps)
+
         # Create protein paraameters
         for level in self.config['group_levels']:
             outfile=self.diff_dir + '/protein_experimental_design_{}.R'.format(level)
@@ -330,8 +369,10 @@ class mq_txt:
         # Normalize proteins
         outdir = self.diff_dir + 'protein_normalization'
         infile = self.gsea_dir +'/ipr_target_proteins.txt'
-        self.normalize('iBAQ.', infile, outdir)
-        self.normalized_target_proteins = pd.read_csv(self.diff_dir + '/protein_normalization/msnbase/normalized.csv') 
+        norm_prots = self.diff_dir + '/protein_normalization/msnbase/normalized.csv'
+        if not os.path.exists(norm_prots):
+            self.normalize('iBAQ.', infile, outdir)
+        self.normalized_target_proteins = pd.read_csv(norm_prots) 
         
         # unipept anslysis
         self.unipept()
@@ -343,7 +384,8 @@ class mq_txt:
         outpath=self.gsea_dir
         for level in self.config['group_levels']:
             gsea_dir = outpath + '/' + level
-            os.mkdir(gsea_dir)
+            if not os.path.exists(gsea_dir):
+                os.mkdir(gsea_dir)
             table=self.diff_dir+'/protein_normalization/msnbase/normalized.csv'
             design = self.diff_dir+'/protein_experimental_design_{}.R'.format(level)
             genecol='Mygene.entrez'
@@ -691,12 +733,17 @@ class mq_txt:
         table = pd.read_csv(table)
         table.to_csv(indir + '/combined.csv')    
         group_table = indir + '/combined.csv'
+        cols = table.columns.tolist()
+        
+        #print(table['Row names'].tolist())
         cmd = 'gage.R --indir {} --outdir {} --keggid {} --design {} --table {} --genecol {} --kocol {} --pval {}'.format(indir, outpath, keggid, design, group_table, genecol, kocol,  pval)
         process = subprocess.Popen(cmd, shell=True)
         process.wait()
         assert process.returncode == 0
     
         for name, group in table.groupby('Component'):
+            assert len(group) == len(group['Identifier'].dropna())
+            #print(group['Row.name'].tolist())
             group_table = indir + '/{}.csv'.format(name)
             group.to_csv(indir + '/{}.csv'.format(name))    
             cmd = 'gage.R --indir {} --outdir {} --keggid {} --design {} --table {} --genecol {} --kocol {} --pval {}'.format(indir, outpath, keggid, design, group_table, genecol, kocol,  pval)
@@ -1075,7 +1122,8 @@ class mq_txt:
         for sample in samples:
             if group_level in samples[sample]:
                 group = samples[sample][group_level]
-                experiment[group].append(sample)
+                if isinstance(group, str):
+                    experiment[group].append(sample)
         groups = []
         reps = []
         for group in experiment:
@@ -1277,8 +1325,8 @@ class mq_txt:
         
     def diff_analysis(self):
         for level in self.config['group_levels']:
-            
-            os.mkdir(self.diff_dir + '/' + level)
+            if not os.path.exists(self.diff_dir + '/' + level): 
+                os.mkdir(self.diff_dir + '/' + level)
 
             # peptides
             diff_dir = self.diff_dir + '/' + level + '/peptide_diff'

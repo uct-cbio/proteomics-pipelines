@@ -51,11 +51,15 @@ orig_data <- data
 data <- data[,cols]
 
 fpie <- function( df , names, valcols, outfile) {
+    print(head(df))
     df$slices <- rowSums(df[,valcols, drop=FALSE] )
     df$slices <- df$slices/sum(df$slices) * 100
     df$slices <- round(df$slices, 2)
     df$label <- paste(names, " ", df$slices, ' %', sep="")
     df$label[df$slices < 0.5] <- ""
+    print(head(df$label))
+    print(length(names))
+    print(length(df))
     jpeg(outfile, width=1000,height=900)
     par(mar=c(6,12,6,12)+.1)
     pie(df$slices, labels = df$label,  main="Summed intensity (%)")
@@ -100,17 +104,19 @@ splom_path=paste(outdir,'splom/',sep='')
 dir.create(splom_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 
 splom <- function (df, valcols, labels, path, name) {
-    png(paste(path,name,sep=''),units="in",width=11,height=8.5,res=300)
+    #pdf(paste(path,name,sep=''),units="in",width=11,height=8.5,res=300)
+    pdf(paste(path,name,sep=''), width = 20, height = 20)
     df$temp <- labels
     df <- df[df$temp!= '' , ]  
     labels <- df$temp
     df <- df[, valcols]
     prot_labels <- as.numeric(labels)
     prot_labels <- rev(rainbow_hcl(length(prot_labels)))[prot_labels]
+    
     pairs(df, col = prot_labels, lower.panel = NULL, cex.labels=0.5, pch=19, cex = 0.01)
     dev.off() }
 
-splom(splomdata, cols, splomdata$Identifier, splom_path, 'splom.png')
+splom(splomdata, cols, splomdata$Identifier, splom_path, 'splom.pdf')
 
 #############################################
 # Diferential abundance analysis with LIMMA #

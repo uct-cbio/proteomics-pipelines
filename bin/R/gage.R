@@ -58,6 +58,15 @@ species = opt$keggid
 genecol = opt$genecol
 pval = opt$pval
 kocol =opt$kocol
+table_path <- opt$table 
+print(inpath)
+print(path)
+print(species)
+print(genecol)
+print(pval)
+print(kocol) 
+print(table_path)
+print(opt$design)
 
 source(opt$design)
 
@@ -121,11 +130,13 @@ if(file.exists(reactome_path)){
     reactome <- 'true'
 }
 
-table_path <- opt$table 
 infile <- basename(table_path)
 
 table <- read.csv(table_path)
-row.names(table) <- table$Row.names
+#print(head(table))
+#print(table$Row.names)
+#row.names(table) <- table$Row.names
+#quit()
 
 table[, cols] <- lapply(table[, cols], function(x){replace(x, x == 0,  NA)})
 table[, cols] <- lapply(table[, cols], function(x){ log2(x)})
@@ -133,8 +144,13 @@ table[, cols] <- lapply(table[, cols], function(x){ log2(x)})
 
 # GI table
 gi_table <- cbind(table)
-rownames(gi_table) <- gi_table$Identifier
-
+#ids <-  as.character(gi_table$Identifier)
+#genecol <- as.character(gi_table[,genecol])
+#gi_table <- gi_table[,cols]
+#print(length(ids))
+#print(length(row.names(gi_table)))
+#row.names(gi_table) <- ids
+#gi_table
 #print(head(gi_table))
 #quit()
 
@@ -144,8 +160,9 @@ refdata <- merge( table, newtable, by="Identifier", all.y = TRUE)
 refdata <- refdata[!duplicated(refdata$gi), ]
 ref <- refdata$gi
 refdata <- refdata[,cols]
-row.names(refdata) <-ref
-
+print('refcols')
+#row.names(refdata) <-ref
+.rowNamesDF(refdata, make.names=TRUE) <- ref
 
 ko_s <- strsplit(as.character(gi_table[,kocol]), split = ";")
 ko_newtable <- data.frame( Identifier = rep(gi_table$Identifier, sapply(ko_s, length)), gi = unlist(ko_s))
@@ -153,7 +170,8 @@ kodata <- merge( table, ko_newtable, by="Identifier", all.y = TRUE)
 kodata <- kodata[!duplicated(kodata$gi), ]
 ko <- kodata$gi
 kodata <- kodata[,cols]
-row.names(kodata) <- ko
+print('kocols')
+.rowNamesDF(kodata, make.names=TRUE) <- ko
 
 
 #print(head((refdata))
@@ -164,6 +182,7 @@ ids <- table$Identifier
 
 table <- table[,cols]
 
+print('idcols')
 row.names(table) <- ids
 
 
@@ -171,7 +190,7 @@ row.names(table) <- ids
 #dir.create(outpath, showWarnings = FALSE)
 
 analyse <- function(data, gset, refcols, sampcols, samedir) {
-  cnts.p <- gage(data, gsets = gset, ref = refcols, samp = sampcols, compare ="unpaired", samedir= samedir)  
+  cnts.p <- gage(data, gsets = gset, ref = refcols, samp = sampcols, compare ="unpaired", same.dir= samedir) # used to be unpaired 
   return(cnts.p)
 }
 
@@ -209,6 +228,23 @@ greater <- function(res, samp, ref) {
   return(greater)
 }
 
+both <- function(res, samp, ref) {
+  both <- as.data.frame(res$greater)
+  #_ <- as.data.frame(res$less)
+  both$RowName <- as.character(row.names(both))
+  both$Exposed <- samp
+  both$Control <- ref
+  both$Coregulated <- "Both"
+  print(both)
+  if (length(row.names(both)) > 0) {
+      print(cutoff)
+      both <- both[both$`p.val` < cutoff, ]
+      print(head(both)) 
+  }
+  both <- both[!is.na(both$`p.val`),]
+  #print(head(greater))
+  return(both)
+}
 
 process <- function(table , refcols, sampcols, outpath, refdata, samp, ref) {
   # IPR
@@ -261,7 +297,7 @@ process <- function(table , refcols, sampcols, outpath, refdata, samp, ref) {
   ref.d <- refdata[, sampcols]-rowMeans(refdata[, refcols, drop=FALSE])
   ko.d <- kodata[, sampcols]-rowMeans(kodata[, refcols, drop=FALSE])
   
-  res <- analyse(table, kegg.set, refcols, sampcols, T)
+  res <- analyse(table, kegg.set, refcols, sampcols, TRUE)
   ls <- less(res, samp, ref)
   if (length(row.names(ls)) > 0) {
     ls$SameDir <- "True"
@@ -282,18 +318,16 @@ process <- function(table , refcols, sampcols, outpath, refdata, samp, ref) {
     try(pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ko.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste('ko', pid, sep=''), species = 'ko')))
   }
   
-  res <- analyse(table, kegg.set, refcols, sampcols, F)
-  gt <- greater(res, samp, ref)
-  ls <- less(res, samp, ref)
-  print(str(res))
-
-  if (length(row.names(gt)) > 0) {
-    gt$SameDir <- "False"
-    gt$RowName = paste(species, gt$RowName,sep = "")
-    write.csv(gt, paste('KEGG.both.', infile,sep= ''))
-    greater_ids <- row.names(gt)
-  try(pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste(species, pid, sep=''), species = species)))
-  try(pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ko.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste('ko', pid, sep=''), species = 'ko')))
+  res <- analyse(table, kegg.set, refcols, sampcols, FALSE)
+  #print(summary(res))
+  bt <- both(res, samp, ref)
+  if (length(row.names(bt)) > 0) {
+    bt$SameDir <- "False"
+    bt$RowName = paste(species, bt$RowName,sep = "")
+    write.csv(bt, paste('KEGG.both.', infile,sep= ''))
+    both_ids <- row.names(bt)
+  try(pv.out.list <- sapply(both_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste(species, pid, sep=''), species = species)))
+  try(pv.out.list <- sapply(both_ids, function(pid) pathview(gene.data = ko.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste('ko', pid, sep=''), species = 'ko')))
   } 
   
   # BP
