@@ -20,7 +20,7 @@ singularity shell mqmetaproteomics_v1.3.img
 3. Export the path to the folder where interproscan.sh is located.
 
 ~~~
-PATH=$PATH::/users/ptgmat003/ceph/cbio/users/ptgmat003/interproscan/5.35-74.0/interproscan-5.35-74.0
+PATH=$PATH::/cbio/users/ptgmat003/interproscan/interproscan-5.36-75.0
 ~~~
 
 4. Clone the cbio-proteogenomics-tests repo
