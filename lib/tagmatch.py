@@ -702,3 +702,4 @@ class blast_tags:
 
         return sequence, np.round(ngap,4), np.round(cgap,4)
 
+    

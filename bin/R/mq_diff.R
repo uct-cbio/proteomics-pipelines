@@ -43,12 +43,16 @@ data[, cols] <- lapply(data[, cols], function(x){ log2(x)})
 rownames(data) <- data$Identifier
 
 Identifier <- data$Identifier
+data$Row.Name <- Identifier
+other <- data[, (colnames(data) %in% c("Identifier", "Row.Name", "Leading.Protein","Leading.gene"))]
+
 #names <- paste(Identifier, '(', data$PeptideCount, ' peptides, ', data$MS.MS.Count,' msms)',sep='')
 
 #data <- data[,cols]
 data$Identifier <- Identifier
 orig_data <- data
 data <- data[,cols]
+
 
 fpie <- function( df , names, valcols, outfile) {
     print(head(df))
@@ -138,7 +142,8 @@ for ( i in seq_along(colnames(contrast.matrix))) {
     Exposed <- cntrst_[[1]][1]
     Control <- cntrst_[[1]][2]
     table <- topTable(fit2,adjust="BH", coef=i, n=Inf)
-    #table <- merge(orig_data, table, by=0)
+    table <- merge(other, table, by=0)
+    rownames(table) <- table$Identifier
     table$Exposed <- Exposed
     table$Control <- Control
     table <- setDT(table, keep.rownames = TRUE)[]
@@ -170,7 +175,7 @@ pvals <- unlist(pval_lists, recursive = TRUE, use.names = FALSE)
 
 pval_data <- data[rownames(data) %in% pvals, ]
 
-
+print(pvals)
 #########################################################
 # Hierarchical clustering and correlation of replicates #
 ######################################################### 

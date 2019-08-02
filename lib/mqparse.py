@@ -163,12 +163,58 @@ def parse_groups(ids):
     new_ids = ';'.join(new_ids)
     return new_ids
 
+def bp(data, names, outfile, overlay=False):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    # Create the boxplot
+    bp = ax.boxplot(data )#, patch_artist=True)
+    ## change outline color, fill color and linewidth of the boxes
+    for box in bp['boxes']:
+        # change outline color
+        box.set( color='#7570b3', linewidth=1)
+        # change fill color
+        #box.set( facecolor = '#1b9e77' )
+    ## change color and linewidth of the whiskers
+    for whisker in bp['whiskers']:
+        whisker.set(color='#7570b3', linewidth=1)
+    ## change color and linewidth of the caps
+    for cap in bp['caps']:
+        cap.set(color='#7570b3', linewidth=1)
+    ## change color and linewidth of the medians
+    for median in bp['medians']:
+        median.set(color='#b2df8a', linewidth=2)
+        #median.set(linewidth=2)
+    ## change the style of fliers and their fill
+    for flier in bp['fliers']:
+        flier.set(marker='.', color='#e7298a', alpha=0.5)
+    ## Custom x-axis labels
+    ax.set_xticklabels(names)
+    #ax.set_yticklabels('Posterior Error Probability (PEP)')
+    ax.set_title('Number of identified peptides per sample')
+    ## Remove top axes and right axes ticks
+    ax.get_xaxis().tick_bottom()
+    ax.get_yaxis().tick_left()
+    
+    # Draw the observations
+    if overlay == True:
+        for i in range(len(data)):
+            y = data[i]
+            #x = np.random.normal(1 +i, 0.04, size=len(y))
+            x = [ i + 1  for _ in y ]
+            #print(x)
+            #x = np.random.normal(0.5 +i, 0.04, size=len(y))
+            plt.plot(x, y, 'r.', alpha=0.2)
+    # Save the figure
+    fig.savefig(outfile, bbox_inches='tight')
+    fig.clf()
+    plt.close()
+
 class mq_txt:
     def __init__(self, config, exclude_contaminants=False):
         c = "library('FSA')"; ro.r(c)
         with open(config) as f:
             self.config = yaml.load(f.read())
-        
+        #assert 4==5 
         print(self.config)
         self.txt_path = self.config['mq_txt']
         self.outdir = self.config['outdir']
@@ -197,38 +243,54 @@ class mq_txt:
             print(self.design)
 
         rename_columns = {}
+        exclude_columns = []
+        exclude_samples = []
+
         group_levels = self.config['group_levels']
+        print(design)
         for row in self.design.iterrows():
             rename = row[1]['rename']
             sample = row[1]['sample']
+            exclude = str(row[1]['exclude']).strip()
+            row_exclude = []
             frm = 'Intensity {}'.format(sample)
             assert frm in self.peptides.columns # Check that the column exists
             to = 'Intensity {}'.format(rename)
             rename_columns[frm] = to
+            row_exclude.append(to)
+            
             frm = 'iBAQ {}'.format(sample)
             to = 'iBAQ {}'.format(rename)
             rename_columns[frm] = to
+            row_exclude.append(to)
+            
+            if exclude =='+':
+                exclude_columns += row_exclude
+                exclude_samples.append(rename)
+
         for level in group_levels:
             if not level in self.design.columns:
                 print('Group level {} is not defined in design {}'.format(level, design))
                 return
-
-        self.config = self.update_config(self.config, self.design)
+        
+        self.config = self.update_config(self.config, self.design, exclude_samples)
         self.rename_columns = rename_columns
         self.peptides['Identifier'] = self.peptides['Sequence']
         self.proteingroups = self.create_protein_group_identifier(pd.read_csv(self.txt_path +'/proteinGroups.txt', sep='\t'))
 
-
         self.proteingroups['Leading Protein'] = self.proteingroups['Protein IDs'].apply(parse_ids).apply(lambda x : x.split(';')[0])
         self.proteingroups['Leading Species'] = self.proteingroups['Protein IDs'].apply(parse_groups).apply(lambda x : x.split(';')[0])
-        
+        self.reference_fasta = list(SeqIO.parse(self.config['reference_fasta'], 'fasta'))
+        self.search_fasta = list(SeqIO.parse(self.config['search_fasta'],'fasta'))
+        self.proteingroups = self.leading_protein_gene(self.proteingroups.copy(), self.search_fasta, self.reference_fasta)
+        assert 'Leading.gene' in self.proteingroups.columns
+        print(self.proteingroups['Leading.gene'])
         mgfile = self.outdir +'/proteingroups.mygene.csv'
         if not os.path.exists(mgfile):
             self.proteingroups = self.leading_protein_mygene(self.proteingroups)
             self.proteingroups.to_csv(mgfile)
         else:
             self.proteingroups = pd.read_csv(mgfile)
-
         
         assert len(self.proteingroups['Identifier'].tolist()) == len(set(self.proteingroups['Identifier'].tolist()))
         
@@ -238,6 +300,7 @@ class mq_txt:
             self.proteingroups.to_csv(kofile)
         else:
             self.proteingroups = pd.read_csv(kofile)
+        
         print(list(rename_columns.keys()))
         for sample in samples:
             pepcol = 'Intensity {}'.format(sample)
@@ -254,14 +317,9 @@ class mq_txt:
                 #_ = len([i for i in r if not i == 0]) /  len(r)
                 #print(pepcol, _)
                 #assert _ * 100 > 20
-
-
-        self.peptides.rename(columns=rename_columns, inplace=True)
-            
+        
+        self.peptides.rename(columns=rename_columns, inplace=True)            
         self.proteingroups.rename(columns=rename_columns, inplace=True)
-            
-
-        self.reference_fasta = list(SeqIO.parse(self.config['reference_fasta'], 'fasta'))
         self.proteingroups = self.host_proteins(self.proteingroups, self.reference_fasta)
         assert len(self.proteingroups['Identifier'].tolist()) == len(set(self.proteingroups['Identifier'].tolist()))
         self.msms = pd.read_csv(self.txt_path +'/msms.txt', sep='\t')
@@ -279,19 +337,14 @@ class mq_txt:
         if exclude_contaminants == True:
             self.target_peptides = self.exclude_contaminants(self.target_peptides)
             self.target_proteingroups = self.exclude_contaminants(self.target_proteingroups)
-        self.peptide_txt = self.peptide_dir +'target_peptides.txt'
-        self.target_peptides.to_csv(self.peptide_txt, sep='\t')
-        self.protein_txt = self.protein_dir + 'target_proteins.txt'
-        self.target_proteingroups.to_csv(self.protein_txt, sep='\t')
         self.protein_id_lists(self.target_proteingroups, self.protein_dir +'/protein_ids.txt')
         self.target_peptides_list = self.target_peptides['Sequence'].tolist()
         self.target_msms = self.target_msms[self.target_msms['Sequence'].isin(self.target_peptides_list)]
-        self.search_fasta = list(SeqIO.parse(self.config['search_fasta'],'fasta'))
         self.get_reference_peptides()
-        self.reference_peptides = self.target_peptides[self.target_peptides['Sequence'].isin(self.reference_peptides_list)]
-        self.non_reference_peptides = self.target_peptides[self.target_peptides['Sequence'].isin(self.non_reference_peptides_list)]
-        self.reference_msms = self.target_msms[self.target_msms['Sequence'].isin(self.reference_peptides_list)]
-        self.non_reference_msms = self.target_msms[self.target_msms['Sequence'].isin(self.non_reference_peptides_list)]
+        self.reference_peptides=self.target_peptides[self.target_peptides['Sequence'].isin(self.reference_peptides_list)]
+        self.non_reference_peptides=self.target_peptides[self.target_peptides['Sequence'].isin(self.non_reference_peptides_list)]
+        self.reference_msms=self.target_msms[self.target_msms['Sequence'].isin(self.reference_peptides_list)]
+        self.non_reference_msms=self.target_msms[self.target_msms['Sequence'].isin(self.non_reference_peptides_list)]
         self.target_msms_pep = self.target_msms['PEP'].tolist()
         self.target_peptides_pep = self.target_peptides['PEP'].tolist()
         self.reverse_msms_pep = self.reverse_msms['PEP'].tolist()
@@ -302,18 +355,38 @@ class mq_txt:
         self.non_reference_peptides_pep = self.non_reference_peptides['PEP'].tolist()
         self.contaminant_msms_pep = self.contaminant_msms['PEP'].tolist()
         
+        # Get gene names from FASTA
+        
+        #~######
         # get PEP score statistics
-        self.contaminant_pep_median = np.median(self.contaminant_msms_pep)
-        self.contaminant_pep_stdev = np.std(self.contaminant_msms_pep)
-        self.reverse_pep_median = np.median(self.reverse_msms_pep)
-        self.reverse_pep_stdev = np.std(self.reverse_msms_pep)
-        self.reference_pep_median = np.median(self.reference_msms_pep)
-        self.reference_pep_stdev = np.std(self.reference_msms_pep)
+        self.contaminant_pep_median=np.median(self.contaminant_msms_pep)
+        self.contaminant_pep_stdev=np.std(self.contaminant_msms_pep)
+        self.reverse_pep_median=np.median(self.reverse_msms_pep)
+        self.reverse_pep_stdev=np.std(self.reverse_msms_pep)
+        self.reference_pep_median=np.median(self.reference_msms_pep)
+        self.reference_pep_stdev=np.std(self.reference_msms_pep)
         self.non_reference_pep_median = np.median(self.non_reference_msms_pep)
         self.non_reference_pep_stdev = np.std(self.non_reference_msms_pep)
         self.target_pep_median = np.median(self.target_msms_pep)
         self.target_pep_stdev = np.std(self.target_msms_pep)
         
+        ######
+        # QC #
+        ######
+        self.qc(self.config,self.design,self.qc_dir,self.summary,self.target_peptides,self.target_proteingroups)
+        
+        # Exclude samples according to design.csv
+        self.peptide_txt = self.peptide_dir +'target_peptides.txt'
+        print('Excluding :')
+        print(exclude_columns)
+        self.target_peptides = self.target_peptides[[i for i in self.target_peptides.columns if not  i in exclude_columns]]
+        self.target_peptides.to_csv(self.peptide_txt, sep='\t')
+        self.protein_txt = self.protein_dir + 'target_proteins.txt'
+
+        self.target_proteingroups=self.target_proteingroups[[i for i in self.target_proteingroups.columns if not  i in exclude_columns]]
+        self.target_proteingroups.to_csv(self.protein_txt, sep='\t')
+
+
         # create summary
         self.create_summary()
 
@@ -337,8 +410,7 @@ class mq_txt:
             infile = self.fasta_dir +'/leading_proteins.fasta'
             outpath  = self.fasta_dir
             self.ips_fasta(infile, outpath) 
-        
-
+    
         # gene sets
         infile = self.fasta_dir +'/leading_proteins.fasta.tsv'
         self.ips_genesets(infile, self.target_proteingroups, self.gsea_dir)
@@ -352,11 +424,13 @@ class mq_txt:
                                        group_level=level)
         
         # Normalize peptides
+        norm_method = self.config['normalize']
+        impute_method = self.config['impute']
         outdir = self.diff_dir + 'peptide_normalization'
         infile = self.peptide_txt
         norm_peps=self.diff_dir + '/peptide_normalization/msnbase/normalized.csv'
         if not os.path.exists(norm_peps):
-            self.normalize('Intensity.', infile, outdir)
+            self.normalize('Intensity.', infile, outdir, norm_method, impute_method)
         self.normalized_target_peptides = pd.read_csv(norm_peps)
 
         # Create protein paraameters
@@ -370,8 +444,10 @@ class mq_txt:
         outdir = self.diff_dir + 'protein_normalization'
         infile = self.gsea_dir +'/ipr_target_proteins.txt'
         norm_prots = self.diff_dir + '/protein_normalization/msnbase/normalized.csv'
+        
         if not os.path.exists(norm_prots):
-            self.normalize('iBAQ.', infile, outdir)
+            self.normalize('iBAQ.', infile, outdir, norm_method, impute_method)
+        
         self.normalized_target_proteins = pd.read_csv(norm_prots) 
         
         # unipept anslysis
@@ -392,19 +468,80 @@ class mq_txt:
             kocol='Leading.Protein.Kegg.Orthology.ID'
             self.ips_gsea(outpath, gsea_dir, design, table, genecol=genecol , kocol=kocol)
             self.summarize_gsea(gsea_dir, gsea_dir + '/summary.txt', self.config, level)
-    
-    def update_config(self, config, design):
+   
+    def qc(self, config, design,  outpath, summary, target_peptides, target_proteins):
+        if not os.path.exists(outpath):
+            os.mkdir(outpath )
+        # ms vs ms assigned
+        summary = summary[summary['Experiment'].notnull()]
+        columns = ['MS/MS Submitted','MS/MS Identified']
+        ax = summary.set_index('Experiment')[columns].plot.bar(rot=90)
+        fig = ax.get_figure()
+        fig.savefig( outpath + '/msms_identifications.png')
+        fig.clf()
+        plt.close()
+
+        ######### 
+        # SPLOM #
+        #########
+
+        if not os.path.exists(outpath + '/splom'):
+            os.mkdir(outpath + '/splom')
+        ibaq_cols = [i for i in target_proteins.columns if i .startswith('iBAQ ')]
+        med_ibaq = target_proteins[ibaq_cols].replace(0,np.nan) #.median(axis=1)
+        med_ibaq = med_ibaq.median(skipna=True,  axis=1)
+        for col in ibaq_cols:
+            newdf = pd.DataFrame()
+            newdf['Median'] = med_ibaq
+            newdf[col] = target_proteins[col]
+            newdf = newdf.replace(0, np.nan)
+            plt.style.use('ggplot')
+            ax = newdf.plot.scatter(x='Median', y=col)
+            fig = ax.get_figure()
+            colname = col.split('iBAQ ')[1]
+            fig.savefig( outpath + '/splom/{}.png'.format(colname))
+            fig.clf()
+            plt.close()
+
+        #############
+        # Box Plots #
+        #############
+
+        if not os.path.exists(outpath + '/bp'):
+            os.mkdir(outpath + '/bp/')
+        all_ids = summary['Peptide Sequences Identified'].tolist()
+        data = [all_ids]
+        names = ['All' ]
+        bp(data, names, outpath + '/bp/peptide_identifications_all.png', True)
+        for level in config['group_levels']:
+            data_dict = defaultdict(list)
+            data  = []
+            names = []
+            mapping=design.set_index('sample')[level].to_dict()
+            vals=summary.set_index('Experiment')['Peptide Sequences Identified'].to_dict()
+            for key in vals:
+                if key in mapping:
+                    group = mapping[key]
+                    val = vals[key]
+                    data_dict[group].append(val)
+            for key in data_dict:
+                names.append(key)
+                data.append(data_dict[key] )
+                bp(data, names, outpath + '/bp/peptide_identifications_{}.png'.format(level), True)
+        return  
+
+    def update_config(self, config, design, exclude_columns):
         config['samples'] = {}
         for row in design.iterrows():
             rename = row[1]['rename']
-            sample = row[1]['sample']
-            config['samples'][rename] = {}
-            for level in config['group_levels']:
-                assert level in row[1].index
-                config['samples'][rename][level] = row[1][level]
+            if not rename in exclude_columns:
+                print(rename)
+                sample = row[1]['sample']
+                config['samples'][rename] = {}
+                for level in config['group_levels']:
+                    assert level in row[1].index
+                    config['samples'][rename][level] = row[1][level]
         return config
-
-
 
     def create_protein_group_identifier(self, proteingroups):
         proteingroups['Identifier'] = ' (Protein group ' + proteingroups['id'].apply(str)+')'
@@ -435,6 +572,7 @@ class mq_txt:
         self.pep_dir = self.outdir + '/pep/'
         self.diff_dir = self.outdir + '/diff/'
         self.gsea_dir = self.outdir + '/gsea/'
+        self.qc_dir = self.outdir + '/qc/'
         
         if not os.path.exists(self.outdir):
             os.mkdir(self.outdir) 
@@ -444,6 +582,7 @@ class mq_txt:
             os.mkdir(self.peptide_dir)
             os.mkdir(self.protein_dir)
             os.mkdir(self.diff_dir)
+            os.mkdir(self.qc_dir)
             os.mkdir(self.gsea_dir)
    
     def get_reference_peptides(self):
@@ -1167,8 +1306,8 @@ class mq_txt:
         w.write(template)
         w.close()
 
-    def normalize(self, quant, infile, outdir):
-        cmd = 'mq_normalize_intensity.R -q {} -p {} -o {} && exit'.format(quant, infile,  outdir)
+    def normalize(self, quant, infile, outdir, normalize, impute):
+        cmd = 'mq_normalize_intensity.R -q {} -p {} -o {} -n {} -i {} && exit'.format(quant,infile, outdir,normalize, impute)
         process = subprocess.Popen(cmd, shell=True)
         process.wait()
         assert process.returncode == 0
@@ -1424,6 +1563,17 @@ class mq_txt:
                 proteingroups.loc[row[0],'Mygene.entrez'] = entrez
             except:
                 pass
+        return proteingroups
+    
+    def leading_protein_gene(self, proteingroups, search_fasta, reference_fasta):
+        genes = proteingroups['Leading Protein'].tolist()
+        gene_dict = {}
+        for p in search_fasta + reference_fasta:
+            ID = p.id.split('|')[1]
+            if 'GN=' in p.description:
+                gn = p.description.split('GN=')[1].split()[0]
+                gene_dict[ID] = gn
+        proteingroups['Leading.gene'] = proteingroups['Leading Protein'].map(gene_dict)
         return proteingroups
 
     def leading_protein_ko(self, proteingroups):
