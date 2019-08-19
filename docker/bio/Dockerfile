@@ -123,3 +123,4 @@ RUN R -e "devtools::install_version('car', dependencies=TRUE, repos='http://cran
 #RUN R -e "install.packages('tvtnorm', type='source', repos=NULL) "
 RUN R -e "install.packages('FSA') "
 
+RUN apt-get -y install libdw-dev

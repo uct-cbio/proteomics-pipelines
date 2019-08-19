@@ -15,6 +15,8 @@ ENV DOCKER_JAVA_ARGS -XX:+UseParallelGC -XX:ParallelGCThreads= -XX:+AggressiveOp
 #COPY interproscan.properties /interproscan/interproscan.properties
 
 RUN pip3 install tzlocal rpy2
+RUN apt-get -y install libdw-dev
+
 ENV PYTHONPATH $PYTHONPATH::/home/bio/proteomics-pipelines/lib
 ENV PATH $PATH::/home/bio/proteomics-pipelines/bin/R:/home/bio/proteomics-pipelines/bin/bash
 ENV python2ve /home/bio/ve27
