@@ -210,7 +210,7 @@ def bp(data, names, outfile, overlay=False):
     plt.close()
 
 class mq_txt:
-    def __init__(self, config, exclude_contaminants=False):
+    def __init__(self, config, exclude_contaminants=True):
         c = "library('FSA')"; ro.r(c)
         with open(config) as f:
             self.config = yaml.load(f.read())
@@ -373,7 +373,7 @@ class mq_txt:
         ######
         # QC #
         ######
-        self.qc(self.config,self.design,self.qc_dir,self.summary,self.target_peptides,self.target_proteingroups)
+        self.qc(self.config,self.design,self.qc_dir,self.summary,self.peptides,self.proteingroups)
         
         # Exclude samples according to design.csv
         self.peptide_txt = self.peptide_dir +'target_peptides.txt'
@@ -470,8 +470,36 @@ class mq_txt:
             self.summarize_gsea(gsea_dir, gsea_dir + '/summary.txt', self.config, level)
    
     def qc(self, config, design,  outpath, summary, target_peptides, target_proteins):
+        print("Starting QC")
         if not os.path.exists(outpath):
             os.mkdir(outpath )
+        
+        # Protein abundance analysis
+        target_proteins = target_proteins.sort_values('iBAQ', ascending=False)
+        #contaminants = target_proteins[target_proteins['Potential contaminant'] == '+'].head(5)
+        target_proteins['Source'] = target_proteins['Protein IDs']
+        target_proteins.loc[target_proteins['Potential contaminant'] != '+','Source' ] = 'Non-contaminant'
+        target_proteins['Source'] = target_proteins['Source'].apply(lambda x : x.split(';')[0])
+        agg_cols = {}
+        for col in target_proteins.columns.tolist():
+            if col.startswith('iBAQ'):
+                agg_cols[col] = sum
+        agg_cols['Potential contaminant'] = 'first'
+        conts = target_proteins.groupby('Source').agg(agg_cols)
+        conts = conts.sort_values(['iBAQ'])
+        conts = conts.tail(5)
+        ibaq_cols = [col for col in conts.columns if col.startswith('iBAQ ') ]
+        conts = conts[ibaq_cols]
+        conts = conts.transpose()
+        ax = conts.plot.bar(rot=90, stacked=False, figsize=(10,10))
+        fig = ax.get_figure()
+        fig.savefig( outpath + '/proteingroup_identifications.png')
+        fig.clf()
+        plt.close()
+        #other = other[ibaq_cols].sum(axis=0)
+        #print(other)
+
+
         # ms vs ms assigned
         summary = summary[summary['Experiment'].notnull()]
         columns = ['MS/MS Submitted','MS/MS Identified']

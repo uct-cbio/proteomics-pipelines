@@ -27,7 +27,6 @@ if not os.path.exists(outpath +'/gsea'):
 
 with open( outpath +'/fasta/id_mapping.json') as f:
     mapping = json.loads(f.read())
-print(mapping)
 mapping2pg = defaultdict(set)
 for key in mapping:
     if key in orf2pg:
@@ -41,15 +40,19 @@ for key in mapping2pg:
 
 data = pd.read_csv(outpath  + '/fasta/nr_translated_pg_orfs.fasta.tsv', sep='\t', engine='python', header=None)
 data = data.reset_index()
-data.rename(columns={0:'seqid'}, inplace=True)
+data.rename(columns={'level_0':'seqid'}, inplace=True)
 
 new_df = pd.DataFrame()
 new_df['seqid'] = pd.Series(list(newmap.keys()))
 new_df['_mapped.id'] = new_df['seqid'].apply(lambda x : newmap[x])
 merged = pd.merge(data, new_df)
-del merged['index']
+print(new_df.head())
+print(data.head())
+print(merged.head())
+#del merged['index']
 merged['seqid'] =merged['_mapped.id']
 del merged['_mapped.id']
+print(merged.head())
 ipr = outpath +'/gsea/interproscan.tsv'
 merged.to_csv(ipr, sep='\t')
 mqparse.mq_txt.ips_genesets(None, ipr, proteingroups, outpath + '/gsea', keggid=keggid, id_col="Identifier")

@@ -38,11 +38,11 @@ rownames(data) <- data$Identifier
 
 orig_data <- data
 
-data[, cols] <- lapply(data[,cols], function(x) replace(x, is.infinite(x),NA))
+#data[, cols] <- lapply(data[,cols], function(x) replace(x, is.infinite(x),NA))
 
-data[, cols] <- lapply(data[, cols], function(x){replace(x, x == 0, NA)})
+#data[, cols] <- lapply(data[, cols], function(x){replace(x, x == 0, NA)})
 
-data[, cols] <- log2(data[, cols])
+#data[, cols] <- log2(data[, cols])
 
 #exclude missing samples 
 #data <- data[rowSums(is.na(data[,cols])) < length(cols)/2, ]
@@ -51,37 +51,37 @@ data[, cols] <- log2(data[, cols])
 #######################################################
 # Create MSnBase object, normalization and imputation #
 #######################################################
-print('Creating msnbase object')
-msnbase_path=paste(outdir,'msnbase/',sep='')
-dir.create(msnbase_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
+#print('Creating msnbase object')
+#msnbase_path=paste(outdir,'msnbase/',sep='')
+#dir.create(msnbase_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 
-msnpath = paste(outdir, "msnbase/cleaned.csv",sep='')
-write.csv(data, file=msnpath)
+#msnpath = paste(outdir, "msnbase/cleaned.csv",sep='')
+#write.csv(data, file=msnpath)
 
-ecol <- cols
-fname <- "Identifier"
-eset <- readMSnSet2(msnpath, ecol, fname)
-eset@phenoData$sampleNames <- cols
-eset@phenoData$sampleGroups <- f
+#ecol <- cols
+#fname <- "Identifier"
+#eset <- readMSnSet2(msnpath, ecol, fname)
+#eset@phenoData$sampleNames <- cols
+#eset@phenoData$sampleGroups <- f
 
-png(paste(msnbase_path,'boxplots_unnormalized.png',sep=''),units="in", width=11, height=8.5, res=300)
-par(mfrow = c(2, 1))
-boxplot(exprs(eset), notch=TRUE, col=(c("gold")), main="Samples", ylab="protein log2(iBAQ intensity)", las=2) 
-dev.off()
+#png(paste(msnbase_path,'boxplots_unnormalized.png',sep=''),units="in", width=11, height=8.5, res=300)
+#par(mfrow = c(2, 1))
+#boxplot(exprs(eset), notch=TRUE, col=(c("gold")), main="Samples", ylab="protein log2(iBAQ intensity)", las=2) 
+#dev.off()
 
-x.nrm <- normalise(eset, "quantiles")
-x.imputed <- impute(x.nrm, method = "QRILC")
+#x.nrm <- normalise(eset, "quantiles")
+#x.imputed <- impute(x.nrm, method = "bpca")
 
-png(paste(msnbase_path,'boxplots_normalized.png',sep=''),units="in",width=11,height=8.5,res=300)
-par(mfrow = c(2, 1))
-boxplot(exprs(x.imputed), notch=TRUE, col=(c("gold")), main="Samples", ylab="protein log2(iBAQ intensity)", las=2) 
-dev.off()
+#png(paste(msnbase_path,'boxplots_normalized.png',sep=''),units="in",width=11,height=8.5,res=300)
+#par(mfrow = c(2, 1))
+#boxplot(exprs(x.imputed), notch=TRUE, col=(c("gold")), main="Samples", ylab="protein log2(iBAQ intensity)", las=2) 
+#dev.off()
 
-png(paste(msnbase_path,'all_data_heatmap_normalized.png',sep=''),units="in",width=11,height=8.5,res=300)
-heatmap(exprs(x.imputed), margins=c(10,17))
-dev.off()
+#png(paste(msnbase_path,'all_data_heatmap_normalized.png',sep=''),units="in",width=11,height=8.5,res=300)
+#heatmap(exprs(x.imputed), margins=c(10,17))
+#dev.off()
 
-data <- ms2df(x.imputed)
+#data <- ms2df(x.imputed)
 
 orig_data <- data[,cols]
 
@@ -111,8 +111,8 @@ orig_data <- orig_data[order(-orig_data$iBAQMean),] # Order by mean ibaq, ascend
 
 orig_data <- orig_data[!duplicated(orig_data$"ORF.ids...all.strains" ), ]
 
-imputedpath = paste(outdir, "msnbase/imputed.csv",sep='')
-write.csv(orig_data, file= imputedpath)
+#imputedpath = paste(outdir, "msnbase/imputed.csv",sep='')
+#write.csv(orig_data, file= imputedpath)
 
 
 data <- data[,cols]

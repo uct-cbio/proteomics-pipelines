@@ -6,14 +6,10 @@ config=$1
 outpath=$2
 kegg_id=$3 #'mtu'
 python2ve=$4 # $HOME/ve273   # interproscan needs python 2 (Create one with virtualenv)
+normalize='quantiles'
+impute='bpca'
 
 # The rest is generic
-
-# Create the output directory
-#rm -rf $outpath && mkdir $outpath
-
-# Check the config script for any errors
-#mq_proteogenomics_validate_config.py $config $outpath
 
 # Proteogenomics analysis
 if [ ! -d $outpath/uniprot ] ; then
@@ -23,6 +19,7 @@ fi
 if [ ! -d $outpath/strains ] ; then
     mq_genome_to_peptide.py $config $outpath || rm -rf $outpath/strains
 fi
+
 
 #mq_consensus_blast.py $config $outpath
 
@@ -104,28 +101,24 @@ fi
 ###################################
 
 if [ ! -f $outpath/experimental_design.R ] ; then
-    mq_experimental_design.py $config $outpath || rm -rf $outpath/experimental_design.R
+    mq_experimental_design.py $config $outpath || rm -rf $outpath/experimental_design.R ; exit 1
 fi
 
 if [ ! -d $outpath/msnbase ] ; then
-    mq_normalize_intensity.R -q 'iBAQ.'  -p ${outpath}/combined.csv -o ${outpath} || rm -rf ${outpath}/msnbase
+    mq_normalize_intensity.R -q 'iBAQ.'  -p ${outpath}/combined.csv -o ${outpath} -n ${normalize} -i ${impute} || rm -rf ${outpath}/msnbase
 fi
 
-
 if [ ! -d $outpath/diff ] ; then
-    mq_diff.R -d ${outpath}/experimental_design.R -f ${outpath}/msnbase/normalized.csv -o ${outpath}/diff || rm -rf ${outpath}/diff
+    mq_diff.R -d ${outpath}/experimental_design.R -f ${outpath}/msnbase/normalized.csv -o ${outpath}/diff || rm -rf ${outpath}/diff && exit 1
     #mq_differential_abundance.R -d ${outpath}/experimental_design.R -p ${outpath}/combined.csv -o ${outpath}/diff || rm -rf ${outpath}/diff
 fi
 ##################
 # IPS Enrichment #
 ##################
 if [ ! -d $outpath/gsea ] ; then
-    ips_gsea.py $outpath  $kegg_id #&& mq_annotate.py $outpath && mq_genesets.R --outdir $outpath/gsea --keggid $kegg_id #|| rm -rf $outpath/gsea ; exit 1
-    gage.R --outdir $outpath/gsea --indir $outpath/gsea --keggid $kegg_id --design ${outpath}/experimental_design.R --table ${outpath}/msnbase/normalized.csv --genecol GeneID --kocol GeneID --pval 0.05 || rm -rf ${outpath}/gsea
+    ips_gsea.py $outpath  $kegg_id && gage.R --outdir $outpath/gsea --indir $outpath/gsea --keggid $kegg_id --design ${outpath}/experimental_design.R --table ${outpath}/msnbase/normalized.csv --genecol GeneID --kocol GeneID --pval 0.05 || rm -rf ${outpath}/gsea
 fi
-
 exit
-
 ###########
 # JBROWSE #
 ###########
