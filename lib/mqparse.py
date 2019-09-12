@@ -334,9 +334,16 @@ class mq_txt:
         self.target_msms = self.exclude_reverse(self.msms)
         self.target_peptides = self.exclude_reverse(self.peptides)
         self.target_proteingroups = self.exclude_reverse(self.proteingroups)
+        
+        ######
+        # QC #
+        ######
+        self.qc(self.config,self.design,self.qc_dir,self.summary,self.target_peptides,self.target_proteingroups)
+        
         if exclude_contaminants == True:
             self.target_peptides = self.exclude_contaminants(self.target_peptides)
             self.target_proteingroups = self.exclude_contaminants(self.target_proteingroups)
+        
         self.protein_id_lists(self.target_proteingroups, self.protein_dir +'/protein_ids.txt')
         self.target_peptides_list = self.target_peptides['Sequence'].tolist()
         self.target_msms = self.target_msms[self.target_msms['Sequence'].isin(self.target_peptides_list)]
@@ -370,10 +377,6 @@ class mq_txt:
         self.target_pep_median = np.median(self.target_msms_pep)
         self.target_pep_stdev = np.std(self.target_msms_pep)
         
-        ######
-        # QC #
-        ######
-        self.qc(self.config,self.design,self.qc_dir,self.summary,self.peptides,self.proteingroups)
         
         # Exclude samples according to design.csv
         self.peptide_txt = self.peptide_dir +'target_peptides.txt'
