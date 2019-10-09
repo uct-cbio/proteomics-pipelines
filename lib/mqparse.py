@@ -163,7 +163,7 @@ def parse_groups(ids):
     new_ids = ';'.join(new_ids)
     return new_ids
 
-def bp(data, names, outfile, overlay=False):
+def bp(data, names, outfile, title, overlay=False):
     fig = plt.figure()
     ax = fig.add_subplot(111)
     # Create the boxplot
@@ -190,7 +190,7 @@ def bp(data, names, outfile, overlay=False):
     ## Custom x-axis labels
     ax.set_xticklabels(names)
     #ax.set_yticklabels('Posterior Error Probability (PEP)')
-    ax.set_title('Number of identified peptides per sample')
+    ax.set_title(title)
     ## Remove top axes and right axes ticks
     ax.get_xaxis().tick_bottom()
     ax.get_yaxis().tick_left()
@@ -214,11 +214,13 @@ class mq_txt:
         c = "library('FSA')"; ro.r(c)
         with open(config) as f:
             self.config = yaml.load(f.read())
-        #assert 4==5 
         print(self.config)
         self.txt_path = self.config['mq_txt']
         self.outdir = self.config['outdir']
         design = self.config['design']
+        exclude_contaminants = self.config['exclude_contaminants']
+        if not exclude_contaminants == True:
+            assert exclude_contaminants == False
 
         self.summary = pd.read_csv(self.txt_path +'/summary.txt', sep='\t')
         print(self.summary)
@@ -537,13 +539,13 @@ class mq_txt:
         #############
         # Box Plots #
         #############
-
+        title='Number of identified peptides per sample'
         if not os.path.exists(outpath + '/bp'):
             os.mkdir(outpath + '/bp/')
         all_ids = summary['Peptide Sequences Identified'].tolist()
         data = [all_ids]
         names = ['All' ]
-        bp(data, names, outpath + '/bp/peptide_identifications_all.png', True)
+        bp(data, names, outpath + '/bp/peptide_identifications_all.png', title,  True)
         for level in config['group_levels']:
             data_dict = defaultdict(list)
             data  = []
@@ -553,12 +555,38 @@ class mq_txt:
             for key in vals:
                 if key in mapping:
                     group = mapping[key]
-                    val = vals[key]
-                    data_dict[group].append(val)
+                    if not str(group) == 'nan':
+                        val = vals[key]
+                        data_dict[group].append(val)
             for key in data_dict:
                 names.append(key)
                 data.append(data_dict[key] )
-                bp(data, names, outpath + '/bp/peptide_identifications_{}.png'.format(level), True)
+                bp(data, names, outpath + '/bp/peptide_identifications_{}.png'.format(level), title, True)
+        
+        ##################################
+        # % Identified spectra by groups #
+        ##################################
+        all_ids = summary['MS/MS Identified [%]'].tolist()
+        title='Percentage of identified MS/MS per sample'
+        data = [all_ids]
+        names = ['All' ]
+        bp(data, names, outpath + '/bp/msms_percent_identifications_all.png', title, True)
+        for level in config['group_levels']:
+            data_dict = defaultdict(list)
+            data  = []
+            names = []
+            mapping=design.set_index('sample')[level].to_dict()
+            vals=summary.set_index('Experiment')['MS/MS Identified [%]'].to_dict()
+            for key in vals:
+                if key in mapping:
+                    group = mapping[key]
+                    if not str(group) == 'nan':
+                        val = vals[key]
+                        data_dict[group].append(val)
+            for key in data_dict:
+                names.append(key)
+                data.append(data_dict[key] )
+                bp(data, names, outpath + '/bp/msms_percent_identifications_{}.png'.format(level), title, True)
         return  
 
     def update_config(self, config, design, exclude_columns):

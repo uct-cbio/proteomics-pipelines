@@ -108,10 +108,16 @@ dev.off()
 print(paste("Normalizing data using: ", norm_method,sep=''))
 
 checkData(as.matrix(exprs(eset)), verbose=TRUE)
-x.nrm <- normalise(eset, norm_method)
+
+if (norm_method != 'none') {
+    x.nrm <- normalise(eset, norm_method) 
+} else{
+    x.nrm <- eset
+}
 
 # https://pubs.acs.org/doi/pdf/10.1021/acs.jproteome.5b00981
 checkData(as.matrix(exprs(x.nrm)), verbose=TRUE)
+
 x.imputed <- impute(x.nrm, method = impute_method, colmax=90)
 
 minval = min(exprs(x.imputed), na.rm=TRUE)
@@ -152,7 +158,7 @@ print(data[is.na(data)] )
 imputedpath = paste(outdir, "msnbase/normalized.csv",sep='')
 write.csv(data, file= imputedpath)
 
-
-
-
-
+# shuffle it for permutation testing
+data <- data[sample(nrow(data)),]
+imputedpath = paste(outdir, "msnbase/normalized.csv.shuffled.csv",sep='')
+write.csv(data, file= imputedpath)
