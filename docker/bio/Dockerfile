@@ -1,48 +1,26 @@
-FROM ubuntu:xenial
+FROM amd64/r-base:latest
 
 ENV http_proxy ${http_proxy}
 ENV https_proxy ${https_proxy}
 ENV ftp_proxy ${ftp_proxy}
 
-RUN apt-get update && apt install -y apt-transport-https software-properties-common wget debconf multiarch-support
-
-RUN wget http://launchpadlibrarian.net/222159415/openjdk-8-jre-headless_8u66-b17-1build1_amd64.deb
-RUN dpkg -i openjdk-8-jre-headless_8u66-b17-1build1_amd64.deb || apt-get -y install -f && dpkg -i openjdk-8-jre-headless_8u66-b17-1build1_amd64.deb
+RUN apt-get update && apt install -y default-jdk
 
 #RUN wget https://launchpad.net/~openjdk-r/+archive/ubuntu/ppa/+build/8156693/+files/openjdk-8-jdk_8u66-b17-1_amd64.deb
 #RUN dpkg -i openjdk-8-jre_8u66-b17-1_amd64.deb || apt-get -y install -f && dpkg -i openjdk-8-jdk_8u66-b17-1_amd64.deb
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install software-properties-common
 
 RUN java -version
+RUN apt-get update && apt-get -y  install dirmngr
 
 # PYTHON 3
 RUN apt-get install -y python3-dev python3-pip
 RUN pip3 install --upgrade pip
 RUN pip3 install pandas scipy numpy virtualenv
-RUN pip3 install BioPython
-
-# PYTHON 2.7
-RUN apt-get install -y python-dev python-pip
-RUN virtualenv -p python2.7 /root/ve27
-
-
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
-RUN add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu xenial-cran35/'
+RUN pip3 install BioPython rpy2
 
 ENV DEBIAN_FRONTEND noninteractive
-RUN apt update && apt -y install r-base r-base-dev
-# R
-#RUN apt-get install -y sudo dirmngr
-#RUN sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
 
-
-#RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
-#RUN add-apt-repository 'deb [arch=amd64,i386] http://cran.rstudio.com/bin/linux/ubuntu xenial/'
-
-#RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv E084DAB9
-
-#RUN add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/'
-
-#RUN apt-get update && apt-get install -y r-base r-base-dev
 RUN apt-get install -y curl libssl-dev libxml2-dev libcurl4-openssl-dev libssh2-1-dev openssl curl openssl
 RUN R -e "install.packages('BiocManager')"
 RUN R -e "install.packages('Rcpp', dependencies=TRUE, repos='http://cran.us.r-project.org')"
@@ -112,6 +90,9 @@ RUN pip3 install matplotlib_venn
 RUN apt-get update
 RUN apt-get -y install python3-tk python3-cffi
 
+RUN apt-get -y install libffi-dev
+RUN pip3 install --upgrade cffi
+RUN pip3 install --upgrade pip
 RUN pip3 install rpy2
 RUN pip3 install datrie
 
