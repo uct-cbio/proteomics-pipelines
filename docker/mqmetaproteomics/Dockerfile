@@ -1,4 +1,6 @@
-FROM cbio/iprscan:latest
+#FROM cbio/iprscan:latest
+
+FROM thyscbio/bio:v1.0
 
 ENV http_proxy ${http_proxy}
 ENV https_proxy ${https_proxy}
