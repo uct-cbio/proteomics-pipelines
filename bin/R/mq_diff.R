@@ -54,6 +54,7 @@ orig_data <- data
 data <- data[,cols]
 
 
+
 fpie <- function( df , names, valcols, outfile) {
     print(head(df))
     df$slices <- rowSums(df[,valcols, drop=FALSE] )
@@ -94,6 +95,10 @@ for (group in groups){
     fpie(intensities, Identifier, groupcols, out) 
     variances <- cbind(variances, var = apply(vardata[,groupcols, drop=FALSE], 1, function(x) var(na.omit(x))))
     names(variances)[names(variances) == 'var'] <- group 
+    
+    # Lets annotated the data with group means
+    print(group)
+    other[,group ] <- rowMeans(data[,groupcols, drop=FALSE])
 }
 
 write.table(variances, paste(outdir,'/group_variance/group_variance.txt',sep=''), sep='\t', row.names=TRUE)
@@ -143,6 +148,9 @@ for ( i in seq_along(colnames(contrast.matrix))) {
     Control <- cntrst_[[1]][2]
     table <- topTable(fit2,adjust="BH", coef=i, n=Inf)
     table <- merge(other, table, by=0)
+    table$Exposed.Mean <- table[,Exposed]
+    table$Control.Mean <- table[,Control]
+
     rownames(table) <- table$Identifier
     table$Exposed <- Exposed
     table$Control <- Control
@@ -241,8 +249,8 @@ hm <- function( df, heatmap_path, file,  main, xlab , factors) {
     legend("topright",      # location of the legend on the heatmap plot
                legend = unique(factors), # category labels
                col =unique(col_colors),  # color key
-                  lty= 1,             # line style
-                       lwd = 10            # line width
+               lty= 1,             # line style
+               lwd = 10            # line width
                    )
     dev.off() }
 
