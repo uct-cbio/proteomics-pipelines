@@ -7,7 +7,7 @@ outpath=$2
 kegg_id=$3 #'mtu'
 python2ve=$4 # $HOME/ve273   # interproscan needs python 2 (Create one with virtualenv)
 normalize='quantiles'
-impute='bpca'
+impute='knn'
 
 # The rest is generic
 

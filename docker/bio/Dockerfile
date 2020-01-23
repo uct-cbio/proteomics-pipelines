@@ -105,3 +105,20 @@ RUN R -e "devtools::install_version('car', dependencies=TRUE, repos='http://cran
 RUN R -e "install.packages('FSA') "
 
 RUN apt-get -y install libdw-dev
+
+RUN pip3 install mygene
+
+# Issue with openblas
+RUN apt-get -y install git
+RUN git clone https://github.com/bmbolstad/preprocessCore.git && cd preprocessCore/ && R CMD INSTALL --configure-args="--disable-threading"  .
+
+RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+
+# Leave to end
+ENV PATH $PATH::/home/bio/bin/python:/home/bio/bin/R:/home/bio/bin/bash:/home/bio/bin/python
+ENV PYTHONPATH $PYTHONPATH::/home/bio/lib
+
+COPY lib /home/bio/lib
+COPY bin /home/bio/bin
+
+
