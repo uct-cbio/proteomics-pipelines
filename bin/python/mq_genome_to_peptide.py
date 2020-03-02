@@ -17,6 +17,8 @@ config = yaml.load(open(sys.argv[1]))
 
 output = sys.argv[2]
 
+output = os.path.abspath(output)
+
 os.mkdir(output +'/strains')
 
 peptides = pd.read_csv(config['mq_txt'] + '/peptides.txt', sep='\t',engine='python')

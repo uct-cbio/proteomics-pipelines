@@ -19,7 +19,7 @@ import subprocess
 
 config = yaml.load(open(sys.argv[1]))
 
-output = sys.argv[2]
+output = os.path.abspath( sys.argv[2])
 
 ref = output + '/uniprot/{}/{}_{}.fasta'.format(config['reference_proteome_id'], config['reference_proteome_id'], config['reference_taxid'])
 new=output+'/blast/orfs2proteins/{}/{}_{}.fasta'.format(config['reference_proteome_id'], config['reference_proteome_id'],config['reference_taxid'])

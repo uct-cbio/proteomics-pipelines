@@ -26,7 +26,7 @@ bp_blast_word_size=2
 bp_blast_gapextend=1
 bp_blast_num_threads=1
 bp_blast_outfmt=5
-bp_blast_max_target_seqs=10
+bp_blast_max_target_seqs=10 # ignored during BLAST, applied during export
 bp_blast_max_hsps=1
 bp_blast_fasta='/home/mpotgieter1/lustre/uniprot/uniprot_sept/uniprot_sept.fasta'
 bp_blast_comp_based_stats=0
@@ -90,7 +90,7 @@ wait  # wait for parallel copies to finish
   
 fasta_count=$( find "${output_folder}/blast/fasta" -name "*.fasta" | wc -l  ) 
 
-cmd="blastp -query {} -outfmt '$bp_blast_outfmt' -seg $bp_blast_seg -word_size '$bp_blast_word_size' -out {}.xml -comp_based_stats '$bp_blast_comp_based_stats' -window_size '$bp_blast_window_size' -threshold '$bp_blast_threshold' -db ${output_folder}/db/${BLASTDB} -max_target_seqs $bp_blast_max_target_seqs -max_hsps $bp_blast_max_hsps -num_threads '$bp_blast_num_threads' -evalue '$bp_blast_evalue' -matrix '$bp_blast_matrix' -gapopen '$bp_blast_gapopen' -gapextend '$bp_blast_gapextend' && blast_XML_to_csv.py {}.xml ${input_fasta} {}.csv $bp_blast_max_target_seqs  &> {}.log && gzip --best {}"
+cmd="blastp -query {} -outfmt '$bp_blast_outfmt' -seg $bp_blast_seg -word_size '$bp_blast_word_size' -out {}.xml -comp_based_stats '$bp_blast_comp_based_stats' -window_size '$bp_blast_window_size' -threshold '$bp_blast_threshold' -db ${output_folder}/db/${BLASTDB} -max_hsps $bp_blast_max_hsps -num_threads '$bp_blast_num_threads' -evalue '$bp_blast_evalue' -matrix '$bp_blast_matrix' -gapopen '$bp_blast_gapopen' -gapextend '$bp_blast_gapextend' && blast_XML_to_csv.py {}.xml ${input_fasta} {}.csv $bp_blast_max_target_seqs  &> {}.log && gzip --best {}"
 
 if [ "${fasta_count}" -ne "0" ]; then
     ls ${output_folder}/blast/fasta/*.fasta | parallel -j $bp_gnu_parallel_j -u --sshloginfile ${PBS_NODEFILE} "cd ${PBS_O_WORKDIR}; ${cmd}"

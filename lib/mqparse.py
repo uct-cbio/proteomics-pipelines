@@ -143,6 +143,7 @@ def parse_ids(ids):
     ids = ids.split(';')
     new_ids = []
     for i in ids:
+        print(i)
         if '|' in i:
             new = i.split('|')[1]
         else:
@@ -635,13 +636,22 @@ class mq_txt:
         
         if not os.path.exists(self.outdir):
             os.mkdir(self.outdir) 
+            
+        if not os.path.exists(self.pep_dir):
             os.mkdir(self.pep_dir)
+        if not os.path.exists(self.fasta_dir):
             os.mkdir(self.fasta_dir)
+        if not os.path.exists(self.unipept_dir):
             os.mkdir(self.unipept_dir)
+        if not os.path.exists(self.peptide_dir):
             os.mkdir(self.peptide_dir)
+        if not os.path.exists(self.protein_dir):
             os.mkdir(self.protein_dir)
+        if not os.path.exists(self.diff_dir):
             os.mkdir(self.diff_dir)
+        if not os.path.exists(self.qc_dir):
             os.mkdir(self.qc_dir)
+        if not os.path.exists(self.gsea_dir):
             os.mkdir(self.gsea_dir)
    
     def get_reference_peptides(self):

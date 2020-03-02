@@ -20,7 +20,7 @@ import sequtils
 
 config = yaml.load(open(sys.argv[1]))
 
-output = sys.argv[2]
+output =os.path.abspath( sys.argv[2])
 
 peptides = pd.read_csv(config['mq_txt'] + '/peptides.txt', sep='\t',engine='python')
 peptides = peptides[(peptides['Potential contaminant'].isnull()) & (peptides['Reverse'].isnull())]

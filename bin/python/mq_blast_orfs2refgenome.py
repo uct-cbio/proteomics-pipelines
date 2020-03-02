@@ -19,7 +19,7 @@ import subprocess
 
 config = yaml.load(open(sys.argv[1]))
 
-output = sys.argv[2]
+output =  os.path.abspath(sys.argv[2])
 
 blastfile = config['reference_genome']
 blastname = blastfile.split('/')[-1].split('.')[0]
