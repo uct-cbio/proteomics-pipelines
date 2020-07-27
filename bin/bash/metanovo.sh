@@ -10,6 +10,8 @@ fasta_file=$2
 output_folder=$3/metanovo
 config_file=$4
 
+# set the TMPDIR to outputfolder...SQLITE crashes on ilifu..TO DO
+
 source ${config_file}
 
 source compomics.sh
