@@ -10,14 +10,21 @@ import tempfile
 import subprocess
 import shutil
 import pandas as pd
+import io
 
 limit = 30
 threads = []
 
 jobq=mp.Queue(limit)
+assert jobq.empty()
 results = []
 
 t1 = time.time()
+
+#names = []
+#for i in range(15):
+#    names.append(i)
+#print(names)
 
 def request(jobq):
     while True:
@@ -37,15 +44,18 @@ def request(jobq):
                 try: 
                     p = subprocess.Popen(cmd, shell=True)
                     p.wait()
+                    print(p.communicate())
+                    assert p.returncode == 0
                     with open(tempfasta+'.tsv.txt') as f:
                         res = f.read()
-                        print(res)
-                        results.append(res)
+                        if res != '':
+                            print(res)
+                            results.append(res)
                         done = True
+                    print('Job took {} seconds'.format(str(time.time()-t1)))
                 except:
                     time.sleep(60)
-                    print('Failed, retry')
-                print('Job took {} seconds'.format(str(time.time()-t1)))
+                    print('Failed, retrying {}'.format(tempfasta))
             shutil.rmtree(tempdir)
 
 workers = []
@@ -60,20 +70,26 @@ for i in range(limit):
 recs = SeqIO.parse(sys.argv[1],'fasta')
 for i in recs:
     jobq.put(i)
-    
+
+
 for i in range(limit):
     jobq.put(None)
 
 for w in workers:
     w.join()
 
+assert jobq.empty() # All workers took their None from the queue, ie none were dead
 
-print('results: ', len(results))
+if len(results) > 0:
+    results = '\n'.join(results)
+    data = io.StringIO(results)
+    results = pd.read_csv(data, sep='\t', header=None)
+else:
+    results = pd.DataFrame()
 
-results = '\n'.join(results)
+print(results.head())
+results.to_csv(sys.argv[1] + '.tsv', header=False)
 
-with open(sys.argv[1] + '.tsv','w') as w:
-    w.write(results)
-
+print('Results: ', len(results))
 print('Time elapsed: ', time.time()-t1)
 
