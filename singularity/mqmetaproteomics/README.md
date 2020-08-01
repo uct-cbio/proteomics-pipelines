@@ -37,5 +37,5 @@ nano singularity_config.yaml
 mqmetaproteomics.sh singularity_config.yaml
 ~~~
 
-The output will appear in the outdir parameter specified in the config file.
+The output will appear as per the outdir parameter specified in the config file.
 
