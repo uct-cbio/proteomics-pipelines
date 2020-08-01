@@ -1297,7 +1297,7 @@ class mq_txt:
 
 
     def ips_fasta(self, infile, outpath):
-        cmd = 'ips.sh {} {} $python2ve'.format(infile, outpath)
+        cmd = 'ipr.py {}'.format(infile)
         process = subprocess.Popen(cmd, shell=True)
         process.wait()
         assert process.returncode == 0
