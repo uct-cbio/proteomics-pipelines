@@ -39,3 +39,19 @@ mqmetaproteomics.sh singularity_config.yaml
 
 The output will appear as per the 'outdir' parameter specified in the config file.
 
+7. Contribute!
+7.1 Download both repos eg:
+${HOME}/repos/proteomics-pipelines
+${HOME}/repose/cbio-proteogenomics-tests
+7.2 Load the singularity environment
+7.3 To adjust the paths to the git repo, and overwrite the existing binaries in the singularity image, run:
+source ${HOME}/repos/proteomics-pipelines/bin/bash/dev.sh
+7.4 RUN:
+cd ${HOME}/repose/cbio-proteogenomics-tests/lib/ 
+python3 test_mqparse.py # verify that all tests pass
+7.5 Add more unit-tests to test_mqparse.py and modify the source code in proteomics-pipelines. 
+7.6 Submit a pull request
+
+
+
+
