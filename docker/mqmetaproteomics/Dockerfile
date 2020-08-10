@@ -2,6 +2,8 @@
 
 FROM thyscbio/bio:v1.2
 
+RUN pip3 install xmltramp2
+
 ENV http_proxy ${http_proxy}
 ENV https_proxy ${https_proxy}
 ENV ftp_proxy ${ftp_proxy}

@@ -28,7 +28,7 @@ RUN R -e "install.packages('mime', dependencies=TRUE, repos='http://cran.us.r-pr
 RUN R -e "install.packages('optparse', dependencies=TRUE, repos='http://cran.us.r-project.org')"
 RUN R -e "install.packages('devtools', dependencies=TRUE, repos='http://cran.us.r-project.org')"
 RUN R -e "BiocManager::install('cluster',dependencies=TRUE)"
-RUN apt-get install -y octave liboctave-dev
+RUN apt-get update && apt-get install -f -y libglvnd-dev libglx-dev  libgl-dev  libgl1-mesa-dev octave liboctave-dev
 RUN apt-get install -y openmpi-bin openmpi-doc libopenmpi-dev
 RUN R -e "install.packages('Rmpi', dependencies=TRUE, repos='http://cran.us.r-project.org')"
 RUN R -e "BiocManager::install( c('NMF', 'Matrix', 'irlba'), dependencies=TRUE)"
@@ -68,7 +68,7 @@ WORKDIR /home/bio/
 
 # Install BLAST
 RUN apt-get -y install wget
-ENV blast_ftp ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.9.0+-x64-linux.tar.gz
+ENV blast_ftp ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.10.0+-x64-linux.tar.gz
 RUN mkdir /home/bio/blast && cd /home/bio/blast && wget ${blast_ftp} && tar -zxvf * && rm -rf *.tar.gz 
 RUN cd /home/bio/blast/ncbi*/bin && cp * /usr/local/bin
 
@@ -106,10 +106,10 @@ RUN R -e "install.packages('FSA') "
 
 RUN apt-get -y install libdw-dev
 
-RUN pip3 install mygene
-
+RUN pip3 install mygene xmltramp2
 # Issue with openblas
-RUN apt-get -y install git
+RUN apt-get -y install git parallel
+
 RUN git clone https://github.com/bmbolstad/preprocessCore.git && cd preprocessCore/ && R CMD INSTALL --configure-args="--disable-threading"  .
 
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
