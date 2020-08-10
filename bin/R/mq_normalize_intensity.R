@@ -66,7 +66,7 @@ max_med = max(meds, na.rm=TRUE)
 print(meds)
 print(max_med)
 #un.nrm[, cols] <- lapply(un.nrm[, cols], function(x){ log2(x)})
-data <- data[rowSums(is.na(data[,cols])) < length(cols), ]
+data <- data[rowSums(is.na(data[,cols])) < length(cols), ] # exclude rows where all are NA
 #identifier <- data$Identifier
 #data <- data[,cols]
 #data$Identifier <- identifier
@@ -120,12 +120,11 @@ checkData(as.matrix(exprs(x.nrm)), verbose=TRUE)
 
 x.imputed <- impute(x.nrm, method = impute_method, colmax=90)
 
+baseline = min(exprs(x.nrm), na.rm=TRUE)
 minval = min(exprs(x.imputed), na.rm=TRUE)
-
-delta <- 1 - minval
-exprs(x.imputed) <- exprs(x.imputed) + delta
-exprs(x.nrm) <- exprs(x.nrm) + delta
-
+delta <- baseline - minval
+exprs(x.imputed) <- exprs(x.imputed) + delta # ensures the minimum value is the same after imputation - BPCA can yield negative values 
+#exprs(x.nrm) <- exprs(x.nrm) 
 #x.imputed <- impute(x.nrm, method = impute_method)
 
 #x.imputed <- x.nrm

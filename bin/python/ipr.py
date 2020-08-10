@@ -21,10 +21,9 @@ results = []
 
 t1 = time.time()
 
-#names = []
-#for i in range(15):
-#    names.append(i)
-#print(names)
+names = []
+for i in range(15):
+    names.append(i)
 
 def request(jobq):
     while True:
@@ -49,8 +48,11 @@ def request(jobq):
                     with open(tempfasta+'.tsv.txt') as f:
                         res = f.read()
                         if res != '':
-                            print(res)
-                            results.append(res)
+                            data = io.StringIO(res)
+                            df = pd.read_csv(data, names=names, sep='\t', header=None)
+                            print(df)
+                            results.append(df)
+                        
                         done = True
                     print('Job took {} seconds'.format(str(time.time()-t1)))
                 except:
@@ -67,8 +69,12 @@ for i in range(limit):
     workers.append(p)
 
 # Load the recs
+count = 0
 recs = SeqIO.parse(sys.argv[1],'fasta')
 for i in recs:
+    #count += 1
+    #if count > 10:
+    #    continue
     jobq.put(i)
 
 
@@ -80,16 +86,13 @@ for w in workers:
 
 assert jobq.empty() # All workers took their None from the queue, ie none were dead
 
-if len(results) > 0:
-    results = '\n'.join(results)
-    data = io.StringIO(results)
-    results = pd.read_csv(data, sep='\t', header=None)
+if len(results) == 0:
+    res = pd.DataFrame()
 else:
-    results = pd.DataFrame()
+    res = pd.concat(results)
 
-print(results.head())
-results.to_csv(sys.argv[1] + '.tsv', header=False)
-
+print(res.head())
+res.to_csv(sys.argv[1] + '.tsv', sep='\t', index=False, header=False)
 print('Results: ', len(results))
 print('Time elapsed: ', time.time()-t1)
 

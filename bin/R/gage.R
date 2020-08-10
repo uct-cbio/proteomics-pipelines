@@ -133,7 +133,8 @@ if(file.exists(reactome_path)){
 infile <- basename(table_path)
 
 table <- read.csv(table_path)
-#print(head(table))
+print(head(table))
+print(cols)
 #print(table$Row.names)
 #row.names(table) <- table$Row.names
 #quit()
@@ -159,6 +160,7 @@ newtable <- data.frame( Identifier = rep(gi_table$Identifier, sapply(s, length))
 refdata <- merge( table, newtable, by="Identifier", all.y = TRUE)
 refdata <- refdata[!duplicated(refdata$gi), ]
 ref <- refdata$gi
+print(head(refdata))
 refdata <- refdata[,cols]
 print('refcols')
 #row.names(refdata) <-ref

@@ -12,6 +12,7 @@ library("optparse")
 library('MSnbase')
 library("dplyr")
 
+
 option_list = list(
 make_option(c("-d", "--design"), type="character", default=NULL,
         help="Experimental design template", metavar="character"),
@@ -130,7 +131,7 @@ splom(splomdata, cols, splomdata$Identifier, splom_path, 'splom.pdf')
 #############################################
 # Diferential abundance analysis with LIMMA #
 #############################################
-
+print("LIMMA")
 fit2 <- lmFit(data,design)
 fit2 <- contrasts.fit(fit2, contrast.matrix)
 fit2 <- eBayes(fit2)
@@ -211,7 +212,7 @@ corrplot::corrplot(cophenetic_cors, "pie", "lower")
 dev.off()
 
 
-
+print("Generating heatmaps")
 ############
 # Heatmaps #
 ############
@@ -289,6 +290,7 @@ for ( i in seq_along(colnames(contrast.matrix))) {
 #######
 # PCA #
 #######
+print(head(data))
 pca_path=paste(outdir,'PCA/',sep='')
 dir.create(pca_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 pc <- function( df, path, file, var.axes ) {

@@ -222,6 +222,20 @@ class mq_txt:
         exclude_contaminants = self.config['exclude_contaminants']
         if not exclude_contaminants == True:
             assert exclude_contaminants == False
+        
+        
+        self.protein_quantification = self.config['protein_quantification']
+        assert self.protein_quantification in ['LFQ', 'iBAQ']
+        if self.protein_quantification =='LFQ':
+            self.protein_quantification ='LFQ intensity'
+        self.protein_normalisation = self.config['protein_normalisation']
+        self.protein_imputation = self.config['protein_imputation']
+        
+        self.peptide_quantification = self.config['peptide_quantification']
+        assert self.peptide_quantification in ['Intensity']
+        self.peptide_normalisation = self.config['peptide_normalisation']
+        self.peptide_imputation = self.config['peptide_imputation']
+
 
         self.summary = pd.read_csv(self.txt_path +'/summary.txt', sep='\t')
         print(self.summary)
@@ -262,8 +276,8 @@ class mq_txt:
             rename_columns[frm] = to
             row_exclude.append(to)
             
-            frm = 'iBAQ {}'.format(sample)
-            to = 'iBAQ {}'.format(rename)
+            frm = '{} {}'.format(self.protein_quantification, sample)
+            to = '{} {}'.format(self.protein_quantification, rename)
             rename_columns[frm] = to
             row_exclude.append(to)
             
@@ -307,7 +321,7 @@ class mq_txt:
         print(list(rename_columns.keys()))
         for sample in samples:
             pepcol = 'Intensity {}'.format(sample)
-            protcol = 'iBAQ {}'.format(sample)
+            protcol = '{} {}'.format(self.protein_quantification, sample)
             if not pepcol in rename_columns:
                 del self.proteingroups[protcol]
                 del self.peptides[pepcol]
@@ -315,7 +329,7 @@ class mq_txt:
                 r = self.proteingroups[protcol]
                 _ = len([i for i in r if not i == 0]) /  len(r)
                 print(protcol, _)
-                assert _ * 100 > 20
+                #assert _ * 100 > 20
                 #r = self.peptides[pepcol]
                 #_ = len([i for i in r if not i == 0]) /  len(r)
                 #print(pepcol, _)
@@ -430,21 +444,21 @@ class mq_txt:
                                        group_level=level)
         
         # Normalize peptides
-        norm_method = self.config['normalize']
-        impute_method = self.config['impute']
+        #norm_method = self.config['normalize']
+        #impute_method = self.config['impute']
         outdir = self.diff_dir + 'peptide_normalization'
         infile = self.peptide_txt
         norm_peps=self.diff_dir + '/peptide_normalization/msnbase/normalized.csv'
         if not os.path.exists(norm_peps):
-            self.normalize('Intensity.', infile, outdir, norm_method, impute_method)
+            self.normalize('Intensity.', infile, outdir, self.peptide_normalisation, self.peptide_imputation)
         self.normalized_target_peptides = pd.read_csv(norm_peps)
-
+        self.protein_quant_parameter = '.'.join(self.protein_quantification.split())
         # Create protein paraameters
         for level in self.config['group_levels']:
             outfile=self.diff_dir + '/protein_experimental_design_{}.R'.format(level)
             self.create_R_parameters(  config = self.config, 
                                        outfile=outfile, 
-                                       quant='iBAQ',
+                                       quant=self.protein_quant_parameter,
                                        group_level=level)
         # Normalize proteins
         outdir = self.diff_dir + 'protein_normalization'
@@ -452,7 +466,7 @@ class mq_txt:
         norm_prots = self.diff_dir + '/protein_normalization/msnbase/normalized.csv'
         
         if not os.path.exists(norm_prots):
-            self.normalize('iBAQ.', infile, outdir, norm_method, impute_method)
+            self.normalize('{}.'.format(self.protein_quant_parameter), infile, outdir, self.protein_normalisation, self.protein_imputation)
         
         self.normalized_target_proteins = pd.read_csv(norm_prots) 
         
@@ -481,23 +495,26 @@ class mq_txt:
             os.mkdir(outpath )
         
         # Protein abundance analysis
-        target_proteins = target_proteins.sort_values('iBAQ', ascending=False)
+        target_proteins = target_proteins.sort_values('Intensity', ascending=False)
+        #print(target_proteins.columns.tolist())
         #contaminants = target_proteins[target_proteins['Potential contaminant'] == '+'].head(5)
         target_proteins['Source'] = target_proteins['Protein IDs']
         target_proteins.loc[target_proteins['Potential contaminant'] != '+','Source' ] = 'Non-contaminant'
         target_proteins['Source'] = target_proteins['Source'].apply(lambda x : x.split(';')[0])
         agg_cols = {}
         for col in target_proteins.columns.tolist():
-            if col.startswith('iBAQ'):
+            if col.startswith('Intensity'):
                 agg_cols[col] = sum
         agg_cols['Potential contaminant'] = 'first'
         conts = target_proteins.groupby('Source').agg(agg_cols)
-        conts = conts.sort_values(['iBAQ'])
-        conts = conts.tail(5)
-        ibaq_cols = [col for col in conts.columns if col.startswith('iBAQ ') ]
-        conts = conts[ibaq_cols]
+        conts = conts.sort_values(['Intensity'], ascending=False)
+        print(conts)
+        conts = conts.head(5)
+        intensity_cols = [col for col in conts.columns if col.startswith('Intensity ') ]
+        conts = conts[intensity_cols]
         conts = conts.transpose()
         ax = conts.plot.bar(rot=90, stacked=False, figsize=(10,10))
+        ax.set_title('Summed Intensity of all non-contaminant proteins\n compared to top contaminants')
         fig = ax.get_figure()
         fig.savefig( outpath + '/proteingroup_identifications.png')
         fig.clf()
@@ -521,18 +538,18 @@ class mq_txt:
 
         if not os.path.exists(outpath + '/splom'):
             os.mkdir(outpath + '/splom')
-        ibaq_cols = [i for i in target_proteins.columns if i .startswith('iBAQ ')]
-        med_ibaq = target_proteins[ibaq_cols].replace(0,np.nan) #.median(axis=1)
-        med_ibaq = med_ibaq.median(skipna=True,  axis=1)
-        for col in ibaq_cols:
+        med_intensity = target_proteins[intensity_cols].replace(0,np.nan) #.median(axis=1)
+        med_intensity = med_intensity.median(skipna=True,  axis=1)
+        for col in intensity_cols:
             newdf = pd.DataFrame()
-            newdf['Median'] = med_ibaq
+            newdf['Median'] = med_intensity
             newdf[col] = target_proteins[col]
             newdf = newdf.replace(0, np.nan)
             plt.style.use('ggplot')
             ax = newdf.plot.scatter(x='Median', y=col)
+            ax.set_title('Intensity of {}\n compared to median across all samples'.format(col.split()[1]))
             fig = ax.get_figure()
-            colname = col.split('iBAQ ')[1]
+            colname = col.split('Intensity ')[1]
             fig.savefig( outpath + '/splom/{}.png'.format(colname))
             fig.clf()
             plt.close()
@@ -1301,7 +1318,7 @@ class mq_txt:
         process = subprocess.Popen(cmd, shell=True)
         process.wait()
         assert process.returncode == 0
-
+    
     def protein_id_lists(self, proteingroups, outfile):
         lst = proteingroups['Majority protein IDs'].apply(parse_ids).tolist()
         newlst = []
@@ -1399,7 +1416,7 @@ class mq_txt:
         for group in experiment:
             groups.append(group)
             for sample in experiment[group]:
-                rep = "'iBAQ.{}'".format(sample)
+                rep = "'{}.{}'".format(self.protein_quant_parameter, sample)
                 reps.append(rep)
         reps = ','.join(reps)
         d = reps
@@ -1585,7 +1602,7 @@ class mq_txt:
             for col in self.normalized_target_proteins.columns.tolist():
                 if col.endswith('.term.union'):
                     diff_dir = self.diff_dir + '/' + level + '/' + col
-                    self.aggregate_quant(self.normalized_target_proteins, col, 'iBAQ.', diff_dir) 
+                    self.aggregate_quant(self.normalized_target_proteins, col, '{}.'.format(self.protein_quant_parameter), diff_dir) 
                     table = diff_dir  + '/' + col + '.csv'
                     self.diff(protein_exp, table,  diff_dir )
                     self.summarize_diff(diff_dir , diff_dir + '/summary.txt')
@@ -1593,7 +1610,7 @@ class mq_txt:
             # KEGGG ORTHOLOGY
             col = 'Leading.Protein.Kegg.Orthology'
             diff_dir = self.diff_dir + '/' + level + '/' + col
-            self.aggregate_quant(self.normalized_target_proteins, col, 'iBAQ.', diff_dir )
+            self.aggregate_quant(self.normalized_target_proteins, col, '{}.'.format(self.protein_quant_parameter), diff_dir )
             table = diff_dir + '/' + col + '.csv'
             self.diff(protein_exp, table, diff_dir)
             self.summarize_diff(diff_dir , diff_dir + '/summary.txt')
@@ -1601,7 +1618,7 @@ class mq_txt:
             # LEADING SPECIES
             col = 'Leading.Species'
             diff_dir = self.diff_dir + '/' + level + '/' + col
-            self.aggregate_quant(self.normalized_target_proteins, col, 'iBAQ.', diff_dir )
+            self.aggregate_quant(self.normalized_target_proteins, col, '{}.'.format(self.protein_quant_parameter), diff_dir )
             table = diff_dir + '/' + col + '.csv'
             self.diff(protein_exp, table, diff_dir)
             self.summarize_diff(diff_dir , diff_dir + '/summary.txt')
