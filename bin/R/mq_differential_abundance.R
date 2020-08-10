@@ -12,7 +12,9 @@ library('qvalue')
 library("optparse")
 library('MSnbase')
 library("dplyr")
- 
+
+exit()
+
 option_list = list(
 make_option(c("-d", "--design"), type="character", default=NULL,
         help="Experimntal design template", metavar="character"),

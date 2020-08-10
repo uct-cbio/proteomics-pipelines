@@ -46,14 +46,12 @@ rownames(data) <- data$Identifier
 Identifier <- data$Identifier
 data$Row.Name <- Identifier
 other <- data[, (colnames(data) %in% c("Identifier", "Row.Name", "Leading.Protein","Leading.gene"))]
-
 #names <- paste(Identifier, '(', data$PeptideCount, ' peptides, ', data$MS.MS.Count,' msms)',sep='')
 
 #data <- data[,cols]
 data$Identifier <- Identifier
 orig_data <- data
 data <- data[,cols]
-
 
 
 fpie <- function( df , names, valcols, outfile) {
@@ -290,7 +288,6 @@ for ( i in seq_along(colnames(contrast.matrix))) {
 #######
 # PCA #
 #######
-print(head(data))
 pca_path=paste(outdir,'PCA/',sep='')
 dir.create(pca_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 pc <- function( df, path, file, var.axes ) {
@@ -298,18 +295,24 @@ pc <- function( df, path, file, var.axes ) {
     #dev.new()
     png(fp)
     tdf <- t(df)
-    tdf <- tdf[ , apply(tdf, 2, var) != 0]
+    #tdf <- tdf[ , apply(tdf, 2, var) != 0]
+    #print(tdf)
+    tdf <- tdf[ , which(apply(tdf, 2, var) != 0)]
+
     pca <- prcomp( tdf,  center=TRUE, scale=TRUE)
     g <- ggbiplot(pca, obs.scale = 1, var.scale = 1,
     groups=f, ellipse=TRUE, circle=TRUE, var.axes=var.axes, varname.abbrev = FALSE)
     g <- g + scale_color_discrete(name = '')
     g <- g + theme(legend.direction = 'horizontal',legend.position = 'top') 
-    print(g)
+    
+    print(g + theme_classic())
     dev.off()
     #suppressGraphics(ggsave(fp, g, device = png))
     }
 
 pc(data, pca_path, "all_identified_pca.png", FALSE)
+#print(head(data))
+#quit()
 pc(data, pca_path, "all_identified_pca_labelled.png", TRUE)
 
 if (length(rownames(pval_data)) >=2) {
