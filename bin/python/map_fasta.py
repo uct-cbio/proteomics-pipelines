@@ -33,7 +33,7 @@ for db in dbs[:]:
         db.remove(rec)
         t1_id = map_dct[t1]
         mapping[t1].add(t1_id)
-        print 'Mapped:', count 
+        print('Mapped:', count)
         count += 1
         for db_ in dbs:
             for rec_ in db_:
@@ -43,7 +43,7 @@ for db in dbs[:]:
                     mapping[t1].add(t2_id)
                     mapping[t2].add(t1_id)  
     dbs.remove(db)
-print len(mapping)
+print(len(mapping))
 map_ = defaultdict(list)
 for i in mapping:
     map_[i] = list(mapping[i])

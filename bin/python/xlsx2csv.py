@@ -16,7 +16,7 @@ elif len(sys.argv) == 3:
     outfile = sys.argv[2]
 
 
-if len(file.sheet_names) == 1
+if len(file.sheet_names) == 1:
     df = file.parse('Sheet1')
     df.to_csv(outfile)
 

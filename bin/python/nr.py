@@ -19,5 +19,5 @@ for name, group in df.groupby('Translated sequence'):
     nr_count += 1
 
 
-df.to_csv(sys.)
+df.to_csv(sys.stdout)
 

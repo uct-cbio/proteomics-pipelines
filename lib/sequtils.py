@@ -1608,11 +1608,11 @@ def reference_mapping_blast(fasta_orfs, fasta_refs, temp_folder, max_evalue=0.00
 class annotate:
     def __init__(self, reference_protein, orf_sequence, specific_peptides, translation_table):
         self.reference_protein = reference_protein
-        self.orf_sequence = orf
+        self.orf_sequence = orf_sequence # was orf
         self.peptides = specific_peptides
         self.reference_length = len(str(reference_protein.seq))
         self.translation_table = translation_table
-        self.translated = translate(orf.seq, cds=False, table=self.translation_table)
+        self.translated = translate(orf_sequence.seq, cds=False, table=self.translation_table)
     
     def annotation_type(self): 
         pass

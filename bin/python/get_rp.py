@@ -12,7 +12,7 @@ prot_folder = base + '/biotools/uniprot_proteomes/'
 fasta_records = []
 
 if len(sys.argv) == 1:
-	accession = raw_input('Enter UNIPROT proteome accession number: ')
+	accession = input('Enter UNIPROT proteome accession number: ')
 	filename = accession
 
 elif len(sys.argv) > 1:

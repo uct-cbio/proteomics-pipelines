@@ -32,7 +32,7 @@ def spectral_counts(msms):
 
 def spectral_norm(spectral, valcols): # nomalizes on common identified peptides across all replicates
     normind  = spectral[valcols].dropna(how='any').index
-    print 'Normind: ', len(normind), 'All: ', spectral
+    print('Normind: ', len(normind), 'All: ', spectral)
     normdata = spectral.loc[normind].copy()
     for col in valcols:
         colmean = normdata[col].mean()
@@ -80,7 +80,7 @@ def quantify(proteingroups, peptides, valcols, level):   #quantify proteins usin
         df[col] = df[col].astype(np.float64)
         df[col] = np.nan
     for row in df.iterrows():
-        print row[1].index
+        print(row[1].index)
         id = row[1]['id']
         prot_peps = peptides[peptides['Protein group IDs'] == str(id)][valcols].dropna(how='any')
         if len(prot_peps) != 0:

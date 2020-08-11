@@ -27,7 +27,7 @@ import pickle
 import mygene
 import rpy2.robjects as ro
 import sys
-import StringIO
+from io import StringIO
 
 # Library to parse MaxQuant txt
 

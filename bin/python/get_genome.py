@@ -12,7 +12,7 @@ genome_folder = base + '/biotools/ebi_embl_files/'
 fasta_records = []
 
 if len(sys.argv) == 1:
-	accession = raw_input('Enter EBI genome accession number: ')
+	accession = input('Enter EBI genome accession number: ')
 	filename = accession
 elif len(sys.argv) > 1:
 	filename = '_'.join(sys.argv[1:])

@@ -24,7 +24,7 @@ df = pd.Series(df['Translated sequence'].values, index=df['Non redundant sequenc
 
 recs = []
 for key in df:
-    print key
+    print(key)
     seq = Seq(df[key])
     description = 'Six_frame_protein_sequence'
     id = 'Non_redundant_protein_sequence_{}'.format(key)
