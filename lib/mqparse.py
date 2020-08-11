@@ -27,6 +27,7 @@ import pickle
 import mygene
 import rpy2.robjects as ro
 import sys
+import StringIO
 
 # Library to parse MaxQuant txt
 
@@ -2096,7 +2097,7 @@ def novel_columns(df, genome,cdna):
                 df.loc[count, 'Leading blastp GI id'] = res_accession
                 if res_rec != None:
                     for r in res_rec:
-                        if not isinstance(res_rec[r], basestring):
+                        if not isinstance(res_rec[r], str):
                             df.loc[count,r] = '\n'.join(res_rec[r])
                             for feature in res_rec[r]:
                                 features[r].append(feature)

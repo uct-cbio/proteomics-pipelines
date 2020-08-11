@@ -312,12 +312,12 @@ def KW_DUNN(dataframe, dep_var, dep_fac, outpath):   # pandas df, col to do anov
     data.loc[0, 'Kruskal-Wallis statistic'] = kw_statistic
     data.loc[0, 'Kruskal-Wallis parameter'] = kw_parameter
     
-    try:
-        comp_dct = df.set_index('Comparison')['P.adj'].to_dict()
-        for val in comp_dct:
-            data.loc[0, val +' Dunn-test P.adj'] = comp_dct[val]
-    except:
-        pass
+    #try:
+    #    comp_dct = df.set_index('Comparison')['P.adj'].to_dict()
+    #    for val in comp_dct:
+    #        data.loc[0, val +' Dunn-test P.adj'] = comp_dct[val]
+    #except:
+    #    pass
     
     return data
 

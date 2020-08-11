@@ -70,7 +70,7 @@ def nblast(seqstr, db, threshold = 0.04, path = '/home/thys/biotools/cdna_blast/
     return blast_record
 
 
-def tblastn(seqstr, db, threshold = 0.04, path = '/home/thys/biotools/tblastn/', outfmt = 5):
+def tblastn(seqstr, db, threshold = 0.04, path = '/home/thys/biotools/tblastn/', outfmt = 5, strand='plus'):
     dbpath = path + db
     rec = SeqRecord(seq = Seq(seqstr), id = 'query')
     temp_dir = tempfile.mkdtemp()
@@ -82,7 +82,7 @@ def tblastn(seqstr, db, threshold = 0.04, path = '/home/thys/biotools/tblastn/',
                                         evalue = threshold,
                                         outfmt = outfmt,
                                         out = temp_out,
-                                        strand = plus)
+                                        strand = strand)
     stdout, stderr = blastn_cline()
     result_handle = open(temp_out)
     blast_record = NCBIXML.read(result_handle)
