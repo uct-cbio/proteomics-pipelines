@@ -13,7 +13,7 @@ library("optparse")
 library('MSnbase')
 library("dplyr")
 
-exit()
+#exit()
 
 option_list = list(
 make_option(c("-d", "--design"), type="character", default=NULL,

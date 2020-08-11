@@ -33,11 +33,14 @@ def request(jobq):
         else:
             tempdir = tempfile.mkdtemp()
             tempfasta = tempdir + '/{}.fasta'.format(rec.id.split('|')[-1])
-            SeqIO.write(rec, tempfasta, 'fasta')
+            newrec = Bio.SeqRecord.SeqRecord( id=rec.id, seq =rec.seq)
+            print(newrec.format('fasta'))
+            SeqIO.write(newrec, tempfasta, 'fasta')
             t1 = time.time()
             #cmd = 'python3 iprscan5.py --goterms --pathways --appl SMART --appl TMHMM --appl CDD --appl Pfam --appl Phobius --appl ProDom --appl SignalP --appl TIGRFAM --appl COILS --appl Gene3D --appl HAMAP --appl MOBIDB --appl PANTHER --appl PIRSF --appl PRINTS --appl PROSITE --appl SFLD --email=matthys@gmail.com --outfile={} --outformat=tsv --quiet {}'.format(tempfasta, tempfasta)
             cmd = 'iprscan5.py --goterms --pathways --email=matthys@gmail.com --outfile={} --outformat=tsv --quiet {}'.format(tempfasta, tempfasta)
             done=False
+            #failures = 0
             while done == False:
                 t1 = time.time()
                 try: 
@@ -58,6 +61,9 @@ def request(jobq):
                 except:
                     time.sleep(60)
                     print('Failed, retrying {}'.format(tempfasta))
+                #failures += 1
+                #if failures > 10:
+                #    done=True
             shutil.rmtree(tempdir)
 
 workers = []
