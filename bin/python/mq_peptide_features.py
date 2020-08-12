@@ -196,8 +196,7 @@ for strain in config['strains']:
         gff3 = gff3 +'\n' + ref_gff3
 
     if not os.path.exists(output + '/strains/' + strain):
-        os.mkdir(output + '/strains/' + strain
-    
+        os.mkdir(output + '/strains/' + strain) 
     w =open(output+ '/strains/' + strain + '/{}_features.gff3'.format(strain), 'w')
     w.write(gff3)
     w.close()
