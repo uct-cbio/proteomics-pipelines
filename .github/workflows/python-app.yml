@@ -21,6 +21,7 @@ jobs:
     #    python-version: 3.8
     - name: Install dependencies
       run: |
+        git clone https://thys_potgieter@bitbucket.org/thys_potgieter/cbio-proteogenomics-tests.git
         pip3 install --upgrade pip
         pip3 install flake8 pytest
         if [ -f requirements.txt ]; then pip3 install -r requirements.txt; fi
@@ -32,6 +33,5 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        git clone https://thys_potgieter@bitbucket.org/thys_potgieter/cbio-proteogenomics-tests.git
         pwd
         cd cbio-proteogenomics-tests/lib && pytest
