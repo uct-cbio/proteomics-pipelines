@@ -34,4 +34,4 @@ jobs:
     - name: Test with pytest
       run: |
         pwd
-        cd cbio-proteogenomics-tests/lib && pytest
+        cd cbio-proteogenomics-tests/lib && pytest -x
