@@ -3,6 +3,7 @@
 import pandas as pd
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
+import sys
 
 df = pd.read_csv(sys.stdin)
 

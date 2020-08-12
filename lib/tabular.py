@@ -235,30 +235,30 @@ def filtervalid(df, groups, minimum):   #dataframe, groups: dict (keys are group
     del df1['Valid'] 
     return df1
 
-def groupmeans(df, groups):
-    meancols = {}
-    seen = set()
-    for i in df.columns:
-        regcount = 0
-        for j in groupregexlist:
-            if i.startswith(j):
-                regcount += 1
-                seen.add(j)
-                assert i not in groupregexlist
-                meancols[i] = j
-        assert regcount <= 1
-    assert len(seen) == len(groupregexlist)
-    for row in df.iterrows():
-        means = defaultdict(list)
-        for item in row[1].index:
-            try:
-                assert item not in groupregexlist
-                means[meancols[item]].append(row[1][item])
-            except:
-                pass
-        for item in means:
-            mean = np.mean(means[item], dtype = 'float64')
-            df.loc[row[0], 'mean_{}'.format(item)] = mean
-
-    return df
+#def groupmeans(df, groups):
+#    meancols = {}
+#    seen = set()
+#    for i in df.columns:
+#        regcount = 0
+#        for j in groupregexlist:
+#            if i.startswith(j):
+#                regcount += 1
+#                seen.add(j)
+#                assert i not in groupregexlist
+#                meancols[i] = j
+#        assert regcount <= 1
+#    assert len(seen) == len(groupregexlist)
+#    for row in df.iterrows():
+#        means = defaultdict(list)
+#        for item in row[1].index:
+#            try:
+#                assert item not in groupregexlist
+#                means[meancols[item]].append(row[1][item])
+#            except:
+#                pass
+#        for item in means:
+#            mean = np.mean(means[item], dtype = 'float64')
+#            df.loc[row[0], 'mean_{}'.format(item)] = mean
+#
+#    return df
 

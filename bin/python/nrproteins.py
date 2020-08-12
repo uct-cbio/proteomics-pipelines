@@ -29,6 +29,6 @@ for key in df:
     description = 'Six_frame_protein_sequence'
     id = 'Non_redundant_protein_sequence_{}'.format(key)
     rec = SeqRecord(id=id, seq = seq, description = description)
-    print rec.format('fasta')
+    print(rec.format('fasta'))
     recs.append(rec)
 SeqIO.write(recs, outfile, 'fasta')

@@ -48,7 +48,7 @@ map_ = defaultdict(list)
 for i in mapping:
     map_[i] = list(mapping[i])
 for i in map_:
-    print map_[i]
+    print(map_[i])
     break
 mapping = json.dumps(map_)
 f = open('mapping.json', 'w')

@@ -112,7 +112,7 @@ def gi2up(gi_accession_number):
         splitter = 'xml:lang="en"><head><title>'
         ls = p.split(splitter)[1].split(' ')[0].split(':')[1]
         url2 = 'http://www.uniprot.org/uniprot/?query=yourlist:{}&sort=yourlist:{}&columns=yourlist%28{}%29,id%2Centry%20name%2Creviewed%2Cprotein%20names%2Cgenes%2Corganism%2Clength%2Cexistence%2Ccomment%28PATHWAY%29%2Cgo%2Cgo%28biological%20process%29%2Cgo%28molecular%20function%29%2Cgo%28cellular%20component%29%2Cgo-id'.format(ls,ls,ls)
-        x = urllib2.urlopen(url2).read()
+        x = urllib3.urlopen(url2).read()
         datum = x.split('class="addRemoveColumn mid"')[0].split('</script></td></tr></thead><tbody><tr ')[1]
         datum = datum.split('class=')
         biorec = {}
