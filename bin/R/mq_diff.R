@@ -106,25 +106,27 @@ write.table(variances, paste(outdir,'/group_variance/group_variance.txt',sep='')
 # Let's make a SPLOM #
 ######################
 
-print('Creating a SPLOM')
-splomdata <- orig_data
-splom_path=paste(outdir,'splom/',sep='')
-dir.create(splom_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
+# could be interesting to do this by group and not sample - move sample splom to QC - to do?
 
-splom <- function (df, valcols, labels, path, name) {
-    #pdf(paste(path,name,sep=''),units="in",width=11,height=8.5,res=300)
-    pdf(paste(path,name,sep=''), width = 20, height = 20)
-    df$temp <- labels
-    df <- df[df$temp!= '' , ]  
-    labels <- df$temp
-    df <- df[, valcols]
-    prot_labels <- as.numeric(labels)
-    prot_labels <- rev(rainbow_hcl(length(prot_labels)))[prot_labels]
+#print('Creating a SPLOM')
+#splomdata <- orig_data
+#splom_path=paste(outdir,'splom/',sep='')
+#dir.create(splom_path, showWarnings = TRUE, recursive = FALSE, mode = "0777")
+
+#splom <- function (df, valcols, labels, path, name) {
+#    #pdf(paste(path,name,sep=''),units="in",width=11,height=8.5,res=300)
+#    pdf(paste(path,name,sep='') , width = 1000, height = 1000)
+#    df$temp <- labels
+#    df <- df[df$temp!= '' , ]  
+#    labels <- df$temp
+#    df <- df[, valcols]
+#    prot_labels <- as.numeric(labels)
+#    prot_labels <- rev(rainbow_hcl(length(prot_labels)))[prot_labels]
     
-    pairs(df, col = prot_labels, lower.panel = NULL, cex.labels=0.5, pch=19, cex = 0.01)
-    dev.off() }
+#    pairs(df, col = prot_labels, lower.panel = NULL, cex.labels=0.5, pch=19, cex = 0.01)
+#    dev.off() }
 
-splom(splomdata, cols, splomdata$Identifier, splom_path, 'splom.pdf')
+#splom(splomdata, cols, splomdata$Identifier, splom_path, 'splom.pdf')
 
 #############################################
 # Diferential abundance analysis with LIMMA #

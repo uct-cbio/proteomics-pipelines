@@ -28,6 +28,7 @@ import mygene
 import rpy2.robjects as ro
 import sys
 from io import StringIO
+import this
 
 # Library to parse MaxQuant txt
 
@@ -224,7 +225,6 @@ class mq_txt:
         if not exclude_contaminants == True:
             assert exclude_contaminants == False
         
-        
         self.protein_quantification = self.config['protein_quantification']
         assert self.protein_quantification in ['LFQ', 'iBAQ']
         if self.protein_quantification =='LFQ':
@@ -247,7 +247,7 @@ class mq_txt:
             if column.startswith('Intensity '):
                 name = column.split('Intensity ')[1]
                 samples.append(name)
-
+        samples.append('peptides')  # 'iBAQ peptides' 
         if not os.path.exists(design):
             self.design = pd.DataFrame()
             self.design['sample'] = pd.Series(samples)
@@ -324,8 +324,10 @@ class mq_txt:
             pepcol = 'Intensity {}'.format(sample)
             protcol = '{} {}'.format(self.protein_quantification, sample)
             if not pepcol in rename_columns:
-                del self.proteingroups[protcol]
-                del self.peptides[pepcol]
+                if protcol in self.proteingroups.columns:
+                    del self.proteingroups[protcol]
+                if pepcol in self.peptides.columns:
+                    del self.peptides[pepcol]
             else:
                 r = self.proteingroups[protcol]
                 _ = len([i for i in r if not i == 0]) /  len(r)
