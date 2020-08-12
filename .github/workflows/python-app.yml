@@ -34,4 +34,6 @@ jobs:
     - name: Test with pytest
       run: |
         pwd
+        export PATH=$PATH::/__w/proteomics-pipelines/proteomics-pipelines/bin/python:/__w/proteomics-pipelines/proteomics-pipelines/bin/bash:/__w/proteomics-pipelines/proteomics-pipelines/bin/R:/__w/proteomics-pipelines/proteomics-pipelines/bin/perl
+        echo $PATH
         cd cbio-proteogenomics-tests/lib && pytest -x
