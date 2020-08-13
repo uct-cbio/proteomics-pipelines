@@ -341,6 +341,12 @@ class mq_txt:
         self.peptides.rename(columns=rename_columns, inplace=True)            
         self.proteingroups.rename(columns=rename_columns, inplace=True)
         self.proteingroups = self.host_proteins(self.proteingroups, self.reference_fasta)
+        
+        print(self.proteingroups['Identifier'].tolist())
+        print('*')
+        print(set(self.proteingroups['Identifier'].tolist()))
+        print(len(self.proteingroups['Identifier'].tolist()))
+        print(len(set(self.proteingroups['Identifier'].tolist())))
         assert len(self.proteingroups['Identifier'].tolist()) == len(set(self.proteingroups['Identifier'].tolist()))
         self.msms = pd.read_csv(self.txt_path +'/msms.txt', sep='\t')
         self.target_proteingroups = self.exclude_reverse(self.proteingroups)
