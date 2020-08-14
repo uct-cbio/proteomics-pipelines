@@ -13,7 +13,7 @@ This pulls the latest version from DockerHub, and saves it to the current direct
 
 2. Create an interactive shell with all the required dependencies
 ~~~
-singularity shell mqmetaproteomics_v2.6.img
+singularity shell mqmetaproteomics_v2.7.2.img
 ~~~
 
 3. Clone the cbio-proteogenomics-tests repo
