@@ -108,7 +108,8 @@ dev.off()
 print(paste("Normalizing data using: ", norm_method,sep=''))
 
 checkData(as.matrix(exprs(eset)), verbose=TRUE)
-
+print(head(eset))
+baseline = min(exprs(eset), na.rm=TRUE)
 if (norm_method != 'none') {
     x.nrm <- normalise(eset, norm_method) 
 } else{
@@ -120,10 +121,12 @@ checkData(as.matrix(exprs(x.nrm)), verbose=TRUE)
 
 x.imputed <- impute(x.nrm, method = impute_method, colmax=90)
 
-baseline = min(exprs(x.nrm), na.rm=TRUE)
 minval = min(exprs(x.imputed), na.rm=TRUE)
 delta <- baseline - minval
 exprs(x.imputed) <- exprs(x.imputed) + delta # ensures the minimum value is the same after imputation - BPCA can yield negative values 
+minval = min(exprs(x.nrm), na.rm=TRUE)
+delta <- baseline - minval
+exprs(x.nrm) <- exprs(x.nrm) + delta # ensures the minimum value is the same after imputation - BPCA can yield negative values 
 #exprs(x.nrm) <- exprs(x.nrm) 
 #x.imputed <- impute(x.nrm, method = impute_method)
 

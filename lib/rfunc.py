@@ -340,10 +340,8 @@ class string2ko: # uniprot id
     def __init__(self, string):
         c = 'library(KEGGREST)';ro.r(c)
         c = "res <- keggFind('ko', c('{}'))".format(string) ; ro.r(c)
-        c = "print(res)" ; ro.r(c)
         c = 'names(res)'
         self.ko = ';'.join([i.split(':')[1] for i in robjects.r(c)])
-
         c = 'res'
         self.name= ';'.join(robjects.r(c))
 
@@ -352,9 +350,7 @@ class entrez2ko: # uniprot id
         self.entrez = entrez
         c = 'library(KEGGREST)';ro.r(c)
         c = 'conv <- keggConv("genes", "ncbi-geneid:{}")'.format(self.entrez); ro.r(c) 
-        c = 'print(conv)'; ro.r(c) 
         c = 'ko <- keggGet(conv)'; ro.r(c)
-        c = 'print(ko)'; ro.r(c) 
         c = 'names(ko[[1]]$ORTHOLOGY)'
         self.ko = ';'.join(robjects.r(c))
         c = 'ko[[1]]$ORTHOLOGY'
@@ -392,11 +388,11 @@ def limma(df1, treated, control):   # pandas df, treated columns, control column
     ctot = ct + tr
     rdf =pandas2ri.py2ri(df)
     ro.globalenv['data'] = rdf
-    c="str(data)"; #print ro.r(c)
+    c="str(data)"; 
     c= "data[ is.na(data) ] <- NA"; ro.r(c)
-    c="tr <- c{}".format(tuple(tr)); ro.r(c); #print c
-    c="ct <- c{}".format(tuple(ct)); ro.r(c); #print c
-    c= "str(ct)"; #print ro.r(c)
+    c="tr <- c{}".format(tuple(tr)); ro.r(c); 
+    c="ct <- c{}".format(tuple(ct)); ro.r(c); 
+    c= "str(ct)"; 
     #c='''source("http://www.biostat.jhsph.edu/~kkammers/software/eupa/source.functions.r")'''
     #c='''source("source.functions.r.txt")'''
     ro.r(functions)
@@ -405,7 +401,6 @@ def limma(df1, treated, control):   # pandas df, treated columns, control column
     [design.append(2) for i in tr]
     [design.append(1) for i in ct]
     c="design <- model.matrix(~factor(c{}))".format(tuple(design))
-    #print c
     ro.r(c)
     #print ro.r('str(data)')
     c='''colnames(design) <- c("Intercept", "Diff")'''
@@ -413,7 +408,6 @@ def limma(df1, treated, control):   # pandas df, treated columns, control column
     c='res.eb <- eb.fit(data[, c(tr,ct)], design)'
     ro.r(c)
     c="res.eb"
-    #print ro."r(c)
     dfebi = pandas2ri.ri2py(ro.r[c])
     assert 'index' not in dfebi.columns
     dfebi.index = dfebi.reset_index()['index'].apply(int)
@@ -448,7 +442,7 @@ def trt(df1,treated, control):   # pandas df, treated columns, control columns
     ctot = ct + tr
     rdf =pandas2ri.py2ri(df)
     ro.globalenv['data'] = rdf
-    c="str(data)"; #print ro.r(c)
+    c="str(data)";
     c= "data[ is.na(data) ] <- NA"; ro.r(c)
     c="tr <- c{}".format(tuple(tr)); ro.r(c); #print c
     c="ct <- c{}".format(tuple(ct)); ro.r(c); #print c
