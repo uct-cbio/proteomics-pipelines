@@ -329,10 +329,12 @@ class up2ko:
         self.ids = []
         self.names = []
         for i in res['hits']:
-            symbol = i['entrezgene']
-            ko = entrez2ko(symbol)
-            self.ids.append(ko.ko)
-            self.names.append(ko.name)
+            if 'entrezgene' in i:
+                symbol = i['entrezgene']
+                ko = entrez2ko(symbol)
+                if not ko.ko is None: 
+                    self.ids.append(ko.ko)
+                    self.names.append(ko.name)
         self.ko = ';'.join(set(self.ids))
         self.name = ';'.join(set(self.names))
 
@@ -348,14 +350,25 @@ class string2ko: # uniprot id
 class entrez2ko: # uniprot id
     def __init__(self, entrez):
         self.entrez = entrez
+        self.ko = None
+        self.name = None
+
         c = 'library(KEGGREST)';ro.r(c)
         c = 'conv <- keggConv("genes", "ncbi-geneid:{}")'.format(self.entrez); ro.r(c) 
-        c = 'ko <- keggGet(conv)'; ro.r(c)
+        try:
+            c = 'ko <- keggGet(conv)'; ro.r(c)
+        except:
+            return
         c = 'names(ko[[1]]$ORTHOLOGY)'
-        self.ko = ';'.join(robjects.r(c))
+        try:
+            self.ko = ';'.join(robjects.r(c))
+        except:
+            pass
         c = 'ko[[1]]$ORTHOLOGY'
-        self.name= ';'.join(robjects.r(c))
-
+        try:
+            self.name= ';'.join(robjects.r(c))
+        except:
+            pass
     # keggConv("genes", "uniprot:Q05025"))
     # q <- keggGet("cjo:107318960")
     # q[[1]]$ORTHOLOGY   

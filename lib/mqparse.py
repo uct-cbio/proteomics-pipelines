@@ -1661,7 +1661,6 @@ class mq_txt:
         return proteingroups
 
     def leading_protein_ko(self, proteingroups):
-        
         def _(df):
             ko = rfunc.up2ko(df['Leading Protein'])
             df['Leading Protein Kegg Orthology ID'] = ko.ko
@@ -1672,7 +1671,6 @@ class mq_txt:
                 _ = ""
             df['Leading Protein Kegg Orthology'] = _
             return df
-        
         proteingroups = proteingroups.apply(_, axis = 1)
         return proteingroups
 
