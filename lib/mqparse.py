@@ -1660,19 +1660,18 @@ class mq_txt:
         proteingroups['Leading.gene'] = proteingroups['Leading Protein'].map(gene_dict)
         return proteingroups
 
-    def leading_protein_ko(self, proteingroups):
-        def _(df):
-            ko = rfunc.up2ko(df['Leading Protein'])
-            df['Leading Protein Kegg Orthology ID'] = ko.ko
-            df['Leading Protein Kegg Orthology Name'] = ko.name
+    def leading_protein_ko(self, df):
+        for row in df.iterrows():
+            ind = row[0]
+            ko = rfunc.up2ko(row[1]['Leading Protein'])
+            df[ ind, 'Leading Protein Kegg Orthology ID'] = ko.ko
+            df[ ind, 'Leading Protein Kegg Orthology Name'] = ko.name
             if not ko.ko == '':
                 _ = ko.ko +' ' + ko.name 
             else:
                 _ = ""
-            df['Leading Protein Kegg Orthology'] = _
-            return df
-        proteingroups = proteingroups.apply(_, axis = 1)
-        return proteingroups
+            df[ ind, 'Leading Protein Kegg Orthology'] = _
+        return df
 
     def up2ko(self, up):
         return rfunc.up2ko(up)
