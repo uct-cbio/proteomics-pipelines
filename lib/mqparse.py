@@ -1661,16 +1661,18 @@ class mq_txt:
         return proteingroups
 
     def leading_protein_ko(self, proteingroups):
+        
         def _(df):
-            try:
-                ko = rfunc.up2ko(df['Leading Protein'])
-                if not ko.ko == '':
-                    df['Leading Protein Kegg Orthology ID'] = ko.ko
-                    df['Leading Protein Kegg Orthology Name'] = ko.name
-                    df['Leading Protein Kegg Orthology'] = ko.ko +' ' + ko.name
-            except:
-                pass
+            ko = rfunc.up2ko(df['Leading Protein'])
+            df['Leading Protein Kegg Orthology ID'] = ko.ko
+            df['Leading Protein Kegg Orthology Name'] = ko.name
+            if not ko.ko == '':
+                _ = ko.ko +' ' + ko.name 
+            else:
+                _ = ""
+            df['Leading Protein Kegg Orthology'] = _
             return df
+        
         proteingroups = proteingroups.apply(_, axis = 1)
         return proteingroups
 
