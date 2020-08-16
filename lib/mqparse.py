@@ -307,9 +307,11 @@ class mq_txt:
         
         kofile =self.outdir + '/proteingroups.ko.csv'
         if not os.path.exists( kofile):
+            print("KO lookup")
             self.proteingroups = self.leading_protein_ko(self.proteingroups)
             self.proteingroups.to_csv(kofile)
         else:
+            print("Loading existing KO file")
             self.proteingroups = pd.read_csv(kofile)
         
         assert len(self.proteingroups) == len(set(self.proteingroups['Identifier'].tolist()))
