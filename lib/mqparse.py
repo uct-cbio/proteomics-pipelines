@@ -495,7 +495,8 @@ class mq_txt:
             os.mkdir(outpath )
         
         # Protein abundance analysis
-        target_proteins = target_proteins_.sort_values('Intensity', ascending=False).copy()
+        target_proteins = target_proteins_.copy()
+        target_proteins = target_proteins.sort_values('Intensity', ascending=False)
         #print(target_proteins.columns.tolist())
         #contaminants = target_proteins[target_proteins['Potential contaminant'] == '+'].head(5)
         target_proteins['Source'] = target_proteins['Protein IDs']
@@ -503,7 +504,8 @@ class mq_txt:
         target_proteins['Source'] = target_proteins['Source'].apply(lambda x : x.split(';')[0])
         agg_cols = {}
         for col in target_proteins.columns.tolist():
-            if col.startswith('Intensity'):
+            print(col)
+            if str(col).startswith('Intensity'):
                 agg_cols[col] = sum
         agg_cols['Potential contaminant'] = 'first'
         conts = target_proteins.groupby('Source').agg(agg_cols)
