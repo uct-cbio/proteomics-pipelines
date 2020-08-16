@@ -145,7 +145,6 @@ def parse_ids(ids):
     ids = ids.split(';')
     new_ids = []
     for i in ids:
-        print(i)
         if '|' in i:
             new = i.split('|')[1]
         else:
@@ -217,7 +216,6 @@ class mq_txt:
         c = "library('FSA')"; ro.r(c)
         with open(config) as f:
             self.config = yaml.load(f.read())
-        print(self.config)
         self.txt_path = self.config['mq_txt']
         self.outdir = self.config['outdir']
         design = self.config['design']
@@ -237,9 +235,7 @@ class mq_txt:
         self.peptide_normalisation = self.config['peptide_normalisation']
         self.peptide_imputation = self.config['peptide_imputation']
 
-
         self.summary = pd.read_csv(self.txt_path +'/summary.txt', sep='\t')
-        print(self.summary)
         self.create_folders()
         self.peptides = pd.read_csv(self.txt_path +'/peptides.txt', sep='\t')
         samples = []
@@ -258,14 +254,12 @@ class mq_txt:
             return
         else:
             self.design=pd.read_csv(design)
-            print(self.design)
 
         rename_columns = {}
         exclude_columns = []
         exclude_samples = []
 
         group_levels = self.config['group_levels']
-        print(design)
         for row in self.design.iterrows():
             rename = row[1]['rename']
             sample = row[1]['sample']
@@ -295,14 +289,13 @@ class mq_txt:
         self.rename_columns = rename_columns
         self.peptides['Identifier'] = self.peptides['Sequence']
         self.proteingroups = self.create_protein_group_identifier(pd.read_csv(self.txt_path +'/proteinGroups.txt', sep='\t'))
-
+        assert len(self.proteingroups) == len(list(set(self.proteingroups['Identifier'].tolist())))
         self.proteingroups['Leading Protein'] = self.proteingroups['Protein IDs'].apply(parse_ids).apply(lambda x : x.split(';')[0])
         self.proteingroups['Leading Species'] = self.proteingroups['Protein IDs'].apply(parse_groups).apply(lambda x : x.split(';')[0])
         self.reference_fasta = list(SeqIO.parse(self.config['reference_fasta'], 'fasta'))
         self.search_fasta = list(SeqIO.parse(self.config['search_fasta'],'fasta'))
         self.proteingroups = self.leading_protein_gene(self.proteingroups.copy(), self.search_fasta, self.reference_fasta)
         assert 'Leading.gene' in self.proteingroups.columns
-        print(self.proteingroups['Leading.gene'])
         mgfile = self.outdir +'/proteingroups.mygene.csv'
         if not os.path.exists(mgfile):
             self.proteingroups = self.leading_protein_mygene(self.proteingroups)
@@ -310,7 +303,7 @@ class mq_txt:
         else:
             self.proteingroups = pd.read_csv(mgfile)
         
-        assert len(self.proteingroups['Identifier'].tolist()) == len(set(self.proteingroups['Identifier'].tolist()))
+        assert len(self.proteingroups) == len(set(self.proteingroups['Identifier'].tolist()))
         
         kofile =self.outdir + '/proteingroups.ko.csv'
         if not os.path.exists( kofile):
@@ -319,7 +312,7 @@ class mq_txt:
         else:
             self.proteingroups = pd.read_csv(kofile)
         
-        print(list(rename_columns.keys()))
+        assert len(self.proteingroups) == len(set(self.proteingroups['Identifier'].tolist()))
         for sample in samples:
             pepcol = 'Intensity {}'.format(sample)
             protcol = '{} {}'.format(self.protein_quantification, sample)
@@ -331,16 +324,12 @@ class mq_txt:
             else:
                 r = self.proteingroups[protcol]
                 _ = len([i for i in r if not i == 0]) /  len(r)
-                print(protcol, _)
-                #assert _ * 100 > 20
-                #r = self.peptides[pepcol]
-                #_ = len([i for i in r if not i == 0]) /  len(r)
-                #print(pepcol, _)
-                #assert _ * 100 > 20
         
+        assert len(self.proteingroups) == len(set(self.proteingroups['Identifier'].tolist()))
         self.peptides.rename(columns=rename_columns, inplace=True)            
         self.proteingroups.rename(columns=rename_columns, inplace=True)
         self.proteingroups = self.host_proteins(self.proteingroups, self.reference_fasta)
+        assert len(self.proteingroups) == len(set(self.proteingroups['Identifier'].tolist()))
         
         print(self.proteingroups['Identifier'].tolist())
         print('*')
@@ -498,13 +487,13 @@ class mq_txt:
             self.ips_gsea(outpath, gsea_dir, design, table, genecol=genecol , kocol=kocol)
             self.summarize_gsea(gsea_dir, gsea_dir + '/summary.txt', self.config, level)
    
-    def qc(self, config, design,  outpath, summary, target_peptides, target_proteins):
+    def qc(self, config, design,  outpath, summary, target_peptides_, target_proteins_):
         print("Starting QC")
         if not os.path.exists(outpath):
             os.mkdir(outpath )
         
         # Protein abundance analysis
-        target_proteins = target_proteins.sort_values('Intensity', ascending=False)
+        target_proteins = target_proteins_.sort_values('Intensity', ascending=False).copy()
         #print(target_proteins.columns.tolist())
         #contaminants = target_proteins[target_proteins['Potential contaminant'] == '+'].head(5)
         target_proteins['Source'] = target_proteins['Protein IDs']
@@ -517,7 +506,6 @@ class mq_txt:
         agg_cols['Potential contaminant'] = 'first'
         conts = target_proteins.groupby('Source').agg(agg_cols)
         conts = conts.sort_values(['Intensity'], ascending=False)
-        print(conts)
         conts = conts.head(5)
         intensity_cols = [col for col in conts.columns if col.startswith('Intensity ') ]
         conts = conts[intensity_cols]
@@ -621,7 +609,6 @@ class mq_txt:
         for row in design.iterrows():
             rename = row[1]['rename']
             if not rename in exclude_columns:
-                print(rename)
                 sample = row[1]['sample']
                 config['samples'][rename] = {}
                 for level in config['group_levels']:
@@ -1676,7 +1663,6 @@ class mq_txt:
             try:
                 ko = rfunc.up2ko(df['Leading Protein'])
                 if not ko.ko == '':
-                    print(ko.ko, ko.name)
                     df['Leading Protein Kegg Orthology ID'] = ko.ko
                     df['Leading Protein Kegg Orthology Name'] = ko.name
                     df['Leading Protein Kegg Orthology'] = ko.ko +' ' + ko.name
