@@ -34,7 +34,7 @@ def request(jobq):
             tempdir = tempfile.mkdtemp()
             tempfasta = tempdir + '/{}.fasta'.format(rec.id.split('|')[-1])
             newrec = Bio.SeqRecord.SeqRecord( id=rec.id, seq =rec.seq)
-            print(newrec.format('fasta'))
+            #print(newrec.format('fasta'))
             SeqIO.write(newrec, tempfasta, 'fasta')
             t1 = time.time()
             #cmd = 'python3 iprscan5.py --goterms --pathways --appl SMART --appl TMHMM --appl CDD --appl Pfam --appl Phobius --appl ProDom --appl SignalP --appl TIGRFAM --appl COILS --appl Gene3D --appl HAMAP --appl MOBIDB --appl PANTHER --appl PIRSF --appl PRINTS --appl PROSITE --appl SFLD --email=matthys@gmail.com --outfile={} --outformat=tsv --quiet {}'.format(tempfasta, tempfasta)
@@ -46,18 +46,17 @@ def request(jobq):
                 try: 
                     p = subprocess.Popen(cmd, shell=True)
                     p.wait()
-                    print(p.communicate())
+                    #print(p.communicate())
                     assert p.returncode == 0
                     with open(tempfasta+'.tsv.txt') as f:
                         res = f.read()
                         if res != '':
                             data = io.StringIO(res)
                             df = pd.read_csv(data, names=names, sep='\t', header=None)
-                            print(df)
+                            #print(df)
                             results.append(df)
-                        
                         done = True
-                    print('Job took {} seconds'.format(str(time.time()-t1)))
+                    #print('Job took {} seconds'.format(str(time.time()-t1)))
                 except:
                     time.sleep(60)
                     print('Failed, retrying {}'.format(tempfasta))
