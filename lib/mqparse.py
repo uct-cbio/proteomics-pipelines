@@ -1666,13 +1666,13 @@ class mq_txt:
         for row in df.iterrows():
             ind = row[0]
             ko = rfunc.up2ko(row[1]['Leading Protein'])
-            df[ ind, 'Leading Protein Kegg Orthology ID'] = ko.ko
-            df[ ind, 'Leading Protein Kegg Orthology Name'] = ko.name
+            df.loc[ ind, 'Leading Protein Kegg Orthology ID'] = ko.ko
+            df.loc[ ind, 'Leading Protein Kegg Orthology Name'] = ko.name
             if not ko.ko == '':
                 _ = ko.ko +' ' + ko.name 
             else:
                 _ = ""
-            df[ ind, 'Leading Protein Kegg Orthology'] = _
+            df.loc[ ind, 'Leading Protein Kegg Orthology'] = _
         return df
 
     def up2ko(self, up):
