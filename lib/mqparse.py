@@ -333,11 +333,6 @@ class mq_txt:
         self.proteingroups = self.host_proteins(self.proteingroups, self.reference_fasta)
         assert len(self.proteingroups) == len(set(self.proteingroups['Identifier'].tolist()))
         
-        print(self.proteingroups['Identifier'].tolist())
-        print('*')
-        print(set(self.proteingroups['Identifier'].tolist()))
-        print(len(self.proteingroups['Identifier'].tolist()))
-        print(len(set(self.proteingroups['Identifier'].tolist())))
         assert len(self.proteingroups['Identifier'].tolist()) == len(set(self.proteingroups['Identifier'].tolist()))
         self.msms = pd.read_csv(self.txt_path +'/msms.txt', sep='\t')
         self.target_proteingroups = self.exclude_reverse(self.proteingroups)
@@ -504,7 +499,6 @@ class mq_txt:
         target_proteins['Source'] = target_proteins['Source'].apply(lambda x : x.split(';')[0])
         agg_cols = {}
         for col in target_proteins.columns.tolist():
-            print(col)
             if str(col).startswith('Intensity'):
                 agg_cols[col] = sum
         agg_cols['Potential contaminant'] = 'first'
@@ -948,7 +942,6 @@ class mq_txt:
         #pept2taxa_sc.to_csv(self.unipept_dir + '/pept2taxa_family_sc.csv')
       
     def ips_gsea(self, indir, outpath, design, table, genecol, kocol, keggid='hsa', pval=0.05):
-        print(indir, outpath, design, table, genecol, kocol, keggid, pval)
         indir = '/'.join(indir.split('//'))
         outpath = '/'.join(outpath.split('//'))
         
@@ -960,7 +953,6 @@ class mq_txt:
         group_table = indir + '/combined.csv'
         cols = table.columns.tolist()
         
-        #print(table['Row names'].tolist())
         cmd = 'gage.R --indir {} --outdir {} --keggid {} --design {} --table {} --genecol {} --kocol {} --pval {}'.format(indir, outpath, keggid, design, group_table, genecol, kocol,  pval)
         process = subprocess.Popen(cmd, shell=True)
         process.wait()

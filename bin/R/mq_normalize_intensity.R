@@ -45,15 +45,11 @@ impute_method=opt$i
 
 cols <- names(data)[grep(quant_regex,names(data))] 
 
-print(cols)
 
 rownames(data) <- data$Identifier
 
 orig_data <- data
 
-#print(cols)
-
-#print(data$Identifier)
 
 #data[, cols] <- lapply(data[,cols], function(x) {replace(x, is.infinite(x), NA)})
 #data[, cols] <- t(t(data[, cols])/colSums(data[, cols]))
@@ -63,8 +59,6 @@ ceil <- max(data[,cols], na.rm=TRUE)
 meds <- colMedians(as.matrix(data[,cols]), na.rm = TRUE)
 
 max_med = max(meds, na.rm=TRUE)
-print(meds)
-print(max_med)
 #un.nrm[, cols] <- lapply(un.nrm[, cols], function(x){ log2(x)})
 data <- data[rowSums(is.na(data[,cols])) < length(cols), ] # exclude rows where all are NA
 #identifier <- data$Identifier
@@ -108,7 +102,6 @@ dev.off()
 print(paste("Normalizing data using: ", norm_method,sep=''))
 
 checkData(as.matrix(exprs(eset)), verbose=TRUE)
-print(head(eset))
 baseline = min(exprs(eset), na.rm=TRUE)
 if (norm_method != 'none') {
     x.nrm <- normalise(eset, norm_method) 
@@ -155,7 +148,6 @@ dev.off()
 data <- ms2df(x.nrm)
 #data[, cols] <- lapply(data[, cols], function(x){2^x})
 #data[, cols] <- lapply(data[, cols], function(x){replace(x, x == NA,  0)})
-print(data[is.na(data)] )
 
 imputedpath = paste(outdir, "msnbase/normalized.csv",sep='')
 write.csv(data, file= imputedpath)

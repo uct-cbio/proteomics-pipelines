@@ -55,15 +55,11 @@ data <- data[,cols]
 
 
 fpie <- function( df , names, valcols, outfile) {
-    print(head(df))
     df$slices <- rowSums(df[,valcols, drop=FALSE] )
     df$slices <- df$slices/sum(df$slices) * 100
     df$slices <- round(df$slices, 2)
     df$label <- paste(names, " ", df$slices, ' %', sep="")
     df$label[df$slices < 0.5] <- ""
-    print(head(df$label))
-    print(length(names))
-    print(length(df))
     jpeg(outfile, width=1000,height=900)
     par(mar=c(6,12,6,12)+.1)
     pie(df$slices, labels = df$label,  main="Summed intensity (%)")
@@ -96,7 +92,6 @@ for (group in groups){
     names(variances)[names(variances) == 'var'] <- group 
     
     # Lets annotated the data with group means
-    print(group)
     other[,group ] <- rowMeans(data[,groupcols, drop=FALSE])
 }
 
@@ -162,9 +157,6 @@ for ( i in seq_along(colnames(contrast.matrix))) {
         
     sig_list <- sig_table$rn 
 
-    print(cntrst)
-    #print(sig_list)
-    print('*') 
     pval_lists[[cntrst]] <- sig_list
     
     write.table(table, paste(limma_dir,'limma_', cntrst, '_intensity.csv',sep=''), sep=',', row.names=FALSE)
@@ -184,7 +176,6 @@ pvals <- unlist(pval_lists, recursive = TRUE, use.names = FALSE)
 
 pval_data <- data[rownames(data) %in% pvals, ]
 
-print(pvals)
 #########################################################
 # Hierarchical clustering and correlation of replicates #
 ######################################################### 
