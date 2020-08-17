@@ -401,7 +401,7 @@ def limma(df1, treated, control):   # pandas df, treated columns, control column
     ctot = ct + tr
     rdf =pandas2ri.py2ri(df)
     ro.globalenv['data'] = rdf
-    c="str(data)"; 
+    #c="str(data)"; 
     c= "data[ is.na(data) ] <- NA"; ro.r(c)
     c="tr <- c{}".format(tuple(tr)); ro.r(c); 
     c="ct <- c{}".format(tuple(ct)); ro.r(c); 
