@@ -59,14 +59,6 @@ genecol = opt$genecol
 pval = opt$pval
 kocol =opt$kocol
 table_path <- opt$table 
-print(inpath)
-print(path)
-print(species)
-print(genecol)
-print(pval)
-print(kocol) 
-print(table_path)
-print(opt$design)
 
 source(opt$design)
 
@@ -133,11 +125,6 @@ if(file.exists(reactome_path)){
 infile <- basename(table_path)
 
 table <- read.csv(table_path)
-print(head(table))
-print(cols)
-#print(table$Row.names)
-#row.names(table) <- table$Row.names
-#quit()
 
 table[, cols] <- lapply(table[, cols], function(x){replace(x, x == 0,  NA)})
 table[, cols] <- lapply(table[, cols], function(x){ log2(x)})
@@ -148,11 +135,8 @@ gi_table <- cbind(table)
 #ids <-  as.character(gi_table$Identifier)
 #genecol <- as.character(gi_table[,genecol])
 #gi_table <- gi_table[,cols]
-#print(length(ids))
-#print(length(row.names(gi_table)))
 #row.names(gi_table) <- ids
 #gi_table
-#print(head(gi_table))
 #quit()
 
 s <- strsplit(as.character(gi_table[,genecol]), split = ";")
@@ -160,7 +144,6 @@ newtable <- data.frame( Identifier = rep(gi_table$Identifier, sapply(s, length))
 refdata <- merge( table, newtable, by="Identifier", all.y = TRUE)
 refdata <- refdata[!duplicated(refdata$gi), ]
 ref <- refdata$gi
-print(head(refdata))
 refdata <- refdata[,cols]
 print('refcols')
 #row.names(refdata) <-ref
@@ -176,9 +159,7 @@ print('kocols')
 .rowNamesDF(kodata, make.names=TRUE) <- ko
 
 
-#print(head((refdata))
 
-#print(rownames(refdata))
 
 ids <- table$Identifier
 
@@ -197,7 +178,6 @@ analyse <- function(data, gset, refcols, sampcols, samedir) {
 }
 
 cutoff <- pval
-print(cutoff)
 
 current_wd = getwd()
 
@@ -212,7 +192,6 @@ less <- function(res, samp, ref) {
     less <- less[less$`p.val` < cutoff, ]
   }
   less <- less[!is.na(less$`p.val`),]
-  #print(head(less))
   return(less)
 }
 
@@ -226,7 +205,6 @@ greater <- function(res, samp, ref) {
     greater <- greater[greater$`p.val` < cutoff, ]
   }
   greater <- greater[!is.na(greater$`p.val`),]
-  #print(head(greater))
   return(greater)
 }
 
@@ -237,14 +215,10 @@ both <- function(res, samp, ref) {
   both$Exposed <- samp
   both$Control <- ref
   both$Coregulated <- "Both"
-  print(both)
   if (length(row.names(both)) > 0) {
-      print(cutoff)
       both <- both[both$`p.val` < cutoff, ]
-      print(head(both)) 
   }
   both <- both[!is.na(both$`p.val`),]
-  #print(head(greater))
   return(both)
 }
 
@@ -252,7 +226,6 @@ process <- function(table , refcols, sampcols, outpath, refdata, samp, ref) {
   # IPR
   print("IPR")
   dir.create(outpath, showWarnings = FALSE)
-  print(outpath)
   setwd(outpath)
   #operon_table <- table[row.names(table) %in% operon.set,]
   res <- analyse(table, ipr.set, refcols, sampcols, TRUE)
@@ -426,7 +399,6 @@ refmap <- data.frame(f, cols)
 comparisons <- colnames(contrast.matrix)
 
 for ( comp in comparisons){
-    print(comp)
     setwd(current_wd)
     vals <- strsplit(comp,'-')
     # Get the reference cols
