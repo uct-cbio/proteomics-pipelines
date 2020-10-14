@@ -3,16 +3,45 @@
 set -e
 set -a
 
-res1=$(date +%s.%N)
 
-mgf_folder=$1
-fasta_file=$2
-output_folder=$3/metanovo
-config_file=$4
+res1=$(date +%s.%N)
+if [ $# -eq 0 ]; then
+            CONFPATH="$( cd "$(dirname "$0")" && cd ../config >/dev/null 2>&1 ; pwd -P )"
+            echo $CONFPATH
+            cat ${CONFPATH}/metanovo_config.sh; exit 0
+fi
+
+config_file=$1
+if [ ! -f "$config_file" ]; then
+      echo $config_file does not exist; exit 1
+fi
+
+source ${config_file}
+
+mgf_folder=${MGF_FOLDER}
+if [ ! -d "$mgf_folder" ]; then
+      echo $mgf_folder does not exist; exit 1
+fi
+
+fasta_file=${FASTA_FILE}
+if [ ! -d "$fasta_file" ]; then
+      echo $fasta_file does not exist; exit 1
+fi
+
+output_folder=${OUTPUT_FOLDER}/metanovo
+if [ ! -d "$output_folder" ]; then
+      echo $output_folder does not exist; exit 1
+fi
+
+echo ${config_file}
+echo ${mgf_folder}
+echo ${fasta_file}
+echo ${output_folder}
+mkdir ${output_folder}/temp
+export $TMPDIR=${output_folder}/temp
 
 # set the TMPDIR to outputfolder...SQLITE crashes on ilifu..TO DO
 
-source ${config_file}
 
 source compomics.sh
 

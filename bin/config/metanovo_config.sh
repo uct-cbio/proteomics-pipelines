@@ -20,7 +20,7 @@ JVM_Xms=1024M    # Minimum memory allocated to each Java thread
 
 mn_specificity='specific'      # specific|semi-specific|unspecific   (Enzyme specificity)
 mn_enzymes='Trypsin'           # 'Trypsin, no P rule'|'Trypsin'|'Whole protein' (Enzyme rule)
-mn_max_missed_cleavages=3      # Number of enzymatic missed cleavages
+mn_max_missed_cleavages=2      # Number of enzymatic missed cleavages
 mn_filter_database=1           # Wether  to filter the database using MetaNovo algorithm (1=yes, 0=no)
 mn_search_database=1           # Wether to run an !X Tandem search. if 'mn_filter_database=0', then the search will run against the original database without MetaNovo (1=yes, 0=no)
 mn_prot_fdr_value=1            # Protein level FDR for !X Tandem post-processing
