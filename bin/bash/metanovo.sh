@@ -24,7 +24,7 @@ if [ ! -d "$mgf_folder" ]; then
 fi
 
 fasta_file=${FASTA_FILE}
-if [ ! -d "$fasta_file" ]; then
+if [ ! -f "$fasta_file" ]; then
       echo $fasta_file does not exist; exit 1
 fi
 
@@ -38,7 +38,7 @@ echo ${mgf_folder}
 echo ${fasta_file}
 echo ${output_folder}
 mkdir ${output_folder}/temp
-export $TMPDIR=${output_folder}/temp
+export TMPDIR=${output_folder}/temp
 
 # set the TMPDIR to outputfolder...SQLITE crashes on ilifu..TO DO
 
