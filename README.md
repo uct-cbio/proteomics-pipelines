@@ -50,11 +50,11 @@ Pull an example FASTA file from UniProt. Create your own by combining multiple s
 wget ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
 gunzip uniprot_sprot.fasta.gz
 ~~~~
-Obtain some example mgf files from PRIDE (or use your own!). We will use files obtained from patients with colorectal cancer (https://www.ebi.ac.uk/pride/archive/projects/PXD00046).
+Obtain some example mgf files from PRIDE (or use your own!). We will use files obtained from https://www.ebi.ac.uk/pride/archive/projects/PXD029490.
 ~~~~
 mkdir mgf_files && cd mgf_files
-wget https://www.ebi.ac.uk/pride/data/archive/2014/08/PXD000467/YJC_100327SNOCRC_B11b372_N01.mgf
-wget https://www.ebi.ac.uk/pride/data/archive/2014/08/PXD000467/YJC_100327SNOCRC_B11b372_N02.mgf
+wget http://ftp.pride.ebi.ac.uk/pride/data/archive/2021/11/PXD029490/20180326_CAINO_01_band02.mgf
+wget http://ftp.pride.ebi.ac.uk/pride/data/archive/2021/11/PXD029490/20180326_CAINO_01_band03.mgf
 ~~~~
 ### 4. Create MetaNovo config file for your analysis
 Copy the metanovo config file in bin/config/metanovo_config.sh to the project folder and edit.
