@@ -2,7 +2,8 @@
 set -e
 
 # Change build context to the root of the directory
-version=v1.8
+version=v2.2
+
 name=bio
 docker pull thyscbio/${name}:${version} && echo "version exists" && exit 1 || echo "Gonna build."
 cd ../..

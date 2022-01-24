@@ -68,7 +68,7 @@ WORKDIR /home/bio/
 
 # Install BLAST
 RUN apt-get -y install wget
-ENV blast_ftp ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.10.0+-x64-linux.tar.gz
+ENV blast_ftp ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.12.0+-x64-linux.tar.gz
 RUN mkdir /home/bio/blast && cd /home/bio/blast && wget ${blast_ftp} && tar -zxvf * && rm -rf *.tar.gz 
 RUN cd /home/bio/blast/ncbi*/bin && cp * /usr/local/bin
 
@@ -115,10 +115,10 @@ RUN git clone https://github.com/bmbolstad/preprocessCore.git && cd preprocessCo
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
 # Leave to end
-ENV PATH $PATH::/home/bio/bin/python:/home/bio/bin/R:/home/bio/bin/bash:/home/bio/bin/python
-ENV PYTHONPATH $PYTHONPATH::/home/bio/lib
+#ENV PATH $PATH::/home/bio/bin/python:/home/bio/bin/R:/home/bio/bin/bash:/home/bio/bin/python
+#ENV PYTHONPATH $PYTHONPATH::/home/bio/lib
 
-COPY lib /home/bio/lib
-COPY bin /home/bio/bin
+#COPY lib /home/bio/lib
+#COPY bin /home/bio/bin
 
 

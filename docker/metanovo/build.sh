@@ -1,7 +1,7 @@
 #/usr/bin/env bash
 
 # Change build context to the root of the directory
-version=v1.6
+version=v1.8
 
 name=metanovo
 

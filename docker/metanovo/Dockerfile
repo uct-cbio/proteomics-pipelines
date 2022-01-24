@@ -1,4 +1,4 @@
-FROM cbio/bio:latest
+FROM thyscbio/bio:v2.2
 
 ENV http_proxy ${http_proxy}
 ENV https_proxy ${https_proxy}
@@ -18,13 +18,19 @@ COPY bin/python/chunkfasta.py /home/bio/chunkfasta.py
 
 # SearchGUI
 RUN wget http://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/3.2.20/SearchGUI-3.2.20-mac_and_linux.tar.gz
+#RUN wget http://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/4.1.7/SearchGUI-4.1.7-mac_and_linux.tar.gz
 RUN tar -zxvf *.tar.gz && rm -rf *.tar.gz
 #RUN wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.6.0+-x64-linux.tar.gz
 #RUN tar -zxvf *.tar.gz && rm -rf *.tar.gz
 
 # Compomics utilities
-RUN wget http://genesis.ugent.be/maven2/com/compomics/utilities/4.11.19/utilities-4.11.19.zip
-RUN unzip utilities-4.11.19.zip && rm -rf *.zip
+#RUN wget http://genesis.ugent.be/maven2/com/compomics/utilities/4.11.19/utilities-4.11.19.zip
+#RUN unzip utilities-4.11.19.zip && rm -rf *.zip
+
+
+
+RUN wget http://genesis.ugent.be/maven2/com/compomics/utilities/4.12.0/utilities-4.12.0.zip
+RUN unzip utilities-4.12.0.zip && rm -rf *.zip
 
 # DeNovoGUI
 RUN wget http://genesis.ugent.be/maven2/com/compomics/denovogui/DeNovoGUI/1.15.11/DeNovoGUI-1.15.11-mac_and_linux.tar.gz
@@ -50,7 +56,7 @@ RUN apt-get update && apt-get -y install qtdeclarative5-dev
 #RUN apt-get -y install libeigen3-dev libwildmagic-dev libxerces-c-dev libboost-all-dev libsvn-dev libgsl-dev libbz2-dev
 #RUN cd /openms && mkdir OpenMS-build && cd OpenMS-build && cmake -DOPENMS_CONTRIB_LIBS="/openms/contrib-build" -DBOOST_USE_STATIC=OFF ../OpenMS && make 
 
-RUN wget http://www.proteoannotator.org/datasets/releases/ProteoAnnotator-1.7.86.zip && unzip ProteoAnnotator-*.zip
+#RUN wget http://www.proteoannotator.org/datasets/releases/ProteoAnnotator-1.7.86.zip && unzip ProteoAnnotator-*.zip
 
 
 #ENV LD_LIBRARY_PATH /openms/OpenMS-build/lib:$LD_LIBRARY_PATH
