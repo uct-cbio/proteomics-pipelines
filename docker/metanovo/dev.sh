@@ -7,8 +7,7 @@ exit 1
 fi                                                                 
 set -a
 
-metanovo_version=v1.8
-
+metanovo_version=v1.9.1
 CONFIG_FILE=$(realpath $1)
 echo $CONFIG_FILE
 . ${CONFIG_FILE}

@@ -30,48 +30,25 @@ RUN tar -zxvf *.tar.gz && rm -rf *.tar.gz
 
 
 RUN wget http://genesis.ugent.be/maven2/com/compomics/utilities/4.12.0/utilities-4.12.0.zip
+#RUN wget http://genesis.ugent.be/maven2/com/compomics/utilities/5.0.38/utilities-5.0.38.zip
 RUN unzip utilities-4.12.0.zip && rm -rf *.zip
 
 # DeNovoGUI
 RUN wget http://genesis.ugent.be/maven2/com/compomics/denovogui/DeNovoGUI/1.15.11/DeNovoGUI-1.15.11-mac_and_linux.tar.gz
 RUN tar -zxvf *.tar.gz && rm -rf *.tar.gz
 
-# PeptideShaker
-RUN wget http://genesis.ugent.be/maven2/eu/isas/peptideshaker/PeptideShaker/1.16.13/PeptideShaker-1.16.13.zip
-RUN unzip PeptideShaker-*.zip && rm *.zip
-
-# MSGFPlus
-
-#RUN mkdir /msgfplus && cd /msgfplus && wget https://omics.pnl.gov/sites/default/files/MSGFPlus.zip && unzip MSGFPlus.zip
 RUN apt-get update && apt-get -y install git cmake
 RUN apt-get update && apt-get -y  install qtbase5-dev
 RUN apt-get update && apt-get -y install qtdeclarative5-dev
 
 
-#RUN mkdir /openms && cd /openms && git clone  https://github.com/OpenMS/contrib.git
-#RUN cd /openms && mkdir contrib-build && cd contrib-build && cmake -DBUILD_TYPE=ALL -DNUMBER_OF_JOBS=4 ../contrib 
-#RUN cd /openms && git clone https://github.com/OpenMS/OpenMS.git 
-#RUN apt-get -y install build-essential cmake autoconf patch libtool automake
-#RUN apt-get -y install qt4-default libqtwebkit-dev
-#RUN apt-get -y install libeigen3-dev libwildmagic-dev libxerces-c-dev libboost-all-dev libsvn-dev libgsl-dev libbz2-dev
-#RUN cd /openms && mkdir OpenMS-build && cd OpenMS-build && cmake -DOPENMS_CONTRIB_LIBS="/openms/contrib-build" -DBOOST_USE_STATIC=OFF ../OpenMS && make 
-
-#RUN wget http://www.proteoannotator.org/datasets/releases/ProteoAnnotator-1.7.86.zip && unzip ProteoAnnotator-*.zip
-
-
-#ENV LD_LIBRARY_PATH /openms/OpenMS-build/lib:$LD_LIBRARY_PATH
 ENV PATH="$PATH::/home/bio/bin/python:/home/bio/bin/R:/home/bio/bin/bash"
 
 ENV PYTHONPATH="$PYTHONPATH::/home/bio/lib"
 ENV SG_PATH="/home/bio/SearchGUI*"
 ENV DG_PATH="/home/bio/DeNovoGUI*"
 ENV CU_PATH="/home/bio/utilities*"
-ENV TANDEM_DEFAULT_INPUT_PATH="/home/bio/default_input.xml"
-ENV TANDEM_INPUT_STYLE_PATH="/home/bio/tandem-input-style.xsl"
-ENV MZIDLIB_PATH="/home/bio/ProteoAnnotator-*/mzidlib*"
 
-COPY docker/metanovo/tandem-input-style.xsl /home/bio/tandem-input-style.xsl
-COPY docker/metanovo/default_input.xml /home/bio/default_input.xml
 
 COPY lib /home/bio/lib
 COPY bin /home/bio/bin
@@ -81,8 +58,3 @@ COPY docker/metanovo/sshloginfile /home/bio/sshloginfile
 
 ENV PATH="/home/bio/bin/bash:/home/bio/bin/python:${PATH}"
 
-# Install mono
-#RUN apt-get -y install mono-complete
-
-# Run denovo
-#CMD /root/bin/bash/metanovo.sh  2>&1 | tee /root/output/log.txt 
