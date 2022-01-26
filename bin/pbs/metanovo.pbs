@@ -11,11 +11,7 @@
 #  MetaNovo v9   #
 ##################
 
-#CONFIG=${HOME}/cbio-pipelines/proteomics/bin/config/metanovo_test_config.sh
-CONFIG=/home/mpotgieter1/lustre/clemens_out/metanovo1.sh
-#CONFIG=/home/mpotgieter1/lustre/suereta_out/metanovo1.sh
-#CONFIG=/home/mpotgieter1/lustre/thys_out/metanovo1.sh
-#CONFIG=/home/mpotgieter1/lustre/nyari_out/metanovo1.sh
+CONFIG=${HOME}/proteomics-pipelines/bin/config/metanovo_config.sh
 
 #####################
 # Paths to software #
@@ -24,14 +20,11 @@ CONFIG=/home/mpotgieter1/lustre/clemens_out/metanovo1.sh
 set -a
 export SG_PATH=${HOME}/software/SearchGUI/SearchGUI-3.2.20
 export DG_PATH=${HOME}/software/DeNovoGUI/DeNovoGUI-1.15.11
-export CU_PATH=${HOME}/software/utilities/utilities-4.11.19
-export TANDEM_DEFAULT_INPUT_PATH=${HOME}/cbio-pipelines/proteomics/docker/metanovo/default_input.xml
-export TANDEM_INPUT_STYLE_PATH=${HOME}/cbio-pipelines/proteomics/docker/metanovo/tandem-input-style.xsl
-export MZIDLIB_PATH=${HOME}/software/ProteoAnnotator/mzidlib-1.7
+export CU_PATH=${HOME}/software/utilities/utilities-4.12.0
 source ${CONFIG}
 module add chpc/gnu/parallel-20160422
 
-source metanovo.sh ${MGF_FOLDER} ${FASTA_FILE} ${OUTPUT_FOLDER} ${CONFIG} | tee 2>&1 ${OUTPUT_FOLDER}/log.txt
+source metanovo.sh ${CONFIG} | tee 2>&1 ${OUTPUT_FOLDER}/log.txt
 
 
 
