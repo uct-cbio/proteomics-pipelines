@@ -19,7 +19,7 @@ JVM_Xms=1024M    # Minimum memory allocated to each Java thread
 #######################
 
 mn_specificity='specific'      # specific|semi-specific|unspecific   (Enzyme specificity)
-mn_enzymes='Trypsin'           # 'Trypsin, no P rule'|'Trypsin'|'Whole protein' (Enzyme rule)
+mn_enzymes='Trypsin, no P rule'           # 'Trypsin, no P rule'|'Trypsin'|'Whole protein' (Enzyme rule)
 mn_max_missed_cleavages=2      # Number of enzymatic missed cleavages
 
 ######################
@@ -41,7 +41,7 @@ prec_ppm=0
 frag_tol=0.02
 frag_ppm=0
 digestion=0
-enzyme='Trypsin'
+enzyme='Trypsin (no P rule)'
 specificity=0
 mc=2
 fixed_mods="Carbamidomethylation of C"
