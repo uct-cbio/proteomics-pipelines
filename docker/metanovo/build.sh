@@ -1,7 +1,7 @@
 #/usr/bin/env bash
 
 # Change build context to the root of the directory
-version=v1.9.1
+version=v1.9.2
 name=metanovo
 
 docker pull thyscbio/${name}:${version} && echo "version exists" && exit 1 || echo "Gonna build."
