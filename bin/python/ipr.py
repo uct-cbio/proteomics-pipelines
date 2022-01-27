@@ -39,36 +39,36 @@ def request(jobq):
             SeqIO.write(newrec, tempfasta, 'fasta')
             t1 = time.time()
             #cmd = 'python3 iprscan5.py --goterms --pathways --appl SMART --appl TMHMM --appl CDD --appl Pfam --appl Phobius --appl ProDom --appl SignalP --appl TIGRFAM --appl COILS --appl Gene3D --appl HAMAP --appl MOBIDB --appl PANTHER --appl PIRSF --appl PRINTS --appl PROSITE --appl SFLD --email=matthys@gmail.com --outfile={} --outformat=tsv --quiet {}'.format(tempfasta, tempfasta)
-            cmd = 'iprscan5.py --goterms --pathways --email=matthys@gmail.com --outfile={} --outformat=tsv  {}'.format(tempfasta, tempfasta)
+            cmd = 'iprscan5.py --verbose --goterms --pathways --email=matthys@gmail.com --outfile={} --outformat=tsv  {}'.format(tempfasta, tempfasta)
             done=False
             #failures = 0
-            while done == False:
-                t1 = time.time()
-                try: 
-                    p = subprocess.Popen(cmd, shell=True)
-                    p.wait()
-                    #print(p.communicate())
-                    assert p.returncode == 0
-                    if os.path.exists(tempfasta+'.tsv.txt'):
-                        infile = tempfasta+'.tsv.txt'
-                    else:
-                        infile = tempfasta+'.tsv.tsv'
-                    with open(infile) as f:
-                        res = f.read()
-                        if res != '':
-                            data = io.StringIO(res)
-                            df = pd.read_csv(data, names=names, sep='\t', header=None)
-                            #print(df)
-                            results.append(df)
-                        done = True
-                    #print('Job took {} seconds'.format(str(time.time()-t1)))
-                except Exception as e:
-                    time.sleep(60)
-                    print(e)
-                    print('Failed, retrying {}'.format(tempfasta))
-                #failures += 1
-                #if failures > 10:
-                #    done=True
+            #while done == False:
+            t1 = time.time()
+            try: 
+                p = subprocess.Popen(cmd, shell=True)
+                p.wait()
+                print(p.communicate())
+                assert p.returncode == 0
+                if os.path.exists(tempfasta+'.tsv.txt'):
+                    infile = tempfasta+'.tsv.txt'
+                else:
+                    infile = tempfasta+'.tsv.tsv'
+                with open(infile) as f:
+                    res = f.read()
+                    if res != '':
+                        data = io.StringIO(res)
+                        df = pd.read_csv(data, names=names, sep='\t', header=None)
+                        #print(df)
+                        results.append(df)
+                    done = True
+                #print('Job took {} seconds'.format(str(time.time()-t1)))
+            except Exception as e:
+                #time.sleep(60)
+                print(e)
+                print('Failed interproscan query for  {}'.format(tempfasta))
+            #failures += 1
+            #if failures > 10:
+            #    done=True
             shutil.rmtree(tempdir)
 
 workers = []
