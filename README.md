@@ -5,8 +5,7 @@ MetaNovo uses open-source tools to match raw spectra to database entries in a pa
 
 Database matches are stored in an SQLite database, and used to estimate the abundance of proteins using sequence tag matches, taking into account protein length using a normalized spectral abundance factor estimation for each protein in each sample. The MetaNovo algorithm uses the protein abundance level estimation to rank the data, producing a parsimonious list of protein identifiers that can explain all the database matches (such that each spectral match maps to at least one protein in the non-redundant list). Taxonomic representation in this list is calculated using the UniProt FASTA header "OS" entry, and a score for each organism is obtained. Database proteins are re-ranked based on the combined scores for spectral and organism abundance, and a database is exported.
 
-#### Recomended use - MetaNovo with Singularity. Please follow steps 3,4 and 6 below.
-
+#### Recomended use - MetaNovo with Singularity. For this you only need to follow steps 3,4 and 6 below.
 
 ## MetaNovo installation
 
@@ -15,11 +14,10 @@ Database matches are stored in an SQLite database, and used to estimate the abun
 
 ### 2. Install metanovo dependencies
 #### 2.1 The following dependencies will be installed (skip this step if they are already installed):
-##### http://genesis.ugent.be/maven2/com/compomics/utilities/4.11.19/utilities-4.11.19.zip
-##### http://www.proteoannotator.org/datasets/releases/ProteoAnnotator-1.7.86.zip
+##### http://genesis.ugent.be/maven2/com/compomics/utilities/4.12.0/utilities-4.12.0.zip
 ##### http://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/3.2.20/SearchGUI-3.2.20-mac_and_linux.tar.gz
 ##### http://genesis.ugent.be/maven2/com/compomics/denovogui/DeNovoGUI/1.15.11/DeNovoGUI-1.15.11-mac_and_linux.tar.gz
-##### https://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.5.tar.gz
+
 ~~~~
 cd proteomics-pipelines/bin/bash/
 export METANOVO_DEPENDENCIES=${HOME}/software/ # Change the path if needed
@@ -31,14 +29,7 @@ Using a dedicated python virtual environment is highly recommended.
 cd proteomics-pipelines/lib 
 pip3 install -r requirements.txt
 ~~~~
-#### 2.3 Install R dependencies (Optional to enable post-processing with !X Tandem)
-Required dependencies can be installed with a script:
-~~~~
-cd proteomics-pipelines/bin/R
-./install_R_modules.R
-~~~~
-#### 2.4 Install UniPept (Optional, to allow for taxonomic characterization of !X Tandem results)
-https://unipept.ugent.be/clidocs (MetaNovo is tested with UniPept version 1.1.1)
+
 ### 3. Create the project folder 
 Create a project folder to run MetaNovo. Please change to a directory for data storage on your cluster.
 ~~~~
@@ -78,12 +69,9 @@ JVM_Xms=1024M    # Minimum memory allocated to each Java thread
 Configure general parameters for the MetaNovo pipeline.
 ~~~~
 mn_specificity='specific'      # specific|semi-specific|unspecific   (Enzyme specificity)
-mn_enzymes='Trypsin'           # 'Trypsin, no P rule'|'Trypsin'|'Whole protein' (Enzyme rule)
-mn_max_missed_cleavages=3      # Number of enzymatic missed cleavages
-mn_filter_database=1           # Wether  to filter the database using MetaNovo algorithm (1=yes, 0=no)
-mn_search_database=1           # Wether to run an !X Tandem search. if 'mn_filter_database=0', then the search will run against the original database without MetaNovo (1=yes, 0=no)
-mn_prot_fdr_value=1            # Protein level FDR for !X Tandem post-processing
-mn_pep_fdr_value=1             # Peptide level FDR for !X Tandme post-processing
+mn_enzymes='Trypsin, no P rule'           # 'Trypsin, no P rule'|'Trypsin'|'Whole protein' (Enzyme rule)
+mn_max_missed_cleavages=2      # Number of enzymatic missed cleavages
+
 ~~~~
 Configure wich sequencing engines to use with DeNovoGUI. Currently only DirecTag is supported by MetaNovo. http://compomics.github.io/projects/denovogui/wiki/denovocli.html
 ~~~~
@@ -100,7 +88,7 @@ prec_ppm=0
 frag_tol=0.02
 frag_ppm=0
 digestion=0
-enzyme='Trypsin'
+enzyme='Trypsin (no P rule)'
 specificity=0
 mc=2
 fixed_mods="Carbamidomethylation of C"
@@ -224,24 +212,11 @@ module add chpc/gnu/parallel-20160422
 ~~~~
 export SG_PATH=${HOME}/software/SearchGUI/SearchGUI-3.2.20
 export DG_PATH=${HOME}/software/DeNovoGUI/DeNovoGUI-1.15.11
-export CU_PATH=${HOME}/software/utilities/utilities-4.11.19
-export TANDEM_DEFAULT_INPUT_PATH=${HOME}/proteomics-pipelines/docker/metanovo/default_input.xml
-export TANDEM_INPUT_STYLE_PATH=${HOME}/proteomics-pipelines/docker/metanovo/tandem-input-style.xsl
-export MZIDLIB_PATH=${HOME}/software/ProteoAnnotator/mzidlib-1.7
+export CU_PATH=${HOME}/software/utilities/utilities-4.12.0
 ~~~~
 
-#### 5.5 Create !X Tandem config
-When runnng MetaNovo the first time in a project, if "mn_search_database" was selected above, the default !X Tandem configuration file will be created and place in the output folder. Please examine, edit and restart the pipeline. 
-~~~~
-cd my_metanovo_project 
-qsub metanovo.pbs
-~~~~
-Wait for it to complete...
-~~~~
-nano metanovo/default_input.xml
-~~~~
-#### 5.6 Restart the pipeline
-If the pipeline failes at any step, simply restart and the pipeline will continue where it left off.
+#### 5.5 Start the pipeline
+If the pipeline fails at any step, simply restart and the pipeline will continue where it left off.
 ~~~~
 qsub metanovo.pbs
 ~~~~
@@ -256,17 +231,8 @@ cd proteomics-pipelines/singularity/metanovo
 Proceed with Step 3 and 4 above.
 
 ~~~
-singularity shell metanovo_v1.6.img
-Singularity metanovo_v1.6.img:~/my_metanovo_project> metanovo.sh  mgf_files/ uniprot_sprot.fasta /full/path/to/my_metanovo_project/output/ config.sh # Please use the full path to the output folder
-~~~
-This will give the output:
-~~~
-'output//metanovo/config.sh' unchanged.
-Please edit X!Tandem default_input.xml and tandem-input-style.xsl in OUTPUT_FOLDER/metanovo and restart the pipeline
-~~~
-Examine the default X!Tandem configuration files, and proceed if all defaults are suitable.
-~~~
-metanovo.sh  mgf_files/ uniprot_sprot.fasta output/ config.sh
+singularity shell metanovo_v1.9.2.img
+Singularity metanovo_v1.9.2.img:~/my_metanovo_project> metanovo.sh config.sh 
 ~~~
 This process can be performed on local workstatiuon, and Singularity compatible High Performance clusters. 
 
