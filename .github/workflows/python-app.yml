@@ -14,7 +14,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: thyscbio/bio:v1.9
+    container: thyscbio/bio:v2.2
     steps:
     - uses: actions/checkout@v2
     #- name: Set up Python 3.8
