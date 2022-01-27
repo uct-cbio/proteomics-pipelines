@@ -31,6 +31,10 @@ from io import StringIO
 import this
 
 # Library to parse MaxQuant txt
+try:
+        from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+        from yaml import Loader, Dumper
 
 def name_dct():
     names = {'sf_novel_m':'Six Frame Novel Only\n(M start)',
@@ -215,7 +219,7 @@ class mq_txt:
     def __init__(self, config, exclude_contaminants=True):
         c = "library('FSA')"; ro.r(c)
         with open(config) as f:
-            self.config = yaml.load(f.read())
+            self.config = yaml.load(f.read(), Loader=Loader)
         self.txt_path = self.config['mq_txt']
         self.outdir = self.config['outdir']
         design = self.config['design']
