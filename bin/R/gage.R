@@ -5,6 +5,7 @@ library('limma')
 library('pathview')
 library('optparse')
 
+
 print("Starting gene set enrichment")
 option_list = list(
 make_option(c("-o", "--outdir"),
@@ -138,7 +139,6 @@ gi_table <- cbind(table)
 #row.names(gi_table) <- ids
 #gi_table
 #quit()
-
 s <- strsplit(as.character(gi_table[,genecol]), split = ";")
 newtable <- data.frame( Identifier = rep(gi_table$Identifier, sapply(s, length)), gi = unlist(s))
 refdata <- merge( table, newtable, by="Identifier", all.y = TRUE)
@@ -241,19 +241,19 @@ process <- function(table , refcols, sampcols, outpath, refdata, samp, ref) {
   }
  
   # EC
-  print("EC")
-  #operon_table <- table[row.names(table) %in% operon.set,]
-  res <- analyse(table, ec.set, refcols, sampcols, TRUE)
-  gt <- greater(res, samp, ref)
-  if (length(row.names(gt)) > 0) {
-    gt$SameDir <- "True"
-    write.csv(gt, paste('EC.up.', infile,sep=''))
-  }
-  ls <- less(res, samp, ref)
-  if (length(row.names(ls)) > 0) {
-    ls$SameDir <- "True"
-    write.csv(ls,paste('EC.down.', infile, sep=''))
-  }
+  #print("EC")
+  ##operon_table <- table[row.names(table) %in% operon.set,]
+  #res <- analyse(table, ec.set, refcols, sampcols, TRUE)
+  #gt <- greater(res, samp, ref)
+  #if (length(row.names(gt)) > 0) {
+  #  gt$SameDir <- "True"
+  #  write.csv(gt, paste('EC.up.', infile,sep=''))
+  #}
+  #ls <- less(res, samp, ref)
+  #if (length(row.names(ls)) > 0) {
+  #  ls$SameDir <- "True"
+  #  write.csv(ls,paste('EC.down.', infile, sep=''))
+  #}
 
 
   #res <- analyse(table, ipr.set, refcols, sampcols, FALSE)
@@ -268,42 +268,42 @@ process <- function(table , refcols, sampcols, outpath, refdata, samp, ref) {
   #  write.csv(ls, paste(outpath, '/IPR.down.both.csv',sep=''))
   #}
 
-  print("KEGG")
-  ref.d <- refdata[, sampcols]-rowMeans(refdata[, refcols, drop=FALSE])
-  ko.d <- kodata[, sampcols]-rowMeans(kodata[, refcols, drop=FALSE])
+  #print("KEGG")
+  #ref.d <- refdata[, sampcols]-rowMeans(refdata[, refcols, drop=FALSE])
+  #ko.d <- kodata[, sampcols]-rowMeans(kodata[, refcols, drop=FALSE])
   
-  res <- analyse(table, kegg.set, refcols, sampcols, TRUE)
-  ls <- less(res, samp, ref)
-  if (length(row.names(ls)) > 0) {
-    ls$SameDir <- "True"
-    ls$RowName = paste(species, ls$RowName,sep = "")
-    write.csv(ls, paste('KEGG.down.', infile, sep=''))
-    less_ids <- row.names(ls) 
-    try(pv.out.list <- sapply(less_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste(species, pid, sep=''), species = species)))
-    try(pv.out.list <- sapply(less_ids, function(pid) pathview(gene.data = ko.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste('ko', pid, sep=''), species = 'ko')))
-  }
+  #res <- analyse(table, kegg.set, refcols, sampcols, TRUE)
+  #ls <- less(res, samp, ref)
+  #if (length(row.names(ls)) > 0) {
+  #  ls$SameDir <- "True"
+  #  ls$RowName = paste(species, ls$RowName,sep = "")
+  #  write.csv(ls, paste('KEGG.down.', infile, sep=''))
+  #  less_ids <- row.names(ls) 
+  #  try(pv.out.list <- sapply(less_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste(species, pid, sep=''), species = species)))
+  #  try(pv.out.list <- sapply(less_ids, function(pid) pathview(gene.data = ko.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste('ko', pid, sep=''), species = 'ko')))
+  #}
   
-  gt <- greater(res, samp, ref)
-  if (length(row.names(gt)) > 0) {
-    gt$SameDir <- "True"
-    gt$RowName = paste(species, gt$RowName,sep = "")
-    write.csv(gt, paste('KEGG.up.', infile, sep=''))
-    greater_ids <- row.names(gt)
-    try(pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste(species, pid, sep=''), species = species)))
-    try(pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ko.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste('ko', pid, sep=''), species = 'ko')))
-  }
+  #gt <- greater(res, samp, ref)
+  #if (length(row.names(gt)) > 0) {
+  #  gt$SameDir <- "True"
+  #  gt$RowName = paste(species, gt$RowName,sep = "")
+  #  write.csv(gt, paste('KEGG.up.', infile, sep=''))
+  #  greater_ids <- row.names(gt)
+  #  try(pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste(species, pid, sep=''), species = species)))
+  #  try(pv.out.list <- sapply(greater_ids, function(pid) pathview(gene.data = ko.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste('ko', pid, sep=''), species = 'ko')))
+  #}
   
-  res <- analyse(table, kegg.set, refcols, sampcols, FALSE)
-  #print(summary(res))
-  bt <- both(res, samp, ref)
-  if (length(row.names(bt)) > 0) {
-    bt$SameDir <- "False"
-    bt$RowName = paste(species, bt$RowName,sep = "")
-    write.csv(bt, paste('KEGG.both.', infile,sep= ''))
-    both_ids <- row.names(bt)
-  try(pv.out.list <- sapply(both_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste(species, pid, sep=''), species = species)))
-  try(pv.out.list <- sapply(both_ids, function(pid) pathview(gene.data = ko.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste('ko', pid, sep=''), species = 'ko')))
-  } 
+  #res <- analyse(table, kegg.set, refcols, sampcols, FALSE)
+  ##print(summary(res))
+  #bt <- both(res, samp, ref)
+  #if (length(row.names(bt)) > 0) {
+  #  bt$SameDir <- "False"
+  #  bt$RowName = paste(species, bt$RowName,sep = "")
+  #  write.csv(bt, paste('KEGG.both.', infile,sep= ''))
+  #  both_ids <- row.names(bt)
+  #try(pv.out.list <- sapply(both_ids, function(pid) pathview(gene.data = ref.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste(species, pid, sep=''), species = species)))
+  #try(pv.out.list <- sapply(both_ids, function(pid) pathview(gene.data = ko.d, kegg.native = T, out.suffix = infile, same.layer = F, pathway.id = paste('ko', pid, sep=''), species = 'ko')))
+  #} 
   
   # BP
   print("BP")
@@ -400,6 +400,8 @@ comparisons <- colnames(contrast.matrix)
 
 for ( comp in comparisons){
     setwd(current_wd)
+    #print("here")
+    #print(comp)
     vals <- strsplit(comp,'-')
     # Get the reference cols
     ref  = as.character(vals[[1]][2])
@@ -413,4 +415,8 @@ for ( comp in comparisons){
     sampcols <- as.numeric(rownames(sampdf))
 
     outpath <-paste( path, '/', samp, '_', ref ,sep='' ) 
+    #print(head(table))
+    #print(refcols)
+    #print(sampcols)
+
     process(table, refcols, sampcols, outpath, refdata, samp, ref) }

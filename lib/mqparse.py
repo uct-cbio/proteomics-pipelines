@@ -958,10 +958,18 @@ class mq_txt:
         cols = table.columns.tolist()
         
         cmd = 'gage.R --indir {} --outdir {} --keggid {} --design {} --table {} --genecol {} --kocol {} --pval {}'.format(indir, outpath, keggid, design, group_table, genecol, kocol,  pval)
-        process = subprocess.Popen(cmd, shell=True)
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        out, err = process.communicate()
+        if not out is None:
+            out = out.decode('utf-8')
+            print(out)
+        if not err is None:
+            err = err.decode('utf-8')
+            print(err)
         process.wait()
         assert process.returncode == 0
-    
+        #return
+
         for name, group in table.groupby('Component'):
             assert len(group) == len(group['Identifier'].dropna())
             #print(group['Row.name'].tolist())
@@ -1088,12 +1096,13 @@ class mq_txt:
                     kegg2pg[_].add(pg)
             except:
                 pass
-        proteins.apply(kegg2gene,axis=1)
-        kegg_df = pd.DataFrame()
-        kegg_df['KEGG_ID'] = pd.Series(list(kegg2pg.keys()))
-        kegg_df['KEGG_ID'] = kegg_df['KEGG_ID'].apply(str)
-        kegg_df['GENES'] = pd.Series(list(kegg2pg.values())).apply( lambda x  : '|'.join(x))
-        kegg_df.to_csv(outpath +'/kegg2proteingroups.csv')
+        if len(list(kegg2pg.keys())) > 0:
+            proteins.apply(kegg2gene,axis=1)
+            kegg_df = pd.DataFrame()
+            kegg_df['KEGG_ID'] = pd.Series(list(kegg2pg.keys()))
+            kegg_df['KEGG_ID'] = kegg_df['KEGG_ID'].apply(str)
+            kegg_df['GENES'] = pd.Series(list(kegg2pg.values())).apply( lambda x  : '|'.join(x))
+            kegg_df.to_csv(outpath +'/kegg2proteingroups.csv')
 
 
         # EC
@@ -1111,41 +1120,42 @@ class mq_txt:
             except:
                 pass
         data.apply(ec, axis=1)
-        with open( outpath +'/accession2ec.p', 'wb') as f:
-            pickle.dump( id2ec, f)
-        ec_df = pd.DataFrame()
-        ec_vals = list(ecs)
-        ec_df['EC_ID'] = pd.Series(ec_vals)
-        ec_df.to_csv(outpath +'/ec_terms.csv')
-        
-        def ecintersect(val):
-            vals = val.split(';')
-            setlist = []
-            for val in vals:
-                vset = id2ec[val]
-                setlist.append(vset)
-            union = set.union(*setlist)
-            if len(union) > 0 :
-                return ';'.join(union)
-        proteins['_ec.term.union']   = proteins[id_col].apply(parse_ids).apply(ecintersect)
+        if len(list(id2ec.keys())) > 0:
+            with open( outpath +'/accession2ec.p', 'wb') as f:
+                pickle.dump( id2ec, f)
+            ec_df = pd.DataFrame()
+            ec_vals = list(ecs)
+            ec_df['EC_ID'] = pd.Series(ec_vals)
+            ec_df.to_csv(outpath +'/ec_terms.csv')
+            
+            def ecintersect(val):
+                vals = val.split(';')
+                setlist = []
+                for val in vals:
+                    vset = id2ec[val]
+                    setlist.append(vset)
+                union = set.union(*setlist)
+                if len(union) > 0 :
+                    return ';'.join(union)
+            proteins['_ec.term.union']   = proteins[id_col].apply(parse_ids).apply(ecintersect)
 
-        ec2pg = defaultdict(set)
-        
-        def ec2gene(df):
-            ec_terms = df['_ec.term.union']
-            pg = df['Identifier']
-            try:
-                ec_terms = ec_terms.split(';')
-                for _ in ec_terms:
-                    ec2pg[_].add(pg)
-            except:
-                pass
-        proteins.apply(ec2gene,axis=1)
-        ec_df = pd.DataFrame()
-        ec_df['EC_ID'] = pd.Series(list(ec2pg.keys()))
-        ec_df['EC_ID'] = ec_df['EC_ID'].apply(str)
-        ec_df['GENES'] = pd.Series(list(ec2pg.values())).apply( lambda x  : '|'.join(x))
-        ec_df.to_csv(outpath +'/ec2proteingroups.csv')
+            ec2pg = defaultdict(set)
+            
+            def ec2gene(df):
+                ec_terms = df['_ec.term.union']
+                pg = df['Identifier']
+                try:
+                    ec_terms = ec_terms.split(';')
+                    for _ in ec_terms:
+                        ec2pg[_].add(pg)
+                except:
+                    pass
+            proteins.apply(ec2gene,axis=1)
+            ec_df = pd.DataFrame()
+            ec_df['EC_ID'] = pd.Series(list(ec2pg.keys()))
+            ec_df['EC_ID'] = ec_df['EC_ID'].apply(str)
+            ec_df['GENES'] = pd.Series(list(ec2pg.values())).apply( lambda x  : '|'.join(x))
+            ec_df.to_csv(outpath +'/ec2proteingroups.csv')
 
         # REACTOME
         id2reactome= defaultdict(set)

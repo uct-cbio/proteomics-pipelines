@@ -69,35 +69,39 @@ save(mf.set, file=paste(outpath, '/mfset.Rdata', sep=''))
 ###############
 
 keggpath <- paste(outpath,'/kegg2proteingroups.csv', sep='') 
-ktab <- read.csv(keggpath, colClasses=c("character","character"))
-ktab <- data.frame(lapply(ktab, as.character), stringsAsFactors=FALSE)
+if(file.exists(keggpath)){
 
-#ktab$ID<- with(ktab, paste0(kegg_id, KEGG_ID))
+    ktab <- read.csv(keggpath, colClasses=c("character","character"))
+    ktab <- data.frame(lapply(ktab, as.character), stringsAsFactors=FALSE)
 
-ktab$ID <- ktab$KEGG_ID
-ktab$GENES <- lapply(ktab$GENES, vct)
+    #ktab$ID<- with(ktab, paste0(kegg_id, KEGG_ID))
 
-kegg.set <- as.list(ktab$GENES)
-names(kegg.set) <- as.list(ktab$ID)
-save(kegg.set, file=paste(outpath, '/keggset.Rdata', sep=''))
+    ktab$ID <- ktab$KEGG_ID
+    ktab$GENES <- lapply(ktab$GENES, vct)
+
+    kegg.set <- as.list(ktab$GENES)
+    names(kegg.set) <- as.list(ktab$ID)
+    save(kegg.set, file=paste(outpath, '/keggset.Rdata', sep=''))
+}
 
 ###############
 #    EC     #
 ###############
 
 ecpath <- paste(outpath,'/ec2proteingroups.csv', sep='') 
-etab <- read.csv(ecpath, colClasses=c("character","character"))
-etab <- data.frame(lapply(etab, as.character), stringsAsFactors=FALSE)
+if(file.exists(ecpath)){
+    etab <- read.csv(ecpath, colClasses=c("character","character"))
+    etab <- data.frame(lapply(etab, as.character), stringsAsFactors=FALSE)
 
-#ktab$ID<- with(ktab, paste0(kegg_id, KEGG_ID))
+    #ktab$ID<- with(ktab, paste0(kegg_id, KEGG_ID))
 
-etab$ID <- etab$EC_ID
-etab$GENES <- lapply(etab$GENES, vct)
+    etab$ID <- etab$EC_ID
+    etab$GENES <- lapply(etab$GENES, vct)
 
-ec.set <- as.list(etab$GENES)
-names(ec.set) <- as.list(etab$ID)
-save(ec.set, file=paste(outpath, '/ecset.Rdata', sep=''))
-
+    ec.set <- as.list(etab$GENES)
+    names(ec.set) <- as.list(etab$ID)
+    save(ec.set, file=paste(outpath, '/ecset.Rdata', sep=''))
+}
 ###############
 #    METACYC     #
 ###############

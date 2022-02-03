@@ -39,7 +39,8 @@ def request(jobq):
             SeqIO.write(newrec, tempfasta, 'fasta')
             t1 = time.time()
             #cmd = 'python3 iprscan5.py --goterms --pathways --appl SMART --appl TMHMM --appl CDD --appl Pfam --appl Phobius --appl ProDom --appl SignalP --appl TIGRFAM --appl COILS --appl Gene3D --appl HAMAP --appl MOBIDB --appl PANTHER --appl PIRSF --appl PRINTS --appl PROSITE --appl SFLD --email=matthys@gmail.com --outfile={} --outformat=tsv --quiet {}'.format(tempfasta, tempfasta)
-            cmd = 'iprscan5.py --verbose --goterms --pathways --email=matthys@gmail.com --outfile={} --outformat=tsv  {}'.format(tempfasta, tempfasta)
+            cmd = 'iprscan5.py --verbose --goterms --pathways --email=matthys.potgieter@gmail.com --outfile={} --outformat=tsv  {}'.format(tempfasta + '.tsv', tempfasta)
+            print(cmd)
             done=False
             #failures = 0
             #while done == False:
@@ -49,10 +50,10 @@ def request(jobq):
                 p.wait()
                 print(p.communicate())
                 assert p.returncode == 0
-                if os.path.exists(tempfasta+'.tsv.txt'):
-                    infile = tempfasta+'.tsv.txt'
-                else:
-                    infile = tempfasta+'.tsv.tsv'
+                #if os.path.exists(tempfasta+'.tsv.txt'):
+                #    infile = tempfasta+'.tsv.txt'
+                #else:
+                infile = tempfasta+'.tsv'
                 with open(infile) as f:
                     res = f.read()
                     if res != '':
