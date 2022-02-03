@@ -53,7 +53,7 @@ def request(jobq):
                 #if os.path.exists(tempfasta+'.tsv.txt'):
                 #    infile = tempfasta+'.tsv.txt'
                 #else:
-                infile = tempfasta+'.tsv'
+                infile = tempfasta+'.tsv.tsv.tsv'
                 with open(infile) as f:
                     res = f.read()
                     if res != '':
@@ -103,8 +103,8 @@ if len(results) == 0:
 else:
     res = pd.concat(results)
 
-print(res.head())
-res.to_csv(sys.argv[1] + '.tsv', sep='\t', index=False, header=False)
+if len(res) > 0:
+    res.to_csv(sys.argv[1] + '.tsv', sep='\t', index=False, header=False)
 print('Results: ', len(results))
 print('Time elapsed: ', time.time()-t1)
 
