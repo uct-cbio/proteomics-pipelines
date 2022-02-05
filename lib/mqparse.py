@@ -470,8 +470,8 @@ class mq_txt:
         self.normalized_target_proteins = pd.read_csv(norm_prots) 
         
         # unipept anslysis
-        self.unipept()
-        
+        self.unipept(self.unipept_dir)
+        self.unipept_agg(self.normalized_target_peptides, self.unipept_dir) 
         # diff analusis
         self.diff_analysis()
         
@@ -768,16 +768,19 @@ class mq_txt:
             list_kw_dunn(names, data, 'PEP', 'Category', outpath)
     
 
-    def unipept(self):
-        if not (os.path.exists(self.unipept_dir +'unipept.sh')):
-            w = open(self.unipept_dir + 'unipept.sh','w')
+    def unipept(self, unipept_dir):
+        if not (os.path.exists(unipept_dir +'/unipept.sh')):
+            w = open(unipept_dir + '/unipept.sh','w')
             w.write('\ncat ../peptides/target_peptides_list.txt | prot2pept | peptfilter | tr I L | sort -u | unipept pept2lca -e -a > pept2lca.txt')
             #w.write('\ncat ../peptides/target_peptides_list.txt | prot2pept | peptfilter | tr I L | sort -u | unipept pept2taxa -e -a > pept2taxa.txt')
             w.close()
-            cmd = 'cd {} && chmod 700 unipept.sh && ./unipept.sh > unipept.log 2>&1 && exit'.format(self.unipept_dir)
-            process = subprocess.Popen(cmd, shell=True)
+            cmd = 'cd {} && chmod 700 unipept.sh && ./unipept.sh > unipept.log 2>&1 && exit'.format(unipept_dir)
+            process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+            out, err = process.communicate()
             process.wait()
             assert process.returncode == 0
+
+    def unipept_agg(self, normalized_target_peptides, unipept_dir):
 
         agg_cols = {'taxon_name':'first', 
                     'taxon_id':'first', 
@@ -806,7 +809,7 @@ class mq_txt:
                       'phylum_name',
                       'phylum_id']
 
-        for col in self.normalized_target_peptides.columns.tolist():
+        for col in normalized_target_peptides.columns.tolist():
             if col.startswith('Experiment.'):
                 agg_cols[col] = np.sum
                 clean_cols.append(col)
@@ -816,12 +819,11 @@ class mq_txt:
         lca_level_cutoff = 1
         
         # pept2lca
-        self.pept2lca = pd.read_csv(self.unipept_dir + '/pept2lca.txt')
-        lca_peptides = pd.merge(self.normalized_target_peptides,self.pept2lca,how='left',left_on='Sequence',right_on='peptide')
+        pept2lca = pd.read_csv(unipept_dir + '/pept2lca.txt')
+        lca_peptides = pd.merge(normalized_target_peptides,pept2lca,how='left',left_on='Sequence',right_on='peptide')
         lca_peptides['PeptideCount'] = 1
         lca_peptides['taxon_name'].replace(np.nan, "unassigned", inplace=True)
-
-        lca_peptides.to_csv(self.unipept_dir + '/pept2lca_peptides.csv')
+        lca_peptides.to_csv(unipept_dir + '/pept2lca_peptides.csv')
         pept2lca_taxon_sc = lca_peptides.groupby(lca_peptides.taxon_name).agg(agg_cols) 
         pept2lca_taxon_sc = pept2lca_taxon_sc[pept2lca_taxon_sc['PeptideCount'] >= lca_level_cutoff ]
         lca_taxon_ids = pept2lca_taxon_sc['taxon_id'].tolist()
@@ -829,7 +831,7 @@ class mq_txt:
         pept2lca_taxon_sc['Identifier'] = pept2lca_taxon_sc['taxon_name']
         newcols = [i for i in clean_cols if i in pept2lca_taxon_sc.columns.tolist()]
         pept2lca_taxon_sc = pept2lca_taxon_sc[newcols]
-        pept2lca_taxon_sc.to_csv(self.unipept_dir + '/pept2lca_taxon_sc.csv')
+        pept2lca_taxon_sc.to_csv(unipept_dir + '/pept2lca_taxon_sc.csv')
 
         # pept2lca species
         pept2lca_species_sc = lca_peptides.groupby(lca_peptides.species_name).agg(agg_cols) 
@@ -840,7 +842,7 @@ class mq_txt:
         del pept2lca_species_sc['taxon_id']
         newcols = [i for i in clean_cols if i in pept2lca_species_sc.columns.tolist()]
         pept2lca_species_sc = pept2lca_species_sc[newcols]
-        pept2lca_species_sc.to_csv(self.unipept_dir + '/pept2lca_species_sc.csv')
+        pept2lca_species_sc.to_csv(unipept_dir + '/pept2lca_species_sc.csv')
         
         # pept2lca genus
         pept2lca_genus_sc = lca_peptides.groupby(lca_peptides.genus_name).agg(agg_cols) 
@@ -854,7 +856,8 @@ class mq_txt:
         
         newcols = [i for i in clean_cols if i in pept2lca_genus_sc.columns.tolist()]
         pept2lca_genus_sc = pept2lca_genus_sc[newcols]
-        pept2lca_genus_sc.to_csv(self.unipept_dir + '/pept2lca_genus_sc.csv')
+        if len(pept2lca_genus_sc) > 0:
+            pept2lca_genus_sc.to_csv(unipept_dir + '/pept2lca_genus_sc.csv')
         
         # pept2lca family
         pept2lca_family_sc = lca_peptides.groupby(lca_peptides.family_name).agg(agg_cols) 
@@ -869,7 +872,8 @@ class mq_txt:
         del pept2lca_family_sc['genus_id']
         newcols = [i for i in clean_cols if i in pept2lca_family_sc.columns.tolist()]
         pept2lca_famliy_sc = pept2lca_family_sc[newcols]
-        pept2lca_family_sc.to_csv(self.unipept_dir + '/pept2lca_family_sc.csv')  
+        if len(pept2lca_family_sc) > 0:
+            pept2lca_family_sc.to_csv(unipept_dir + '/pept2lca_family_sc.csv')  
         
         # pept2lca phylum
         pept2lca_phylum_sc = lca_peptides.groupby(lca_peptides.phylum_name).agg(agg_cols) 
@@ -885,7 +889,7 @@ class mq_txt:
         del pept2lca_phylum_sc['family_id']
         newcols = [i for i in clean_cols if i in pept2lca_phylum_sc.columns.tolist()]
         pept2lca_phylum_sc = pept2lca_phylum_sc[newcols]
-        pept2lca_phylum_sc.to_csv(self.unipept_dir + '/pept2lca_phylum_sc.csv')
+        pept2lca_phylum_sc.to_csv(unipept_dir + '/pept2lca_phylum_sc.csv')
         
         ## pept2taxa 
         #self.pept2taxa = pd.read_csv(self.unipept_dir + '/pept2taxa.txt')
@@ -1468,21 +1472,28 @@ class mq_txt:
         self.normalized_target_proteins = pd.read_csv(self.diff_dir + '/peptide_normalization/msnbase/normalized_protein_ibaq.csv') 
     
     def diff(self, exp_design, infile, outpath):
+        if not os.path.exists(infile):
+            return
         cmd = 'mq_diff.R -d {} -f {} -o {}'.format(exp_design, infile, outpath)
+        print(cmd)
         process = subprocess.Popen(cmd, shell=True)
         process.wait()
-        var = pd.read_csv(outpath +'/group_variance/group_variance.txt',sep='\t')
-        var = var.dropna(axis=1, how='all')
-        if len(var) > 0:
-            names = []
-            data = []
-            for col in var:
-                names.append(col)
-                data.append(var[col].tolist())
-            list_kw_dunn(names, data, 'Variance', 'Group', outpath + '/group_variance/' )
+        assert process.returncode == 0
+        if os.path.exists(outpath +'/group_variance/group_variance.txt'):
+            var = pd.read_csv(outpath +'/group_variance/group_variance.txt',sep='\t')
+            var = var.dropna(axis=1, how='all')
+            if len(var) > 0:
+                names = []
+                data = []
+                for col in var:
+                    names.append(col)
+                    data.append(var[col].tolist())
+                list_kw_dunn(names, data, 'Variance', 'Group', outpath + '/group_variance/' )
         
 
     def summarize_diff(self, inpath, outfile):
+        if not os.path.exists(inpath + '/limma'):
+            return
         w = open(outfile, 'w')
         
         ##################
@@ -1688,6 +1699,8 @@ class mq_txt:
         if not os.path.exists(outpath):
             os.mkdir(outpath)
         data = df[df[agg_col].notnull()]
+        if len(data) == 0:
+            return
         x = data.assign(**{agg_col:data[agg_col].str.split(';')})
         data = pd.DataFrame({col:np.repeat(x[col].values, x[agg_col].str.len()) for col in x.columns.difference([agg_col])}).assign(**{agg_col:np.concatenate(x[agg_col].values)})[x.columns.tolist()]
         agg_cols = {}

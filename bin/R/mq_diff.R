@@ -31,6 +31,8 @@ exp_design=opt$d
 source(exp_design)
 
 data <- read.csv(path)
+if ( dim(data)[1] <= 1 ) {
+    quit() }
 data <- data[with(data, order(-rowSums(data[,cols, drop=FALSE]))), ]
 
 #ratios <- t(t(data[, cols])/colSums(data[, cols]))
@@ -46,6 +48,7 @@ rownames(data) <- data$Identifier
 Identifier <- data$Identifier
 data$Row.Name <- Identifier
 other <- data[, (colnames(data) %in% c("Identifier", "Row.Name", "Leading.Protein","Leading.gene"))]
+
 #names <- paste(Identifier, '(', data$PeptideCount, ' peptides, ', data$MS.MS.Count,' msms)',sep='')
 
 #data <- data[,cols]
@@ -136,17 +139,15 @@ dir.create(limma_dir, showWarnings = TRUE, recursive = FALSE, mode = "0777")
 pval_lists <- vector("list", length(colnames(contrast.matrix)))
 #qval_lists_0_005 <- vector("list", length(colnames(contrast.matrix)))
 
-
 for ( i in seq_along(colnames(contrast.matrix))) {
     cntrst <-  colnames(contrast.matrix)[i]
     cntrst_ <- strsplit(cntrst, '-')
     Exposed <- cntrst_[[1]][1]
     Control <- cntrst_[[1]][2]
     table <- topTable(fit2,adjust="BH", coef=i, n=Inf)
-    table <- merge(other, table, by=0)
+    table <- merge(other, table, by=0 ) #'Identifier')
     table$Exposed.Mean <- table[,Exposed]
     table$Control.Mean <- table[,Control]
-
     rownames(table) <- table$Identifier
     table$Exposed <- Exposed
     table$Control <- Control
@@ -247,7 +248,10 @@ hm <- function( df, heatmap_path, file,  main, xlab , factors) {
     dev.off() }
 
 # Heatmap of global data set
+if (length(rownames(data)) >=2) {
 hm(data, heatmap_path, "heatmap_intensity_all.png", "Log2(Intensity) - All", "log2(Intensity)", f)
+}
+
 
 if (length(rownames(pval_data)) >=2) {
     hm(pval_data, heatmap_path, "heatmap_significant.png", "Log2(Intensity) - Adj. p-value < 0.05", "log2(Intensity)", f)
@@ -303,10 +307,12 @@ pc <- function( df, path, file, var.axes ) {
     #suppressGraphics(ggsave(fp, g, device = png))
     }
 
-pc(data, pca_path, "all_identified_pca.png", FALSE)
-#print(head(data))
-#quit()
-pc(data, pca_path, "all_identified_pca_labelled.png", TRUE)
+if (length(rownames(data)) >=2) {
+    pc(data, pca_path, "all_identified_pca.png", FALSE)
+    #print(head(data))
+    #quit()
+    pc(data, pca_path, "all_identified_pca_labelled.png", TRUE)
+}
 
 if (length(rownames(pval_data)) >=2) {
     pc(pval_data, pca_path, "qval_0_05_identified_pca_labelled.png", TRUE)
