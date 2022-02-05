@@ -10,6 +10,7 @@ Database matches are stored in an SQLite database, and used to estimate the abun
 ## MetaNovo installation
 
 ### 1. Clone the repository
+
 `git clone https://github.com/uct-cbio/proteomics-pipelines.git`
 
 ### 2. Install metanovo dependencies
