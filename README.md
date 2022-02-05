@@ -232,8 +232,8 @@ cd proteomics-pipelines/singularity/metanovo
 Proceed with Step 3 and 4 above.
 
 ~~~
-singularity shell metanovo_v1.9.2.img
-Singularity metanovo_v1.9.2.img:~/my_metanovo_project> metanovo.sh config.sh 
+singularity shell metanovo_v1.9.4.img
+Singularity metanovo_v1.9.4.img:~/my_metanovo_project> metanovo.sh config.sh 
 ~~~
 This process can be performed on local workstatiuon, and Singularity compatible High Performance clusters. 
 
