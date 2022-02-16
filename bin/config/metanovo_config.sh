@@ -3,8 +3,9 @@
 ######################
 
 MGF_FOLDER=${HOME}/my_metanovo_project/mgf_files
-FASTA_FILE=${HOME}/my_metanovo_project/uniprot_sprot.fasta
+FASTA_FILE=${HOME}/my_metanovo_project/combined.fasta # or just use swissprot for demonstration only purpose. We recommend all UniProt
 OUTPUT_FOLDER=${HOME}/my_metanovo_project/output
+
 ######################
 # Processing Control #
 ######################
@@ -13,6 +14,7 @@ CHUNKSIZE=100000 # size to split fasta for paralellel processing
 THREAD_LIMIT=2   # How many threads to use per node
 JVM_Xmx=10000M   # Maximum memory allocated to each Java thread
 JVM_Xms=1024M    # Minimum memory allocated to each Java thread
+
 
 #######################
 # MetaNovo parameters #
@@ -25,7 +27,8 @@ mn_max_missed_cleavages=2      # Number of enzymatic missed cleavages
 ######################
 # DeNovoGUI Settings #
 ######################
-
+# Configure wich sequencing engines to use with DeNovoGUI. Currently only DirecTag is supported by MetaNovo. 
+# http://compomics.github.io/projects/denovogui/wiki/denovocli.html
 dg_pepnovo=0
 dg_pnovo=0
 dg_novor=0
@@ -34,6 +37,8 @@ dg_directag=1
 #################################
 # Identification Parameters CLI #
 #################################
+# Configure the identification parameters for DenovoGUI and PeptideMapper. The DirecTag 'directag_max_tag_count' can be reduced to 1 for very large datasets. Support for other search engines is in progress. The default settings below should be sufficient for most applications. 
+#https://github.com/compomics/compomics-utilities/wiki/IdentificationParametersCLI
 
 # Spectrum matching parameters
 prec_tol=0.02
