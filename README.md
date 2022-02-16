@@ -37,12 +37,15 @@ Create a project folder to run MetaNovo. Please change to a directory for data s
 cd .. # Change to the folder for data storage here 
 mkdir my_metanovo_project && cd my_metanovo_project
 ~~~~
-Pull an example FASTA file from UniProt. Create your own by combining multiple species proteomes or use the whole of UniProt. For our example we will use only curated sequences avaiable in SwissProt.
+Pull an example FASTA file from UniProt. Create your own by combining multiple species proteomes or use the whole of UniProt. For our example we will use only curated sequences available in SwissProt. For demonstration purposes, use only uniprot_sprot.fasta. For accurate results, please use more MGF (>10) files, and use the whole of UniProt. The suggested method is to concatenate UniProt trembl, sprot and sprot_varsplic databases into a single FASTA file.
 ~~~~
-wget ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
-gunzip uniprot_sprot.fasta.gz
+wget https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz
+wget https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
+wget https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot_varsplic.fasta.gz
+gunzip *.fasta.gz
+cat *.fast > combined.fasta
 ~~~~
-Obtain some example mgf files from PRIDE (or use your own!). We will use files obtained from https://www.ebi.ac.uk/pride/archive/projects/PXD029490.
+Obtain some example mgf files from PRIDE (or use your own!). We will use files obtained from https://www.ebi.ac.uk/pride/archive/projects/PXD029490. The more MGF files you use, the more accurate the database should be - but the longer the analysis may take.
 ~~~~
 mkdir mgf_files && cd mgf_files
 wget http://ftp.pride.ebi.ac.uk/pride/data/archive/2021/11/PXD029490/20180326_CAINO_01_band02.mgf
@@ -57,7 +60,7 @@ cp proteomics-pipelines/bin/config/metanovo_config.sh my_metanovo_project/config
 Configure the full system paths to the data to be analyzed. A folder containing the MGF files, a FASTA file to search, and and output folder needs to be specified. Please modify the paths for your specific system and data storage requirements. Data files do not all need to be in the same location, but are done so here for simplicity.
 ~~~~
 MGF_FOLDER=${HOME}/my_metanovo_project/mgf_files
-FASTA_FILE=${HOME}/my_metanovo_project/uniprot_sprot.fasta
+FASTA_FILE=${HOME}/my_metanovo_project/combined.fasta # or just use swissprot for demonstration only purpose. We recommend all UniProt
 OUTPUT_FOLDER=${HOME}/my_metanovo_project
 ~~~~
 Configure resource use parameters. The THREAD_LIMIT multiplied by JVM_Xmx should be less than the total RAM available per node, and THREAD_LIMIT should be one less than the total number of available cores. "Out of Memory" issues can be corrected by reducing CHUNKSIZE, assuming the THREAD_LIMIT and JVM_Xmx are correct.
