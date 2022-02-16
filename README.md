@@ -43,7 +43,7 @@ wget https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase
 wget https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
 wget https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot_varsplic.fasta.gz
 gunzip *.fasta.gz
-cat *.fast > combined.fasta
+cat *.fasta > combined.fasta
 ~~~~
 Obtain some example mgf files from PRIDE (or use your own!). We will use files obtained from https://www.ebi.ac.uk/pride/archive/projects/PXD029490. The more MGF files you use, the more accurate the database should be - but the longer the analysis may take.
 ~~~~
