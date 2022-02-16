@@ -242,6 +242,15 @@ This process can be performed on local workstatiuon, and Singularity compatible 
 
 The database is saved as <output_folder>/metanovo/metanovo.fasta
 
+#### 7. MetaNovo with Docker
+Proceed with Step 3 and 4 above. Then:
+~~~
+cd proteomics-pipelines/docker/metanovo 
+./run.sh ${HOME}/my_metanovo_project/config.sh 
+~~~
+
+The database is saved as <output_folder>/metanovo/metanovo.fasta
+
 # Run the tests!
 ~~~~
 git clone https://thys_potgieter@bitbucket.org/thys_potgieter/cbio-proteogenomics-tests.git
