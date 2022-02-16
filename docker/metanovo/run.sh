@@ -7,15 +7,14 @@ exit 1
 fi                                                                 
 set -a
 
+metanovo_version=v1.9.4
+
 CONFIG_FILE=$(realpath $1)
-
-source ${CONFIG_FILE}
-
+echo $CONFIG_FILE
+. ${CONFIG_FILE}
 FASTA_BASE=$(basename $FASTA_FILE)
-
-docker run -it --rm -v ${MGF_FOLDER}:/root/mgf \
-    -v ${FASTA_FILE}:/root/${FASTA_BASE} \
-    -v ${OUTPUT_FOLDER}:/root/output \
-    -v ${CONFIG_FILE}:/root/config.sh  \
-    -e CONFIG_FILE=${CONFIG_FILE} \
-    cbio/metanovo:latest metanovo.sh /root/mgf /root/${FASTA_BASE} /root/output /root/config.sh 
+sudo docker run -it --rm -v ${MGF_FOLDER}:/root/my_metanovo_project/mgf_files \
+    -v ${FASTA_FILE}:/root/my_metanovo_project/${FASTA_BASE} \
+    -v ${OUTPUT_FOLDER}:/root/my_metanovo_project/output \
+    -v ${CONFIG_FILE}:/root/my_metanovo_project/config.sh  \
+    thyscbio/metanovo:${metanovo_version} metanovo.sh /root/my_metanovo_project/config.sh 

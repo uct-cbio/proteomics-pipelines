@@ -7,13 +7,14 @@ exit 1
 fi                                                                 
 set -a
 
-metanovo_version=v1.9.2
+metanovo_version=v1.9.4
 
 CONFIG_FILE=$(realpath $1)
 echo $CONFIG_FILE
 . ${CONFIG_FILE}
 FASTA_BASE=$(basename $FASTA_FILE)
 repo_path=$HOME/repos/proteomics-pipelines
+echo $repo_path
 sudo docker run -it --rm -v ${MGF_FOLDER}:/root/my_metanovo_project/mgf_files \
     -v ${FASTA_FILE}:/root/my_metanovo_project/${FASTA_BASE} \
     -v ${OUTPUT_FOLDER}:/root/my_metanovo_project/output \
