@@ -61,7 +61,7 @@ Configure the full system paths to the data to be analyzed. A folder containing 
 ~~~~
 MGF_FOLDER=${HOME}/my_metanovo_project/mgf_files
 FASTA_FILE=${HOME}/my_metanovo_project/combined.fasta # or just use swissprot for demonstration only purpose. We recommend all UniProt
-OUTPUT_FOLDER=${HOME}/my_metanovo_project
+OUTPUT_FOLDER=${HOME}/my_metanovo_project/output
 ~~~~
 Configure resource use parameters. The THREAD_LIMIT multiplied by JVM_Xmx should be less than the total RAM available per node, and THREAD_LIMIT should be one less than the total number of available cores. "Out of Memory" issues can be corrected by reducing CHUNKSIZE, assuming the THREAD_LIMIT and JVM_Xmx are correct.
 ~~~~
