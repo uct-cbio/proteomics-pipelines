@@ -1,5 +1,5 @@
 # proteomics-pipelines
-A repo with a proteogenomics and metaproteomics pipeline developed by Matthys Potgieter.
+A repo with computational pipelines for pathogen virulence and metaproteome analysis developed by Matthys Potgieter.
 
 ## Pipelines
 [MetaNovo](MetaNovo.md)
