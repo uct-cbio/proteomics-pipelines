@@ -2,4 +2,5 @@
 A repo with a proteogenomics and metaproteomics pipeline developed by Matthys Potgieter.
 
 ## Pipelines
-[a relative link](MetaNovo.md)
+[MetaNovo](MetaNovo.md)
+[MQProteogenomics](MQProteogenomics.md)
