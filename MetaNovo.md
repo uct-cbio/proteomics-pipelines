@@ -1,5 +1,3 @@
-[a relative link](other_file.md)
-
 # MetaNovo 
 MetaNovo is an open-source pipeline that integrates existing tools with a custom algorithm to produce targeted databases for mass spectrometry analysis. As inputs it requires raw mass spectrometry data in MGF format, and a UniProt FASTA file to search. 
 
