@@ -1,4 +1,4 @@
-FROM thyscbio/bio:v1.4
+FROM thyscbio/bio:v2.2
 
 ENV http_proxy ${http_proxy}
 ENV https_proxy ${https_proxy}
