@@ -149,8 +149,13 @@ def parse_ids(ids):
     ids = ids.split(';')
     new_ids = []
     for i in ids:
+        reverse = False
+        if i.startswith('REV__'):
+            reverse=True
         if '|' in i:
             new = i.split('|')[1]
+            if reverse == True:
+                new = 'REV__' + new
         else:
             new = i
         new_ids.append(new)
@@ -161,10 +166,11 @@ def parse_groups(ids):
     ids = ids.split(';')
     new_ids = []
     for i in ids:
-        if '|' in i:
+        
+        if i .startswith('tr|') or i.startswith('sp|'):
             new = i.split('|')[2].split('_')[1]
         else:
-            new = i
+            new = "Undefined"
         new_ids.append(new)
     new_ids = ';'.join(new_ids)
     return new_ids
@@ -222,6 +228,25 @@ class mq_txt:
             self.config = yaml.load(f.read(), Loader=Loader)
         self.txt_path = self.config['mq_txt']
         self.outdir = self.config['outdir']
+        if not os.path.exists(self.outdir):
+            os.mkdir(self.outdir)
+        # logic to make sure the configs are not changed during the process of restarting the pipeline. If yuo want to change the parameters, create a new outfolder
+        saved_config = self.outdir + '/config.yml'
+        if os.path.exists(saved_config):
+            print("The run is already completed")
+            return
+
+        saved_config_temp = self.outdir + '/.config.yml'
+        if not os.path.exists(saved_config_temp):
+            with open(saved_config_temp, 'w') as outfile:
+                yaml.dump(self.config, outfile, default_flow_style=False)
+        with open(saved_config_temp) as f:
+            temp_config = yaml.load(f.read(), Loader=Loader)
+            if temp_config != self.config:
+                print("The config has changed! Not proceeding")
+                return
+        ###########
+
         design = self.config['design']
         exclude_contaminants = self.config['exclude_contaminants']
         if not exclude_contaminants == True:
@@ -247,14 +272,15 @@ class mq_txt:
             if column.startswith('Intensity '):
                 name = column.split('Intensity ')[1]
                 samples.append(name)
-        samples.append('peptides')  # 'iBAQ peptides' 
+        #samples.append('peptides')  # 'iBAQ peptides' 
         if not os.path.exists(design):
             self.design = pd.DataFrame()
             self.design['sample'] = pd.Series(samples)
             self.design['rename'] = pd.Series(samples)
+            self.design['exclude'] = '-'
             self.design['LEVEL_1'] = 'Group_1'
             self.design.to_csv(design, index=False)
-            print("Please edit {}/design.csv, then restart the analysis.".format(self.outdir))
+            print("Please edit {}, then restart the analysis.".format(design))
             return
         else:
             self.design=pd.read_csv(design)
@@ -267,7 +293,11 @@ class mq_txt:
         for row in self.design.iterrows():
             rename = row[1]['rename']
             sample = row[1]['sample']
-            exclude = str(row[1]['exclude']).strip()
+            if 'exclude' in row[1]:
+                # excludes a sample from the analysis
+                exclude = str(row[1]['exclude']).strip()
+            else:
+                exclude = '-'
             row_exclude = []
             frm = 'Intensity {}'.format(sample)
             assert frm in self.peptides.columns # Check that the column exists
@@ -296,7 +326,12 @@ class mq_txt:
         assert len(self.proteingroups) == len(list(set(self.proteingroups['Identifier'].tolist())))
         self.proteingroups['Leading Protein'] = self.proteingroups['Protein IDs'].apply(parse_ids).apply(lambda x : x.split(';')[0])
         self.proteingroups['Leading Species'] = self.proteingroups['Protein IDs'].apply(parse_groups).apply(lambda x : x.split(';')[0])
+        
+        #if 'reference_fasta' in self.config:
         self.reference_fasta = list(SeqIO.parse(self.config['reference_fasta'], 'fasta'))
+        #else:
+        #    assert 'reference_proteome_id' in self.config
+
         self.search_fasta = list(SeqIO.parse(self.config['search_fasta'],'fasta'))
         self.proteingroups = self.leading_protein_gene(self.proteingroups.copy(), self.search_fasta, self.reference_fasta)
         assert 'Leading.gene' in self.proteingroups.columns
@@ -487,7 +522,11 @@ class mq_txt:
             kocol='Leading.Protein.Kegg.Orthology.ID'
             self.ips_gsea(outpath, gsea_dir, design, table, genecol=genecol , kocol=kocol)
             self.summarize_gsea(gsea_dir, gsea_dir + '/summary.txt', self.config, level)
-   
+        
+        # persist the current version of the config so that the pipeline doesnt re-run if sucessfully completed
+        os.rename(saved_config_temp, saved_config)
+
+
     def qc(self, config, design,  outpath, summary, target_peptides_, target_proteins_):
         print("Starting QC")
         if not os.path.exists(outpath):

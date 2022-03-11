@@ -13,8 +13,7 @@ import yaml
 import mqparse
 
 
-config = yaml.load(open(sys.argv[1]))
-
+config = yaml.load(open(sys.argv[1]), Loader=yaml.Loader)
 output = sys.argv[2]
 
 output = os.path.abspath(output)
@@ -39,7 +38,6 @@ for sample in samples:
     strain_samples[st].append(sample)
 
 exp_cols = [i for i in peptides.columns if i.startswith('Experiment')]
-
 #print(peptides[exp_cols])
 #peptides = peptides[:20] # DEV
 #peptide_sequences = peptides['Sequence'].tolist()

@@ -15,13 +15,13 @@ import json
 #loader = importlib.machinery.SourceFileLoader('config', sys.argv[1])
 #config = loader.load_module()
 
-config = yaml.load(open(sys.argv[1]).read())
+config = yaml.load(open(sys.argv[1]).read(), Loader=yaml.CLoader)
 #print(config)
 
 output = sys.argv[2]
 
 try:
-    os.mkdir(output +'/uniprot')
+    os.makedirs(output +'/uniprot')
 except:
     shutil.rmtree(output +'/uniprot')
     os.mkdir(output +'/uniprot')
@@ -33,18 +33,18 @@ proteome = config['reference_proteome_id']
 taxid = config['reference_taxid']
 path = output +'/{}'.format(proteome)
 try:
-    os.mkdir(path)
+    os.makedirs(path)
 except:
     pass
 
 c1='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/README'
-c2='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Bacteria/{}_{}.fasta.gz'.format(proteome, taxid)
-c3='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Bacteria/{}_{}.gene2acc.gz'.format(proteome, taxid)
-c4='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Bacteria/{}_{}.idmapping.gz'.format(proteome, taxid)
-c4='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Bacteria/{}_{}_DNA.fasta.gz'.format(proteome, taxid)
-c5='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Bacteria/{}_{}_DNA.miss.gz'.format(proteome, taxid)
-c6='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Bacteria/{}_{}_additional.fasta.gz'.format(proteome, taxid)   
-c7='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Bacteria/{}_{}.idmapping.gz'.format(proteome, taxid)   
+c2='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Bacteria/{}/{}_{}.fasta.gz'.format(proteome, proteome, taxid)
+c3='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Bacteria/{}/{}_{}.gene2acc.gz'.format(proteome, proteome, taxid)
+c4='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Bacteria/{}/{}_{}.idmapping.gz'.format(proteome, proteome, taxid)
+c4='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Bacteria/{}/{}_{}_DNA.fasta.gz'.format(proteome, proteome, taxid)
+c5='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Bacteria/{}/{}_{}_DNA.miss.gz'.format(proteome, proteome,  taxid)
+c6='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Bacteria/{}/{}_{}_additional.fasta.gz'.format(proteome, proteome,  taxid)   
+c7='ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Bacteria/{}/{}_{}.idmapping.gz'.format(proteome, proteome,  taxid)   
 
 # Unzip everything
 c8="cd {} && gunzip * && rm -rf *.gz".format(path)
@@ -52,6 +52,7 @@ c8="cd {} && gunzip * && rm -rf *.gz".format(path)
 requests = [c1, c2, c3, c4, c5, c6, c7]
 for request in requests:
     command = "cd {} && wget {}".format(path, request)
+    print(command)
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
     process.wait()
 

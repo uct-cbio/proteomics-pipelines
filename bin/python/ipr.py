@@ -33,7 +33,7 @@ def request(jobq):
             return
         else:
             tempdir = tempfile.mkdtemp()
-            tempfasta = tempdir + '/{}.fasta'.format(rec.id.split('|')[-1])
+            tempfasta = tempdir + '/{}.fasta'.format(rec.id.split('|')[1])
             newrec = Bio.SeqRecord.SeqRecord( id=rec.id, seq =rec.seq)
             #print(newrec.format('fasta'))
             SeqIO.write(newrec, tempfasta, 'fasta')

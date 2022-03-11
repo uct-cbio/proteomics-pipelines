@@ -1,63 +1,62 @@
 #!/usr/bin/env bash
 
 set -e
+set -a 
 
 config=$1
 : ${1?"Please provide the path to the yaml config file"}
 
-outpath=$2
-: ${2?"Please provide the path to the output folder"}
-
-kegg_id=$3 #'mtu'
-: ${3?"Please provide the kegg id for this species eg : mtu"}
-
-normalize='quantiles'
-
-impute='knn'
 
 
-# The rest is generic
+outdir=$(extract_variable.py $config outdir) || ( echo "no outdir defined"  && exit 1)
+
+#kegg_id=$3 #'mtu'
+#: ${3?"Please provide the kegg id for this species eg : mtu"}
+
+normalize=$(extract_variable.py $config normalize) || ( echo "no 'normalize' method defined eg. 'quantiles'"  && exit 1)
+
+impute=$(extract_variable.py $config impute) || ( echo "no 'impute' method defined eg. 'knn'"  && exit 1)
 
 # Proteogenomics analysis
-if [ ! -d $outpath/uniprot ] ; then
-    mq_uniprot.py $config $outpath || ( rm -rf $outpath/uniprot ; exit 1 )
-fi
-
-if [ ! -d $outpath/strains ] ; then
-    mq_genome_to_peptide.py $config $outpath || ( rm -rf $outpath/strains ; exit 1 )
+if [ ! -d $outdir/uniprot ] ; then
+    mq_uniprot.py $config $outdir || ( rm -rf $outdir/uniprot ; exit 1 )
 fi
 
 
+if [ ! -d $outdir/strains ] ; then
+    mq_genome_to_peptide.py $config $outdir || ( rm -rf $outdir/strains ; exit 1 )
+fi
 
 mqmetaproteomics.py $config
 
-#mq_consensus_blast.py $config $outpath
+exit 0
+#mq_consensus_blast.py $config $outdir
 
-#uniprot_peptide2db.py $config $outpath
+#uniprot_peptide2db.py $config $outdir
 
 ################
 # Interproscan #
 ################
 
-outfile=$outpath/mapping 
+outfile=$outdir/mapping 
 if [ ! -d $outfile ] ; then
-    mq_peptide_to_referencedb.py $config $outpath || ( rm -rf $outfile ; exit 1 )
+    mq_peptide_to_referencedb.py $config $outdir || ( rm -rf $outfile ; exit 1 )
 fi
 
 
-if [ ! -d $outpath/fasta ] ; then
-    mq_fasta_export.py $config $outpath || ( rm -rf $outpath/fasta ; exit 1 )
+if [ ! -d $outdir/fasta ] ; then
+    mq_fasta_export.py $config $outdir || ( rm -rf $outdir/fasta ; exit 1 )
 fi
 
 
-if [ ! -f $outpath/fasta/id_mapping.json ] ; then
-    ips_fasta.py $outpath/fasta/combined_translated.fasta $outpath/fasta || ( rm -rf $outpath/fasta/id_mapping.json ; exit 1 )
+if [ ! -f $outdir/fasta/id_mapping.json ] ; then
+    ips_fasta.py $outdir/fasta/combined_translated.fasta $outdir/fasta || ( rm -rf $outdir/fasta/id_mapping.json ; exit 1 )
 fi
 
 # Run InterProScan
-outfile=$outpath/fasta/nr_translated_pg_orfs.fasta.gff3 
+outfile=$outdir/fasta/nr_translated_pg_orfs.fasta.gff3 
 if [ ! -f $outfile ] ; then
-    ips.sh $outpath/fasta/nr_translated_pg_orfs.fasta $outpath/fasta || ( rm -rf $outfile ; echo failed  ; exit 1 )
+    ips.sh $outdir/fasta/nr_translated_pg_orfs.fasta $outdir/fasta || ( rm -rf $outfile ; echo failed  ; exit 1 )
 fi
 
 
@@ -65,71 +64,71 @@ fi
 # BLAST #
 #########
 
-if [ ! -d $outpath/blast ] ; then
-    mkdir $outpath/blast
+if [ ! -d $outdir/blast ] ; then
+    mkdir $outdir/blast
 fi
 
 
-if [ ! -d $outpath/blast/orfs2proteins ] ; then
-    mkdir $outpath/blast/orfs2proteins
-    mq_blast_orfs2refproteome.py $config $outpath  || ( rm -rf $outpath/blast/orfs2proteins ; exit 1 )
+if [ ! -d $outdir/blast/orfs2proteins ] ; then
+    mkdir $outdir/blast/orfs2proteins
+    mq_blast_orfs2refproteome.py $config $outdir  || ( rm -rf $outdir/blast/orfs2proteins ; exit 1 )
 fi
 
 
 
-if [ ! -d $outpath/blast/orfs2genome ] ; then
-    mkdir $outpath/blast/orfs2genome
-    mq_blast_orfs2refgenome.py $config $outpath  || ( rm -rf $outpath/blast/orfs2genome ; exit 1 )
+if [ ! -d $outdir/blast/orfs2genome ] ; then
+    mkdir $outdir/blast/orfs2genome
+    mq_blast_orfs2refgenome.py $config $outdir  || ( rm -rf $outdir/blast/orfs2genome ; exit 1 )
 fi
 
-#if [ ! -d $outpath/blast/peptides2genome ] ; then
-#    mkdir $outpath/blast/peptides2genome
-#    mq_blast_peptides2refgenome.py $config $outpath  || rm -rf $outpath/blast/peptides2genome
+#if [ ! -d $outdir/blast/peptides2genome ] ; then
+#    mkdir $outdir/blast/peptides2genome
+#    mq_blast_peptides2refgenome.py $config $outdir  || rm -rf $outdir/blast/peptides2genome
 #fi
 
-if [ ! -d $outpath/blast/peptides2orfs ] ; then
-    mkdir $outpath/blast/peptides2orfs
-    mq_blast_peptides2reforfs.py $config $outpath  || ( rm -rf $outpath/blast/peptides2orfs ; exit 1 )
+if [ ! -d $outdir/blast/peptides2orfs ] ; then
+    mkdir $outdir/blast/peptides2orfs
+    mq_blast_peptides2reforfs.py $config $outdir  || ( rm -rf $outdir/blast/peptides2orfs ; exit 1 )
 fi
 
 ##################
 # Operon Mapping #
 ##################
 
-if [ ! -f $outpath/mapping/operons.json ] ; then
-    door2_operon_map.py $config $outpath || ( rm -rf $outpath/mapping/operons.json ; exit 1 )
+if [ ! -f $outdir/mapping/operons.json ] ; then
+    door2_operon_map.py $config $outdir || ( rm -rf $outdir/mapping/operons.json ; exit 1 )
 fi
 
 ##################
 # Combined table #
 ##################
 
-if [ ! -f $outpath/combined.csv ] ; then
-    mq_peptide_to_protein.py $config $outpath || ( rm -rf $outpath/combined.csv ; exit 1 )
+if [ ! -f $outdir/combined.csv ] ; then
+    mq_peptide_to_protein.py $config $outdir || ( rm -rf $outdir/combined.csv ; exit 1 )
 fi
 
 ###################################
 # Differential abundance analysis #
 ###################################
 
-if [ ! -f $outpath/experimental_design.R ] ; then
-    mq_experimental_design.py $config $outpath || ( rm -rf $outpath/experimental_design.R ; exit 1 )
+if [ ! -f $outdir/experimental_design.R ] ; then
+    mq_experimental_design.py $config $outdir || ( rm -rf $outdir/experimental_design.R ; exit 1 )
 fi
 
-if [ ! -d $outpath/msnbase ] ; then
-    mq_normalize_intensity.R -q 'iBAQ.'  -p ${outpath}/combined.csv -o ${outpath} -n ${normalize} -i ${impute} || ( rm -rf ${outpath}/msnbase ; exit 1 )
+if [ ! -d $outdir/msnbase ] ; then
+    mq_normalize_intensity.R -q 'iBAQ.'  -p ${outdir}/combined.csv -o ${outdir} -n ${normalize} -i ${impute} || ( rm -rf ${outdir}/msnbase ; exit 1 )
 fi
 
-if [ ! -d $outpath/diff ] ; then
-    mq_diff.R -d ${outpath}/experimental_design.R -f ${outpath}/msnbase/normalized.csv -o ${outpath}/diff || ( rm -rf ${outpath}/diff ; exit 1 )
-    #mq_differential_abundance.R -d ${outpath}/experimental_design.R -p ${outpath}/combined.csv -o ${outpath}/diff || rm -rf ${outpath}/diff
+if [ ! -d $outdir/diff ] ; then
+    mq_diff.R -d ${outdir}/experimental_design.R -f ${outdir}/msnbase/normalized.csv -o ${outdir}/diff || ( rm -rf ${outdir}/diff ; exit 1 )
+    #mq_differential_abundance.R -d ${outdir}/experimental_design.R -p ${outdir}/combined.csv -o ${outdir}/diff || rm -rf ${outdir}/diff
 fi
 
 ##################
 # IPS Enrichment #
 ##################
-if [ ! -d $outpath/gsea ] ; then
-    ips_gsea.py $outpath  $kegg_id && gage.R --outdir $outpath/gsea --indir $outpath/gsea --keggid $kegg_id --design ${outpath}/experimental_design.R --table ${outpath}/msnbase/normalized.csv --genecol GeneID --kocol GeneID --pval 0.05 || ( rm -rf ${outpath}/gsea ; exit 1 )
+if [ ! -d $outdir/gsea ] ; then
+    ips_gsea.py $outdir  $kegg_id && gage.R --outdir $outdir/gsea --indir $outdir/gsea --keggid $kegg_id --design ${outdir}/experimental_design.R --table ${outdir}/msnbase/normalized.csv --genecol GeneID --kocol GeneID --pval 0.05 || ( rm -rf ${outdir}/gsea ; exit 1 )
 fi
 echo 'Done'
 exit
@@ -137,34 +136,34 @@ exit
 # JBROWSE #
 ###########
 
-if [ ! -d $outpath/jbrowse ] ; then
-    mkdir $outpath/jbrowse
-    mq_strains2ref_peptides.py $config $outpath  || ( rm -rf $outpath/jbrowse ; exit 1 )
-    mq_strains2ref_orfs.py $config $outpath      || ( rm -rf $outpath/jbrowse ; exit 1 )
-    mq_jbrowse_upload_script.py $config $outpath || ( rm -rf $outpath/jbrowse ; exit 1 )
+if [ ! -d $outdir/jbrowse ] ; then
+    mkdir $outdir/jbrowse
+    mq_strains2ref_peptides.py $config $outdir  || ( rm -rf $outdir/jbrowse ; exit 1 )
+    mq_strains2ref_orfs.py $config $outdir      || ( rm -rf $outdir/jbrowse ; exit 1 )
+    mq_jbrowse_upload_script.py $config $outdir || ( rm -rf $outdir/jbrowse ; exit 1 )
 fi
 
 
-#mq_strains2ref_orfs.py $config $outpath      
+#mq_strains2ref_orfs.py $config $outdir      
 
-#mq_peptide_features.py $config $outpath
-#mq_domain_features.py $config $outpath
-#mq_contig_heatmaps.py $config $outpath
-#mq_wiggle_features.py $config $outpath
-
-
+#mq_peptide_features.py $config $outdir
+#mq_domain_features.py $config $outdir
+#mq_contig_heatmaps.py $config $outdir
+#mq_wiggle_features.py $config $outdir
 
 
 
-#if [ ! -d $outpath/tables ] ;  then      
-#    mq_export_tables.py $config $outpath || rm -rf $outpath/tables
+
+
+#if [ ! -d $outdir/tables ] ;  then      
+#    mq_export_tables.py $config $outdir || rm -rf $outdir/tables
 #fi
 
 #############################
 # Identification Statistics #
 #############################
-#if [ ! -d $outpath/stats ] ; then
-#    mq_basestats.py $config $outpath || rm -rf $outpath/stats
+#if [ ! -d $outdir/stats ] ; then
+#    mq_basestats.py $config $outdir || rm -rf $outdir/stats
 #fi
 
 
@@ -172,8 +171,8 @@ fi
 # PEP score analysis #
 ######################
 
-#mq_PEP_MSMS.py $config $outpath
-#mq_differential_abundance.R -d ${outpath}/experimental_design.R -p ${outpath}/combined.csv -o ${outpath}/diff # || rm -rf ${outpath}/diff
+#mq_PEP_MSMS.py $config $outdir
+#mq_differential_abundance.R -d ${outdir}/experimental_design.R -p ${outdir}/combined.csv -o ${outdir}/diff # || rm -rf ${outdir}/diff
 
 
 
