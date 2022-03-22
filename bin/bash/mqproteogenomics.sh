@@ -29,11 +29,12 @@ fi
 
 mqmetaproteomics.py $config
 
-exit 0
 #mq_consensus_blast.py $config $outdir
+
 
 #uniprot_peptide2db.py $config $outdir
 
+exit 0
 ################
 # Interproscan #
 ################
