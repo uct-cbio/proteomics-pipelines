@@ -22,12 +22,12 @@ if [ ! -d $outdir/uniprot ] ; then
     mq_uniprot.py $config $outdir || ( rm -rf $outdir/uniprot ; exit 1 )
 fi
 
+mqmetaproteomics.py $config
 
 if [ ! -d $outdir/strains ] ; then
     mq_genome_to_peptide.py $config $outdir || ( rm -rf $outdir/strains ; exit 1 )
 fi
 
-mqmetaproteomics.py $config
 
 #mq_consensus_blast.py $config $outdir
 

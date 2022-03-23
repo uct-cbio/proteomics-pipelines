@@ -28,7 +28,7 @@ import mygene
 import rpy2.robjects as ro
 import sys
 from io import StringIO
-import this
+#import this
 
 # Library to parse MaxQuant txt
 try:

@@ -14,9 +14,17 @@ import mqparse
 
 
 config = yaml.load(open(sys.argv[1]), Loader=yaml.Loader)
+
 output = sys.argv[2]
 
+
+
 output = os.path.abspath(output)
+design = os.path.abspath(config['design'])
+
+design = pd.read_csv(design)
+design = design[design['exclude'] != '+']
+assert "Strain" in design.columns
 
 os.mkdir(output +'/strains')
 
@@ -31,11 +39,14 @@ all_peptides = peptides['Sequence'].tolist()
 
 strain_samples = defaultdict(list)
 
-samples = config['samples']
+samples = design['sample'].tolist()
 
-for sample in samples:
-    st = samples[sample]['STRAIN']
-    strain_samples[st].append(sample)
+for row in design.iterrows():
+    sample  = row[1]['sample']
+    strain  = row[1]['Strain']
+    #for sample in samples:
+    #st = samples[sample]['STRAIN']
+    strain_samples[strain].append(sample)
 
 exp_cols = [i for i in peptides.columns if i.startswith('Experiment')]
 #print(peptides[exp_cols])

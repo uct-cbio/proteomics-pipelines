@@ -114,9 +114,15 @@ RUN git clone https://github.com/bmbolstad/preprocessCore.git && cd preprocessCo
 
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
-# Leave to end
-#ENV PATH $PATH::/home/bio/bin/python:/home/bio/bin/R:/home/bio/bin/bash:/home/bio/bin/python
-#ENV PYTHONPATH $PYTHONPATH::/home/bio/lib
+# testing paths (if files are mounted it will use those
+ENV PATH $PATH::/home/testing/proteomics-pipelines/bin/python:/home/testing/proteomics-pipelines/bin/R:/home/testing/proteomics-pipelines/bin/bash:/home/testing/proteomics-pipelines/bin/python
+# production paths
+ENV PATH $PATH::/home/bio/bin/python:/home/bio/bin/R:/home/bio/bin/bash:/home/bio/bin/python
+
+# testing paths
+ENV PYTHONPATH $PYTHONPATH::/home/testing/proteomics-pipelines/lib
+# production paths
+ENV PYTHONPATH $PYTHONPATH::/home/bio/lib
 
 #COPY lib /home/bio/lib
 #COPY bin /home/bio/bin
