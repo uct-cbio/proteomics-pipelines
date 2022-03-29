@@ -31,3 +31,5 @@ Run the example:
 cd cbio-proteogenomics-tests/lib/testdata/proteogenomics_sample
 mqproteogenomics.sh mq_proteogeomics_test.yml
 ~~~
+
+Now adjust the config file for our own data.
