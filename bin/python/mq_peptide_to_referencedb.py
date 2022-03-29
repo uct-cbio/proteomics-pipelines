@@ -12,8 +12,9 @@ import shutil
 import Bio; from Bio import SeqIO
 import pickle
 import yaml
+from yaml import Loader
 
-config = yaml.load(open(sys.argv[1]))
+config = yaml.load(open(sys.argv[1]), Loader=Loader)
 output = sys.argv[2]
 
 os.mkdir(output +'/mapping')

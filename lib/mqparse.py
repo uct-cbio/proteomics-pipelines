@@ -222,7 +222,7 @@ def bp(data, names, outfile, title, overlay=False):
     plt.close()
 
 class mq_txt:
-    def __init__(self, config, exclude_contaminants=True):
+    def __init__(self, config):
         c = "library('FSA')"; ro.r(c)
         with open(config) as f:
             self.config = yaml.load(f.read(), Loader=Loader)
@@ -252,6 +252,12 @@ class mq_txt:
         if not exclude_contaminants == True:
             assert exclude_contaminants == False
         
+        if 'proteogenomics' in self.config:
+            self.proteogenomics = self.config['proteogenomics']
+        else:
+            self.proteogenomics = False
+        assert self.proteogenomics in [True, False]
+
         self.protein_quantification = self.config['protein_quantification']
         assert self.protein_quantification in ['LFQ', 'iBAQ']
         if self.protein_quantification =='LFQ':
@@ -456,17 +462,21 @@ class mq_txt:
         # fasta export
         fasta_file = self.config['search_fasta']
         prot_ids = self.protein_dir +'/protein_ids.txt'
-        outfile = self.fasta_dir +'/leading_proteins.fasta'
+        outfile = self.fasta_dir +'/proteins.fasta'
+        mapping_file = self.fasta_dir +'/id_mapping.json'
         self.export_pg_fasta(fasta_file, prot_ids, outfile)
+        self.export_nr_fasta(outfile, self.fasta_dir, self.proteogenomics )
         
         # interproscan
-        if not os.path.exists(self.fasta_dir +'/leading_proteins.fasta.tsv' ):
-            infile = self.fasta_dir +'/leading_proteins.fasta'
+        if not os.path.exists(self.fasta_dir +'/proteins.fasta.tsv' ):
+            infile = self.fasta_dir +'/nr.fasta'
             outpath  = self.fasta_dir
-            self.ips_fasta(infile, outpath) 
-    
+            if not os.path.exists(infile + '.tsv') or not os.path.exists(mapping_file):
+                self.ips_fasta(infile, outpath) 
+            self.export_ips_tsv( infile + '.tsv', mapping_file,  outfile + '.tsv')
+
         # gene sets
-        infile = self.fasta_dir +'/leading_proteins.fasta.tsv'
+        infile = self.fasta_dir +'/proteins.fasta.tsv'
         self.ips_genesets(infile, self.target_proteingroups, self.gsea_dir)
               
         # Create peptide paraameters
@@ -525,7 +535,6 @@ class mq_txt:
         
         # persist the current version of the config so that the pipeline doesnt re-run if sucessfully completed
         os.rename(saved_config_temp, saved_config)
-
 
     def qc(self, config, design,  outpath, summary, target_peptides_, target_proteins_):
         print("Starting QC")
@@ -1384,6 +1393,69 @@ class mq_txt:
             if rec.id.split('|')[1] in ids:
                 new_fasta.append(rec)
         SeqIO.write(new_fasta, outfile, 'fasta')
+
+
+    def export_nr_fasta(self, fasta_file, outpath, proteogenomics=False):
+        fasta = SeqIO.parse(fasta_file,'fasta')
+        new_fasta = []
+        fdict = {}
+        for rec in fasta:
+            id_ = rec.id.split('|')[1]
+            fdict[id_] = rec
+        
+        sequences = defaultdict(list)
+
+        # get the id of the most upstream identified ORF
+        if proteogenomics == True:
+            version_dict = {}
+            for i in fdict:
+                version = int(i.split('.')[-1]) 
+                id_ = '.'.join(i.split('.')[:-1])
+                if not id_ in version_dict:
+                    version_dict[id_] = version
+                elif version_dict[id_] > version:
+                    version_dict[id_] = version
+
+            orfs = []
+            for id_ in version_dict:
+                orf_id = id_ + '.' + str(version_dict[id_])
+                orfs.append(fdict[orf_id])
+        else:
+            orfs = list(fdict.values())
+
+        nr_sequences = defaultdict(list)
+        for rec in orfs:
+            nr_sequences[str(rec.seq)].append(rec.id)
+
+        export = []
+        mapping = {}
+
+        count = 1
+        for seq in nr_sequences:
+            id_ = 'nr_sequence_{}'.format(str(count)) 
+            ids = nr_sequences[seq]  
+            for i in ids:
+                mapping[i] = id_
+            description =';'.join(ids) 
+            seq = Seq(''.join(seq.split('*')))  
+            record = SeqRecord(id = id_, description = description, seq = seq) 
+            export.append(record) 
+            count += 1
+        SeqIO.write(export, outpath +'/nr.fasta','fasta') 
+        mapping_outpath = outpath +'/id_mapping.json'
+        with open(mapping_outpath,'w') as f: 
+            f.write(json.dumps(mapping))
+
+    def export_ips_tsv(self, infile, mappingfile, outfile):
+        res = pd.read_csv(infile, sep='\t', header=None)
+        with open(mappingfile) as f:
+            mapping = json.loads(f.read())
+        res.rename(columns={0:'ID'},inplace=True)
+        mapping_df = pd.DataFrame(mapping.items())
+        mapping_df.rename(columns={1:'ID'}, inplace=True)
+        new = pd.merge(mapping_df, res, how='right')
+        del new['ID']
+        new.to_csv(outfile, sep='\t')
 
     def create_R_parameters(self, config, outfile, quant, group_level):
         vals=[]

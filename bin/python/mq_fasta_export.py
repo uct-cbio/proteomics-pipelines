@@ -15,12 +15,13 @@ from Bio.Seq import translate
 import json
 import pickle
 import yaml
+from yaml import Loader
 
-config = yaml.load(open(sys.argv[1]))
-
+config = yaml.load(open(sys.argv[1]), Loader)
 
 output = sys.argv[2]
-os.mkdir(output + '/fasta')
+if not os.path.exists(output + '/fasta'):
+    os.mkdir(output + '/fasta')
 
 combined_fasta=[]
 

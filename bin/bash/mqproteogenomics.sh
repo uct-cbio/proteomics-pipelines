@@ -28,38 +28,16 @@ if [ ! -d $outdir/strains ] ; then
     mq_genome_to_peptide.py $config $outdir || ( rm -rf $outdir/strains ; exit 1 )
 fi
 
-
-#mq_consensus_blast.py $config $outdir
-
+#stub_mq_consensus_blast.py $config $outdir
 
 #uniprot_peptide2db.py $config $outdir
-
-exit 0
-################
-# Interproscan #
-################
 
 outfile=$outdir/mapping 
 if [ ! -d $outfile ] ; then
     mq_peptide_to_referencedb.py $config $outdir || ( rm -rf $outfile ; exit 1 )
 fi
 
-
-if [ ! -d $outdir/fasta ] ; then
-    mq_fasta_export.py $config $outdir || ( rm -rf $outdir/fasta ; exit 1 )
-fi
-
-
-if [ ! -f $outdir/fasta/id_mapping.json ] ; then
-    ips_fasta.py $outdir/fasta/combined_translated.fasta $outdir/fasta || ( rm -rf $outdir/fasta/id_mapping.json ; exit 1 )
-fi
-
-# Run InterProScan
-outfile=$outdir/fasta/nr_translated_pg_orfs.fasta.gff3 
-if [ ! -f $outfile ] ; then
-    ips.sh $outdir/fasta/nr_translated_pg_orfs.fasta $outdir/fasta || ( rm -rf $outfile ; echo failed  ; exit 1 )
-fi
-
+exit 0
 
 #########
 # BLAST #
@@ -69,13 +47,10 @@ if [ ! -d $outdir/blast ] ; then
     mkdir $outdir/blast
 fi
 
-
 if [ ! -d $outdir/blast/orfs2proteins ] ; then
     mkdir $outdir/blast/orfs2proteins
     mq_blast_orfs2refproteome.py $config $outdir  || ( rm -rf $outdir/blast/orfs2proteins ; exit 1 )
 fi
-
-
 
 if [ ! -d $outdir/blast/orfs2genome ] ; then
     mkdir $outdir/blast/orfs2genome
