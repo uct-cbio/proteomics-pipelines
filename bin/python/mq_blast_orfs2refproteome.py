@@ -17,8 +17,7 @@ import pickle
 import yaml
 import subprocess
 
-config = yaml.load(open(sys.argv[1]))
-
+config = yaml.load(open(sys.argv[1]), Loader=yaml.Loader)
 output = os.path.abspath( sys.argv[2])
 
 ref = output + '/uniprot/{}/{}_{}.fasta'.format(config['reference_proteome_id'], config['reference_proteome_id'], config['reference_taxid'])
@@ -36,7 +35,7 @@ process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 process.wait()
 assert process.returncode == 0
                  
-query=output + '/fasta/nr_translated_pg_orfs.fasta'
+query=output + '/fasta/nr.fasta'
 outfmt=5
 
 out=output + '/blast/orfs2proteins/{}.xml'.format(config['reference_proteome_id'])

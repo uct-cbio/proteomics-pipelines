@@ -17,17 +17,15 @@ import pickle
 import yaml
 import subprocess
 
-config = yaml.load(open(sys.argv[1]))
-
+config = yaml.load(open(sys.argv[1]), Loader=yaml.Loader)
 output =  os.path.abspath(sys.argv[2])
 
-blastfile = config['reference_genome']
+blastfile = os.path.abspath(config['reference_genome'])
 blastname = blastfile.split('/')[-1].split('.')[0]
-blastdir = output +'/blast/orfs2genome/{}'.format(blastname)
-out = output + '/blast/orfs2genome/{}.xml'.format(blastname)
+blastdir = os.path.abspath(output +'/blast/orfs2genome/{}'.format(blastname))
+out = os.path.abspath(output + '/blast/orfs2genome/{}.xml'.format(blastname))
 
-query=output + '/fasta/nr_translated_pg_orfs.fasta'
-
+query=os.path.abspath(output + '/fasta/nr.fasta')
 os.mkdir(blastdir)
 
 cmd="cp {} {} && cd {} && makeblastdb -in {} -dbtype 'nucl' -out {}".format(blastfile, blastdir, blastdir, blastfile, blastname)

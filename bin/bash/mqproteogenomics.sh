@@ -37,7 +37,6 @@ if [ ! -d $outfile ] ; then
     mq_peptide_to_referencedb.py $config $outdir || ( rm -rf $outfile ; exit 1 )
 fi
 
-exit 0
 
 #########
 # BLAST #
@@ -57,6 +56,7 @@ if [ ! -d $outdir/blast/orfs2genome ] ; then
     mq_blast_orfs2refgenome.py $config $outdir  || ( rm -rf $outdir/blast/orfs2genome ; exit 1 )
 fi
 
+exit 0
 #if [ ! -d $outdir/blast/peptides2genome ] ; then
 #    mkdir $outdir/blast/peptides2genome
 #    mq_blast_peptides2refgenome.py $config $outdir  || rm -rf $outdir/blast/peptides2genome
