@@ -229,7 +229,8 @@ qsub metanovo.pbs
 Ensure singularity is installed, and allocate at least 2 cores and 4 GB of RAM to the docker engine for this example.
 
 ~~~
-cd proteomics-pipelines/singularity/metanovo 
+wget https://github.com/uct-cbio/proteomics-pipelines/archive/refs/tags/v1.9.4.zip                                                        
+cd proteomics-pipelines-1.9.4/singularity/metanovo 
 ./create_image.sh
 ~~~
 Proceed with Step 3 and 4 above.
