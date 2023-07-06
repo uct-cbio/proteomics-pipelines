@@ -36,7 +36,7 @@ PyYAML==6.0
 requests==2.27.1
 rpy2==3.4.5
 scikit-posthocs==0.6.7
-scipy==1.7.3
+scipy==1.10.0
 seaborn==0.11.2
 six==1.16.0
 statsmodels==0.13.1
