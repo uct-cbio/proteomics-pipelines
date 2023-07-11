@@ -83,24 +83,56 @@ fi
 ##################
 
 #if [ ! -f $outdir/combined.csv ] ; then
-ls $outdir/*combined.csv > /dev/null 2>&1  || mq_peptide_to_protein.py $config $outdir || ( rm -rf $outdir/*combined.csv ; exit 1 )
+ls $outdir/*combined1.csv > /dev/null 2>&1  || mq_peptide_to_protein.py $config $outdir || ( rm -rf $outdir/*combined.csv ; exit 1 )
 
 if [ ! -f $outdir/config.yml ] ; then
     echo $outdir/config.yml
     mqmetaproteomics.py $config
 fi
 
+###################################
+# Differential abundance analysis #
+###################################
+
+#if [ ! -f $outdir/experimental_design.R ] ; then
+#    mq_experimental_design.py $config $outdir || ( rm -rf $outdir/experimental_design.R ; exit 1 )
+#fi
+
+#if [ ! -d $outdir/msnbase ] ; then
+#    mq_normalize_intensity.R -q 'iBAQ.'  -p ${outdir}/combined.csv -o ${outdir} -n ${normalize} -i ${impute} || ( rm -rf ${outdir}/msnbase ; exit 1 )
+#fi
+#
+#if [ ! -d $outdir/diff ] ; then
+#    mq_diff.R -d ${outdir}/experimental_design.R -f ${outdir}/msnbase/normalized.csv -o ${outdir}/diff || ( rm -rf ${outdir}/diff ; exit 1 )
+#    #mq_differential_abundance.R -d ${outdir}/experimental_design.R -p ${outdir}/combined.csv -o ${outdir}/diff || rm -rf ${outdir}/diff
+#fi
+
+##################
+## IPS Enrichment #
+###################
+#if [ ! -d $outdir/gsea ] ; then
+#    ips_gsea.py $outdir  $kegg_id && gage.R --outdir $outdir/gsea --indir $outdir/gsea --keggid $kegg_id --design ${outdir}/experimental_design.R --table ${outdir}/msnbase/normalized.csv --genecol GeneID --kocol GeneID --pval 0.05 || ( rm -rf ${outdir}/gsea ; exit 1 )
+#fi
+#echo 'Done'
+#exit
+
+
+###########
+# JBROWSE #
+###########
+
 if [ ! -d $outdir/jbrowse ] ; then
     mkdir $outdir/jbrowse
-    #mq_strains2ref_peptides.py $config $outdir  || ( rm -rf $outdir/jbrowse ; exit 1 )
-    mq_strains2ref.py $config $outdir      || ( rm -rf $outdir/j_ibrowse ; exit 1 )
-    mq_peptide_features.py $config $outdir
+    mq_strains2ref_peptides.py $config $outdir  || ( rm -rf $outdir/jbrowse ; exit 1 )
+    mq_strains2ref_orfs.py $config $outdir      || ( rm -rf $outdir/jbrowse ; exit 1 )
+    mq_jbrowse_upload_script.py $config $outdir # || ( rm -rf $outdir/jbrowse ; exit 1 )
 fi
 
-mq_jbrowse_upload_script.py $config $outdir # || ( rm -rf $outdir/jbrowse ; exit 1 )
-cd $outdir/jbrowse/local && jbrowse admin-server
+#cd $outdir/jbrowse/local && jbrowse admin-server
 exit 0
+#mq_strains2ref_orfs.py $config $outdir      
 
+#mq_peptide_features.py $config $outdir
 #mq_domain_features.py $config $outdir
 #mq_contig_heatmaps.py $config $outdir
 #mq_wiggle_features.py $config $outdir

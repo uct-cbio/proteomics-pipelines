@@ -20,22 +20,30 @@ import subprocess
 config = yaml.load(open(sys.argv[1]), Loader=yaml.Loader)
 output =  os.path.abspath(sys.argv[2])
 
-blastfile = os.path.abspath(config['reference_genome'])
-blastname = blastfile.split('/')[-1].split('.')[0]
-blastdir = os.path.abspath(output +'/blast/orfs2genome/{}'.format(blastname))
-out = os.path.abspath(output + '/blast/orfs2genome/{}.xml'.format(blastname))
 
-query=os.path.abspath(output + '/fasta/nr.fasta')
-os.mkdir(blastdir)
+def _(blastfile , output):
+    blastname = blastfile.split('/')[-1].split('.fasta')[0]
 
-cmd="cp {} {} && cd {} && makeblastdb -in {} -dbtype 'nucl' -out {}".format(blastfile, blastdir, blastdir, blastfile, blastname)
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-process.wait()
-assert process.returncode == 0
 
-num_threads=1
-cmd ="cd {} && tblastn -query {} -db {} -out={} -outfmt 5 -max_target_seqs 500 -max_hsps 1 -num_threads {} -evalue 0.0001".format(blastdir,query, blastname, out, num_threads) 
+    blastdir = os.path.abspath(output +'/blast/orfs2genome/{}'.format(blastname))
+    out = os.path.abspath(output + '/blast/orfs2genome/{}.xml'.format(blastname))
 
-process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-process.wait()
-assert process.returncode == 0
+    query=os.path.abspath(output + '/strains/all_mapped_trans_orfs.fasta')
+    os.mkdir(blastdir)
+
+    cmd="cp {} {} && cd {} && makeblastdb -in {} -dbtype 'nucl' -out {}".format(blastfile, blastdir, blastdir, blastfile, blastname)
+    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    process.wait()
+    assert process.returncode == 0
+
+    num_threads=1
+    cmd ="cd {} && tblastn -query {} -db {} -out={} -outfmt 5 -max_target_seqs 500 -max_hsps 1 -num_threads {} -evalue 0.0001".format(blastdir,query, blastname, out, num_threads) 
+
+    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    process.wait()
+    assert process.returncode == 0
+
+for strain in config['reference']:
+    assembly_id = config['reference'][strain]['assembly_id']
+    blastfile = output + '/ena/{}/{}.fasta'.format(assembly_id, assembly_id)
+    _(blastfile, output)

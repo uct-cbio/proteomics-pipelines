@@ -158,6 +158,15 @@ def bparse(rec, threshold = 0.04):
 class blast2genome:
     def __init__(self, fasta_id, query_seq, match_seq, hit_seq, hit_from, hit_to, hit_strand, amino_offset=0):
         #amino offset is the position in hit_seq from which to start searching for match segments (ie peptide alignment to ORF protein. all seqs must be amino acids, hit_from and hit_to are genomics coords, and query_from and query_to are amino acid coords (1 based).
+        #print('[fasta_id]: {}'.format(fasta_id))
+        #print('[query_seq]: {}'.format(query_seq))
+        #print('[match_seq]: {}'.format(match_seq))
+        #print('[hit_seq]: {}'.format(hit_seq))
+        #print('[hit_from]: {}'.format(str(hit_from)))
+        #print('[hit_to]: {}'.format(str(hit_to)))
+        #print('[hit_strand]: {}'.format(str(hit_strand)))
+        #print('[amino_offset]: {}'.format(str(amino_offset)))
+
         self.fasta_id = fasta_id
         self.query_seq = query_seq
         self.match_seq = match_seq
@@ -173,6 +182,8 @@ class blast2genome:
         self.alignment_end = 0
 
         for segment in self.segments: 
+            if segment == '*':
+                continue
             newstart, newend, newoffset = self.evaluate_start(segment, self.hit_seq, self.hit_from, self.hit_to, self.hit_strand, amino_offset)
             start_position = newstart
             end_position = newend

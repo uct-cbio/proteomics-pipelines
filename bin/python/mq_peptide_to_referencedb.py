@@ -19,16 +19,20 @@ output = sys.argv[2]
 
 os.mkdir(output +'/mapping')
 
-proteome = list(SeqIO.parse(output+ '/uniprot/{}/{}_{}.fasta'.format(config['reference_proteome_id'], config['reference_proteome_id'], config['reference_taxid']),'fasta'))
-peptides = pd.read_csv(config['mq_txt'] +'/peptides.txt',sep='\t')
-peptides = peptides[(peptides['Reverse'].isnull()) & (peptides['Potential contaminant'].isnull())]
+def refmap(proteome_id, tax_id, output):
+    proteome = list(SeqIO.parse(output+ '/uniprot/{}/{}.fasta'.format(proteome_id, proteome_id),'fasta'))
+    peptides = pd.read_csv(config['mq_txt'] +'/peptides.txt',sep='\t')
+    peptides = peptides[(peptides['Reverse'].isnull()) & (peptides['Potential contaminant'].isnull())]
 
-mapped = sequtils.peptides2proteome(proteome, peptides['Sequence'].tolist(), threads=config['threads'])
+    mapped = sequtils.peptides2proteome(proteome, peptides['Sequence'].tolist(), threads=config['threads'])
 
-outpath = output + '/mapping/{}_peptides.json'.format(config['reference_proteome_id'])
-jstr = json.dumps(mapped.pepdict)
+    outpath = output + '/mapping/{}_peptides.json'.format(proteome_id)
+    jstr = json.dumps(mapped.pepdict)
 
-with open(outpath, 'w') as w:
-    w.write(jstr)
+    with open(outpath, 'w') as w:
+        w.write(jstr)
 
-
+for strain in config['reference']:
+    proteome_id = config['reference'][strain]['proteome_id']
+    taxon_id = config['reference'][strain]['taxon_id']
+    refmap(proteome_id, taxon_id, output)

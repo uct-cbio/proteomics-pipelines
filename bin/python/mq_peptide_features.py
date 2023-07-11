@@ -24,32 +24,41 @@ import uniprot
 import pickle
 from io import StringIO
 import yaml
+import collections
 
-config = yaml.load(open(sys.argv[1]).read())
+config = yaml.load(open(sys.argv[1]).read(), Loader=yaml.Loader)
 output = sys.argv[2]
 
-#pep2entry = pickle.load(open(output+'/mapping/pep2entry.p','rb'))
-pep2reference = pickle.load(open(output+'/mapping/{}_peptides.p'.format(config['reference_proteome_id']),'rb'))
 
-ref_gff3 = open('/root/features.gff3').readlines()
-ref_gff3 = [i for i in ref_gff3 if not i.startswith('#')]
-ref_gff3 = '\n'.join(ref_gff3)
-ref_gff3 = 'Note='.join(ref_gff3.split('description='))
-ref_gff3 = 'Note='.join(ref_gff3.split('protein_id='))
+
+    #ref_gff3 = open('/root/features.gff3').readlines()
+    #ref_gff3 = [i for i in ref_gff3 if not i.startswith('#')]
+    #ref_gff3 = '\n'.join(ref_gff3)
+    #ref_gff3 = 'Note='.join(ref_gff3.split('description='))
+    #ref_gff3 = 'Note='.join(ref_gff3.split('protein_id='))
+
+def reference(val):
+    reference_sequence = '|'.join(val.split('|')[0].split('_')[-2:])
+    return reference_sequence
 
 def gff3_peptide_export(df):
     global gdict
     global peptide_columns
-    reference_sequence = df['ORF_id'].split('_')[-3]
+    reference_sequence = reference(df['ORF_id'])
+    #reference_sequence = '|'.join(df['ORF_id'].split('|')[0].split('_')[-2:])
     contig = gdict[reference_sequence]
     
     source = 'MaxQuant'
     type = 'polypeptide'
-    Peptide_starts = [(int(i)-1) * 3 for i in df['Peptide_starts'].split(';')]
+    print(df['Peptide_starts'])
+
+    Peptide_starts = [(int(i)-1) * 3 for i in str(df['Peptide_starts']).split(';')]
+
     ORF_translation = df['ORF_translation']
     Peptide_sequence = df['Peptide_sequence']
     #recno = 'recno_' + df['ORF_id'].split('|')[1].split('recno_')[1]
     ORF_id = df['ORF_id'].split('|')[1]
+    recno = 'recno_' + df['ORF_id'].split('|')[1].split('recno_')[1]
 
     ORF_sequence = df['ORF_sequence']
     Peptide_first_codon = df['Peptide_first_codon']
@@ -81,9 +90,12 @@ def gff3_peptide_export(df):
     except:
         mapped_ref= 'None'
 
-    attributes1 = 'ID=peptide-{};Name={};Note=ORF id {},%0APeptide sequence {}'.format(ORF_id, ORF_id, ORF_id, Peptide_sequence)
+    #attributes1 = 'ID=peptide-{};Name={};Note=ORF id {},%0APeptide sequence {}'.format(ORF_id, ORF_id, ORF_id, Peptide_sequence)
+    attributes1 = 'ID={};Name={};Note=ORF id {},%0APeptide sequence {},%0ATryptic N-terminal {},%0ATryptic C-terminal {},%0APrevious codon {},%0AFirst codon {},%0AAmino acid before {},%0AFirst amino acid {},%0ALast amino acid {},%0AAmino acid after {},%0ASpecific {},%0APeptide ORF count {},%0AIdentified in strain {},%0AMapped reference proteins {}'.format(Peptide_sequence, Peptide_sequence, ORF_id, Peptide_sequence, Peptide_tryptic_nterm, Peptide_tryptic_cterm, Peptide_previous_codon, Peptide_first_codon, Peptide_amino_acid_before, Peptide_amino_acid_first, Peptide_amino_acid_last, Peptide_amino_acid_after, Peptide_inferred_translated_sequence_specific, Peptide_genome_ORF_count, Strain_identified, mapped_ref)
+    #attributes2 = 'Name={};Note=ORF id {},%0APeptide sequence {},%0ATryptic N-terminal {},%0ATryptic C-terminal {},%0APrevious codon {},%0AFirst codon {},%0AAmino acid before {},%0AFirst amino acid {},%0ALast amino acid {},%0AAmino acid after {},%0ASpecific {},%0APeptide ORF count {},%0AIdentified in strain {},%0AMapped reference proteins (Proteome ID {}) {}'.format(Peptide_sequence, ORF_id, Peptide_sequence, Peptide_tryptic_nterm, Peptide_tryptic_cterm, Peptide_previous_codon, Peptide_first_codon, Peptide_amino_acid_before, Peptide_amino_acid_first, Peptide_amino_acid_last, Peptide_amino_acid_after, Peptide_inferred_translated_sequence_specific, Peptide_genome_ORF_count, Strain_identified, config['reference_proteome_id'], mapped_ref)
     
-    attributes2 = 'Name={};Note=ORF id {},%0APeptide sequence {},%0ATryptic N-terminal {},%0ATryptic C-terminal {},%0APrevious codon {},%0AFirst codon {},%0AAmino acid before {},%0AFirst amino acid {},%0ALast amino acid {},%0AAmino acid after {},%0ASpecific {},%0APeptide ORF count {},%0AIdentified in strain {},%0AMapped reference proteins (Proteome ID {}) {}'.format(Peptide_sequence, ORF_id, Peptide_sequence, Peptide_tryptic_nterm, Peptide_tryptic_cterm, Peptide_previous_codon, Peptide_first_codon, Peptide_amino_acid_before, Peptide_amino_acid_first, Peptide_amino_acid_last, Peptide_amino_acid_after, Peptide_inferred_translated_sequence_specific, Peptide_genome_ORF_count, Strain_identified, config['reference_proteome_id'], mapped_ref)
+    attributes2 = 'Parent={};Name={};Note=ORF id {},%0APeptide sequence {},%0ATryptic N-terminal {},%0ATryptic C-terminal {},%0APrevious codon {},%0AFirst codon {},%0AAmino acid before {},%0AFirst amino acid {},%0ALast amino acid {},%0AAmino acid after {},%0ASpecific {},%0APeptide ORF count {},%0AIdentified in strain {},%0AMapped reference proteins {}'.format(recno, Peptide_sequence, ORF_id, Peptide_sequence, Peptide_tryptic_nterm, Peptide_tryptic_cterm, Peptide_previous_codon, Peptide_first_codon, Peptide_amino_acid_before, Peptide_amino_acid_first, Peptide_amino_acid_last, Peptide_amino_acid_after, Peptide_inferred_translated_sequence_specific, Peptide_genome_ORF_count, Strain_identified, mapped_ref)
+    #attributes2 = 'Name={};Note=ORF id {},%0APeptide sequence {},%0ATryptic N-terminal {},%0ATryptic C-terminal {},%0APrevious codon {},%0AFirst codon {},%0AAmino acid before {},%0AFirst amino acid {},%0ALast amino acid {},%0AAmino acid after {},%0ASpecific {},%0APeptide ORF count {},%0AIdentified in strain {},%0AMapped reference proteins (Proteome ID {}) {}'.format(Peptide_sequence, ORF_id, Peptide_sequence, Peptide_tryptic_nterm, Peptide_tryptic_cterm, Peptide_previous_codon, Peptide_first_codon, Peptide_amino_acid_before, Peptide_amino_acid_first, Peptide_amino_acid_last, Peptide_amino_acid_after, Peptide_inferred_translated_sequence_specific, Peptide_genome_ORF_count, Strain_identified, config['reference_proteome_id'], mapped_ref)
     #attributes1 = 'ID=peptide-{};Name={};Note=ORF id {};Peptide sequence {};Mapped reference proteins ({}) {}, Mapped taxon proteins (TaxID {}) {}'.format(ORF_id, Peptide_sequence, ORF_id, Peptide_sequence, config.reference_proteome_id, mapped_ref, config.group_taxid, mapped_up)
     
     for i in range(len(Peptide_starts)):
@@ -106,15 +118,17 @@ def gff3_peptide_export(df):
             trans = str(translate(nucs, table=11, cds=False)) 
             assert trans[1:] == Peptide_sequence[1:]
 
-        row = reference_sequence +'\t' + 'match' +'\t' + type + '\t' + str(gstart) + '\t' + str(gend) + '\t' + score + '\t' + strand + '\t' + phase + '\t' + attributes1
+        row = reference_sequence +'\t' + 'match' +'\t' + type  + '\t' + str(gstart) + '\t' + str(gend) + '\t' + score + '\t' + strand + '\t' + phase + '\t' + attributes1
         peptide_columns.append(row)
         
-        row = reference_sequence +'\t' + source +'\t' + type + '\t' + str(gstart) + '\t' + str(gend) + '\t' + score + '\t' + strand + '\t' + phase + '\t' + attributes2
-        peptide_columns.append(row)
+        #row = reference_sequence +'\t' + source +'\t' + 'open_reading_frame' + '\t' + str(gstart) + '\t' + str(gend) + '\t' + score + '\t' + strand + '\t' + phase + '\t' + attributes2
+        #peptide_columns.append(row)
+
 
 def gff3_orf_export(df):
     global orf_columns
-    reference_sequence = df['ORF_id'].split('_')[-3]
+    #reference_sequence = df['ORF_id'].split('_')[-3]
+    reference_sequence = reference(df['ORF_id'])
     #print(reference_sequence)
     source = 'ProteogenomicsPipeline'
     type = 'open_reading_frame'
@@ -139,7 +153,7 @@ def gff3_orf_export(df):
     phase = '.'
     #attributes = 'Name={};Note=ORF id: {}%0AAssembly: {}%0AMost upstream inferred codon: {}%0AMost upstream inferred start: {}%0APreceding codon: {}%0AN-term fragment: {}%0AC-term fragment: {}'.format(recno, ORF_id, Assembly, Most_Upstream_Inferred_Codon, Most_Upstream_Inferred_Start, ORF_preceding_codon, ORF_Nterm_fragment, ORF_Cterm_fragment)
     
-    attributes = 'Name={};Note=ORF id {}'.format(recno, ORF_id)
+    attributes = 'ID={};Name={};Note=ORF id {}'.format(recno,recno, ORF_id)
     
     row = reference_sequence + '\t' + source + '\t' + type + '\t' + str(start) + '\t' + str(end) + '\t' + score + '\t' + strand + '\t' + phase + '\t' + attributes
     orf_columns.append(row)
@@ -150,7 +164,7 @@ def gff3_contig_export(recs):
     for rec in recs:
         id = rec.id
         #print(id)
-        reference_sequence = id.split('|')[0]
+        reference_sequence = id
         #size = id.split('|')[1]
         size = len(str(rec.seq))
         start = '1'
@@ -170,16 +184,15 @@ for strain in config['strains']:
     orf_columns = []
     peptide_columns = []
     
-    peptides = pickle.load(open(output+ '/strains/' + strain + '/{}_mapped_peptides.p'.format(strain), 'rb'))
+    peptides = pd.read_csv(output+ '/strains/' + strain + '/{}_mapped_peptides.csv'.format(strain))
     strain_identified = peptides[(peptides['Strain_identified']=='+') ]
-    genome = list(SeqIO.parse(config['strains'][strain]['sf_genome'],'fasta'))
+    genome = list(SeqIO.parse(config['strains'][strain]['assembly'],'fasta'))
     
     gff3_contig_export(genome)
 
     gdict = {}
     for rec in genome:
-        id = rec.id.split('|')[0]
-        gdict[id] = rec
+        gdict[rec.id] = rec
     
     #strain_identified = strain_identified.head()
     orfs_identified = strain_identified.drop_duplicates('ORF_id')
@@ -187,17 +200,17 @@ for strain in config['strains']:
     strain_identified.apply(gff3_peptide_export, axis=1)
     gff3_list = ['##gff-version 3\n##Index-subfeatures 1\n']
     
-    gff3_list += contig_columns
+    #gff3_list += contig_columns
     gff3_list += orf_columns
     gff3_list  += peptide_columns
     
     gff3 = '\n'.join(gff3_list)
-    if strain in config['reference_strains']:
-        gff3 = gff3 +'\n' + ref_gff3
+    ##if strain in config['reference_strains']:
+    #    gff3 = gff3 +'\n' + ref_gff3
 
-    if not os.path.exists(output + '/strains/' + strain):
-        os.mkdir(output + '/strains/' + strain) 
-    w =open(output+ '/strains/' + strain + '/{}_features.gff3'.format(strain), 'w')
+    if not os.path.exists(output + '/jbrowse/' + strain):
+        os.mkdir(output + '/jbrowse/' + strain) 
+    w =open(output+ '/jbrowse/' + strain + '/{}_features.gff3'.format(strain), 'w')
     w.write(gff3)
     w.close()
 

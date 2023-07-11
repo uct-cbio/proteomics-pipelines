@@ -61,6 +61,8 @@ def check_identified(peptide, identified):
     else:
         return '-'
 
+all_orfs = []
+all_trans_orfs = []
 for strain in config['strains']:
     samples = strain_samples[strain]
     sample_columns = []
@@ -76,9 +78,9 @@ for strain in config['strains']:
     print('Strain acetylated', len(strain_acetylated))
     print('Strain M(ox)', len(strain_m_ox))
 
-    if paths['sf_genome'] != None:
+    if paths['assembly'] != None:
         print(strain)
-        genome = list(SeqIO.parse(paths['sf_genome'],'fasta'))
+        genome = list(SeqIO.parse(paths['assembly'],'fasta'))
         
         strainpath=output +'/strains/' + strain
         try:
@@ -98,8 +100,12 @@ for strain in config['strains']:
         #outpath=strainpath + '/' + '{}_mapped_peptides.p'.format(str(strain))   
         
         speps.to_csv(strainpath + '/' + '{}_mapped_peptides.csv'.format(str(strain)))
-        
+        SeqIO.write(g2p.mapped_orfs, strainpath + '/' + '{}_mapped_orfs.fasta'.format(str(strain)), 'fasta')
+        SeqIO.write(g2p.mapped_trans_orfs, strainpath + '/' + '{}_mapped_transated_orfs.fasta'.format(str(strain)), 'fasta')
+        all_orfs += g2p.mapped_orfs
+        all_trans_orfs += g2p.mapped_trans_orfs
         #pickle.dump( speps, open( outpath, "wb" ) )
     
 
-
+SeqIO.write(all_orfs, output + '/strains/all_mapped_orfs.fasta', 'fasta')
+SeqIO.write(all_trans_orfs, output + '/strains/all_mapped_trans_orfs.fasta', 'fasta')
