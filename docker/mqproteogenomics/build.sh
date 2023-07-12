@@ -2,7 +2,7 @@
 set -e
 
 # Change build context to the root of the directory
-version=v1.22.3
+version=v1.3
 
 name=mqproteogenomics
 
