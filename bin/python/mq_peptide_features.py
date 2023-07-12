@@ -85,10 +85,12 @@ def gff3_peptide_export(df):
     Strain_identified = df['Strain_identified']
     #mapped_up = ' '.join(pep2entry[Peptide_sequence]) 
     
-    try:
-        mapped_ref = ' '.join(pep2reference[Peptide_sequence]) 
-    except:
-        mapped_ref= 'None'
+    # mapping a peptide to a reference sequence should happen here
+    #try:
+    #    mapped_ref = ' '.join(pep2reference[Peptide_sequence]) 
+    #except:
+    
+    mapped_ref= 'None'
 
     #attributes1 = 'ID=peptide-{};Name={};Note=ORF id {},%0APeptide sequence {}'.format(ORF_id, ORF_id, ORF_id, Peptide_sequence)
     attributes1 = 'ID={};Name={};Note=ORF id {},%0APeptide sequence {},%0ATryptic N-terminal {},%0ATryptic C-terminal {},%0APrevious codon {},%0AFirst codon {},%0AAmino acid before {},%0AFirst amino acid {},%0ALast amino acid {},%0AAmino acid after {},%0ASpecific {},%0APeptide ORF count {},%0AIdentified in strain {},%0AMapped reference proteins {}'.format(Peptide_sequence, Peptide_sequence, ORF_id, Peptide_sequence, Peptide_tryptic_nterm, Peptide_tryptic_cterm, Peptide_previous_codon, Peptide_first_codon, Peptide_amino_acid_before, Peptide_amino_acid_first, Peptide_amino_acid_last, Peptide_amino_acid_after, Peptide_inferred_translated_sequence_specific, Peptide_genome_ORF_count, Strain_identified, mapped_ref)
