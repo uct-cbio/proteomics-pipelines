@@ -77,6 +77,7 @@ RUN conda install -c conda-forge r-sciplot
 RUN conda install -c bioconda r-dunn.test
 RUN conda install -c conda-forge r-fsa
 RUN conda install -c bioconda r-car
+RUN conda install -c r r-gplots
 ##RUN R -e "install.packages('epitools', dependencies=TRUE, repos='http://cran.us.r-project.org')"
 #RUN R -e "install.packages('plotrix', dependencies=TRUE, repos='http://cran.us.r-project.org')"
 #RUN R -e "install.packages('sciplot', dependencies=TRUE, repos='http://cran.us.r-project.org')"
