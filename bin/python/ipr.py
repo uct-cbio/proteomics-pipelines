@@ -50,7 +50,7 @@ def request(jobq):
             t1 = time.time()
             try: 
                 p = subprocess.Popen(cmd, shell=True)
-                p.wait()
+                #p.wait()
                 print(p.communicate())
                 assert p.returncode == 0
                 #if os.path.exists(tempfasta+'.tsv.txt'):
