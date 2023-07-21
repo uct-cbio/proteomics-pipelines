@@ -1,5 +1,5 @@
 #FROM thyscbio/bio:v2.10
-FROM thyscbio/bio:v3.0.1
+FROM thyscbio/bio:v3.0.4
 # samtools etc
 RUN apt-get update && apt-get install -y libssl-dev openssl
 RUN conda update conda && conda install -c bioconda bcftools minimap2

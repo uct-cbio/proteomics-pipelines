@@ -78,6 +78,8 @@ RUN conda install -c bioconda r-dunn.test
 RUN conda install -c conda-forge r-fsa
 RUN conda install -c bioconda r-car
 RUN conda install -c r r-gplots
+RUN conda install -c bioconda r-corrplot
+RUN conda install -c bioconda bioconductor-pathview
 ##RUN R -e "install.packages('epitools', dependencies=TRUE, repos='http://cran.us.r-project.org')"
 #RUN R -e "install.packages('plotrix', dependencies=TRUE, repos='http://cran.us.r-project.org')"
 #RUN R -e "install.packages('sciplot', dependencies=TRUE, repos='http://cran.us.r-project.org')"
@@ -117,7 +119,7 @@ WORKDIR /home/bio/
 #RUN R -e "install.packages('FSA') "
 
 
-#RUN git clone https://github.com/bmbolstad/preprocessCore.git && cd preprocessCore/ && R CMD INSTALL --configure-args="--disable-threading"  .
+RUN git clone https://github.com/bmbolstad/preprocessCore.git && cd preprocessCore/ && R CMD INSTALL --configure-args="--disable-threading"  .
 #RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
 
