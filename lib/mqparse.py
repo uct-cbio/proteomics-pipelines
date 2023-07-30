@@ -232,9 +232,6 @@ class mq_txt:
             os.mkdir(self.outdir)
         # logic to make sure the configs are not changed during the process of restarting the pipeline. If yuo want to change the parameters, create a new outfolder
         saved_config = self.outdir + '/config.yml'
-        if os.path.exists(saved_config):
-            print("The run is already completed")
-            return
 
         saved_config_temp = self.outdir + '/.config.yml'
         if not os.path.exists(saved_config_temp):
@@ -446,7 +443,10 @@ class mq_txt:
         self.target_proteingroups=self.target_proteingroups[[i for i in self.target_proteingroups.columns if not  i in exclude_columns]]
         self.target_proteingroups.to_csv(self.protein_txt, sep='\t')
 
-
+        if os.path.exists(saved_config):
+            print("The run is already completed")
+            return
+        
         # create summary
         self.create_summary()
 
