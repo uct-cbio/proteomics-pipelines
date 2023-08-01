@@ -13,7 +13,7 @@ import pandas as pd
 import io
 import os
 
-limit = 30
+limit = 25
 threads = []
 
 jobq=mp.Queue(limit)
@@ -73,7 +73,8 @@ def request(jobq):
                 #failures += 1
                 #if failures > 10:
                 #    done=True
-                shutil.rmtree(tempdir)
+                if os.path.exists(tempdir):
+                    shutil.rmtree(tempdir)
 
 workers = []
 
