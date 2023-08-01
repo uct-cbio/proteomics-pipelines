@@ -32,22 +32,22 @@ def request(jobq):
         if rec is None:
             return
         else:
-            tempdir = tempfile.mkdtemp()
             rec_id = rec.id
             if '|' in  rec_id:
                 rec_id = rec_id.split('|')[1]
-            tempfasta = tempdir + '/{}.fasta'.format(rec_id)
             newrec = Bio.SeqRecord.SeqRecord( id=rec.id, seq =rec.seq)
-            #print(newrec.format('fasta'))
-            SeqIO.write(newrec, tempfasta, 'fasta')
-            t1 = time.time()
             #cmd = 'python3 iprscan5.py --goterms --pathways --appl SMART --appl TMHMM --appl CDD --appl Pfam --appl Phobius --appl ProDom --appl SignalP --appl TIGRFAM --appl COILS --appl Gene3D --appl HAMAP --appl MOBIDB --appl PANTHER --appl PIRSF --appl PRINTS --appl PROSITE --appl SFLD --email=matthys@gmail.com --outfile={} --outformat=tsv --quiet {}'.format(tempfasta, tempfasta)
-            cmd = 'iprscan5.py --verbose --goterms --pathways --email=matthys.potgieter@gmail.com --outfile={} --outformat=tsv  {}'.format(tempfasta + '.tsv', tempfasta)
-            print(cmd)
             done=False
             #failures = 0
             while done == False:
-                t1 = time.time()
+                tempdir = tempfile.mkdtemp()
+                tempfasta = tempdir + '/{}.fasta'.format(rec_id)
+                #print(newrec.format('fasta'))
+                SeqIO.write(newrec, tempfasta, 'fasta')
+                #t1 = time.time()
+                cmd = 'iprscan5.py --verbose --goterms --pathways --email=matthys.potgieter@gmail.com --outfile={} --outformat=tsv  {}'.format(tempfasta + '.tsv', tempfasta)
+                print(cmd)
+                
                 try: 
                     p = subprocess.Popen(cmd, shell=True)
                     #p.wait()
