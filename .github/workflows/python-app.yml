@@ -23,7 +23,9 @@ jobs:
     #    python-version: 3.8
     - name: Install dependencies
       run: |
+        apt-get update && apt-get install -y git-lfs
         git clone https://thys_potgieter@bitbucket.org/thys_potgieter/cbio-proteogenomics-tests.git
+        cd cbio-proteogenomics-tests && git-lfs pull
         pip3 install --upgrade pip
         pip3 install flake8 pytest
         if [ -f requirements.txt ]; then pip3 install -r requirements.txt; fi
