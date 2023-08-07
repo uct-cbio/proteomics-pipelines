@@ -23,7 +23,7 @@ git clone https://thys_potgieter@bitbucket.org/thys_potgieter/cbio-proteogenomic
 Create an interactive singularity session:
 ~~~
 cd proteomics-pipelines/singularity/mqproteogenomics
-singularity shell mqproteogenomics_v1.5.img 
+singularity shell mqproteogenomics_v2.0.4.img 
 ~~~
 
 Run the example:
