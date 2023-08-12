@@ -122,16 +122,26 @@ WORKDIR /home/bio/
 RUN git clone https://github.com/bmbolstad/preprocessCore.git && cd preprocessCore/ && R CMD INSTALL --configure-args="--disable-threading"  .
 #RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
+RUN apt-get update && apt-get install -y libssl-dev openssl
+RUN conda update conda && conda install -c bioconda bcftools minimap2  
+RUN conda config --add channels bioconda && conda config --add channels conda-forge 
+RUN conda install samtools  
+RUN conda install tabix  
+RUN conda install jbrowse2  
+RUN conda install emboss  
+RUN yes | conda update --all  
+RUN conda init 
+RUN apt-get update && apt-get install -y software-properties-common build-essential zlib1g-dev  genometools 
 
 
 #ENV PYTHONPATH /root/miniconda3/lib/python3.9/site-packages::$PYTHONPATH
 # testing paths
-ENV PYTHONPATH $PYTHONPATH::/home/testing/proteomics-pipelines/lib
+#ENV PYTHONPATH $PYTHONPATH::/home/testing/proteomics-pipelines/lib
 # production paths
 ENV PYTHONPATH $PYTHONPATH::/home/bio/lib
 
 # testing paths (if files are mounted it will use those
-ENV PATH $PATH::/home/testing/proteomics-pipelines/bin/python:/home/testing/proteomics-pipelines/bin/R:/home/testing/proteomics-pipelines/bin/bash:/home/testing/proteomics-pipelines/bin/python
+#ENV PATH $PATH::/home/testing/proteomics-pipelines/bin/python:/home/testing/proteomics-pipelines/bin/R:/home/testing/proteomics-pipelines/bin/bash:/home/testing/proteomics-pipelines/bin/python
 # production paths
 ENV PATH $PATH::/home/bio/bin/python:/home/bio/bin/R:/home/bio/bin/bash:/home/bio/bin/python
 

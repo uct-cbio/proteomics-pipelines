@@ -39,4 +39,4 @@ jobs:
         export PATH=$PATH::/__w/proteomics-pipelines/proteomics-pipelines/bin/python:/__w/proteomics-pipelines/proteomics-pipelines/bin/bash:/__w/proteomics-pipelines/proteomics-pipelines/bin/R:/__w/proteomics-pipelines/proteomics-pipelines/bin/perl
         export PYTHONPATH=$PYTHONPATH::/__w/proteomics-pipelines/proteomics-pipelines/lib
         echo $PATH
-        cd cbio-proteogenomics-tests/lib && pytest 
+        cd cbio-proteogenomics-tests/lib && pytest -v
