@@ -5,7 +5,6 @@ config=$1
 : ${1?"Please provide the path to the yaml config file"}
 
 
-
 outdir=$(extract_variable.py $config outdir) || ( echo "no outdir defined"  && exit 1)
 
 #kegg_id=$3 #'mtu'
@@ -21,6 +20,7 @@ if [ ! -d $outdir/uniprot ] ; then
 fi
 
 # Proteogenomics analysis
+# check the ncrna_class tag in GFF3
 if [ ! -d $outdir/ena ] ; then
     mq_ena.py $config $outdir || ( rm -rf $outdir/ena ; exit 1 )
 fi
@@ -59,17 +59,18 @@ if [ ! -d $outdir/blast/orfs2genome ] ; then
     mq_blast_orfs2refgenome.py $config $outdir  || ( rm -rf $outdir/blast/orfs2genome ; exit 1 )
 fi
 
-
-#if [ ! -d $outdir/blast/peptides2genome ] ; then
-#    mkdir $outdir/blast/peptides2genome
-#    mq_blast_peptides2refgenome.py $config $outdir  || rm -rf $outdir/blast/peptides2genome
-#fi
+# this output is not used for now, peptides are all mapped to the same reference, to facilitate gbrowse on the same reference sequence if it is needed
+if [ ! -d $outdir/blast/peptides2genome ] ; then
+    mkdir $outdir/blast/peptides2genome
+    mq_blast_peptides2refgenome.py $config $outdir  #|| rm -rf $outdir/blast/peptides2genome
+fi
 
 if [ ! -d $outdir/blast/peptides2orfs ] ; then
     mkdir $outdir/blast/peptides2orfs
     mq_blast_peptides2reforfs.py $config $outdir  || ( rm -rf $outdir/blast/peptides2orfs ; exit 1 )
 fi
 
+exit 0
 ##################
 # Operon Mapping #
 ##################

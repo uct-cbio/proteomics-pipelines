@@ -34,5 +34,6 @@ def refmap(proteome_id, tax_id, output):
 
 for strain in config['reference']:
     proteome_id = config['reference'][strain]['proteome_id']
-    taxon_id = config['reference'][strain]['taxon_id']
+    #taxon_id = config['reference'][strain]['taxon_id']
+    taxon_id=None
     refmap(proteome_id, taxon_id, output)

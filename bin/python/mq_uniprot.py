@@ -89,7 +89,8 @@ def download(proteome, taxid, output):
         process.wait()
 
 def download2(proteome_id, output):
-    url='https://www.uniprot.org/uniprot/?query=proteome:{}&format=fasta&include=yes&force=true'.format(proteome_id)
+    #url='https://www.uniprot.org/uniprot/?query=proteome:{}&format=fasta&include=yes&force=true'.format(proteome_id)
+    url='https://rest.uniprot.org/uniprotkb/stream?compressed=true&download=true&format=fasta&includeIsoform=true&query=%28{}%29'.format(proteome_id)
 
     path = output +'/{}'.format(proteome_id)
     try:
@@ -98,21 +99,26 @@ def download2(proteome_id, output):
         pass
     #for request in requests:
     
-    command = "cd {} && curl '{}' > {}.fasta && echo '{}' > urls.txt".format(path, url, proteome_id, url)
+    command = "cd {} && curl '{}' > {}.fasta.gz  && gunzip *.gz && echo '{}' > urls.txt".format(path, url, proteome_id, url)
+    
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
     process.wait()
-    
-    url='https://www.uniprot.org/uniprot/?query=proteome:{}&format=gff&include=yes&force=true'.format(proteome_id)
 
+    #url='https://www.uniprot.org/uniprot/?query=proteome:{}&format=gff&include=yes&force=true'.format(proteome_id)
+    url='https://rest.uniprot.org/uniprotkb/stream?compressed=true&download=true&format=gff&includeIsorform=true&query=%28{}%29'.format(proteome_id)
     
-    command = "cd {} && curl '{}' > {}.gff3 && echo '{}' >> urls.txt".format(path, url, proteome_id, url)
+    command = "cd {} && curl '{}' > {}.gff3.gz && gunzip *.gz  && echo '{}' >> urls.txt".format(path, url, proteome_id, url)
+    
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
     process.wait()
     
-    url='https://www.uniprot.org/uniprot/?query=proteome:UP000236349&include=yes&format=tab&force=true&columns=id,entry%20name,reviewed,protein%20names,genes,organism,length,database(KEGG),comment(PATHWAY),genes(OLN),genes(ORF),database(GeneID)'
-    command = "cd {} && curl '{}' > {}.tab && echo '{}' >> urls.txt".format(path, url, proteome_id, url)
+    #url='https://www.uniprot.org/uniprot/?query=proteome:UP000236349&include=yes&format=tab&force=true&columns=id,entry%20name,reviewed,protein%20names,genes,organism,length,database(KEGG),comment(PATHWAY),genes(OLN),genes(ORF),database(GeneID)'
+    url='https://rest.uniprot.org/uniprotkb/stream?compressed=true&includeIsoform=true&fields=accession%2Creviewed%2Cid%2Cprotein_name%2Cgene_names%2Corganism_name%2Clength%2Ccc_alternative_products%2Ccc_mass_spectrometry%2Cgene_orf%2Cgene_oln%2Cgene_primary%2Corganism_id%2Cxref_kegg%2Ccc_pathway&format=tsv&query=%28{}%29+AND+%28reviewed%3Afalse%29'.format(proteome_id)
+    command = "cd {} && curl '{}' > {}.tab.gz && gunzip *.gz && echo '{}' >> urls.txt".format(path, url, proteome_id, url)
+    
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
     process.wait()
+    return
     
 output = output +'/uniprot'
 

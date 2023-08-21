@@ -143,10 +143,9 @@ ENV PYTHONPATH $PYTHONPATH::/home/bio/lib
 # testing paths (if files are mounted it will use those
 #ENV PATH $PATH::/home/testing/proteomics-pipelines/bin/python:/home/testing/proteomics-pipelines/bin/R:/home/testing/proteomics-pipelines/bin/bash:/home/testing/proteomics-pipelines/bin/python
 # production paths
-ENV PATH $PATH::/home/bio/bin/python:/home/bio/bin/R:/home/bio/bin/bash:/home/bio/bin/python
+ENV PATH $PATH::/home/bio/bin/python:/home/bio/bin/R:/home/bio/bin/bash:/home/bio/bin/python:/home/bio/bin/perl
 
-
-#COPY lib /home/bio/lib
-#COPY bin /home/bio/bin
+COPY lib /home/bio/lib
+COPY bin /home/bio/bin
 
 
