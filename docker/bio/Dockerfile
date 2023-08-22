@@ -147,4 +147,9 @@ ENV PATH=/home/bio/miniconda3/bin:${PATH}
 ENV PYTHONPATH $PYTHONPATH::/home/bio/lib
 ENV PATH $PATH::/home/bio/bin/python:/home/bio/bin/R:/home/bio/bin/bash:/home/bio/bin/python:/home/bio/bin/perl
 
+USER root
+RUN conda init
+ENV PATH=/home/bio/miniconda3/bin:${PATH} 
+ENV PYTHONPATH $PYTHONPATH::/home/bio/lib
+ENV PATH $PATH::/home/bio/bin/python:/home/bio/bin/R:/home/bio/bin/bash:/home/bio/bin/python:/home/bio/bin/perl
 

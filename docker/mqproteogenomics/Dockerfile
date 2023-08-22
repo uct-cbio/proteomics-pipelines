@@ -1,5 +1,5 @@
 #FROM thyscbio/bio:v2.10
-FROM thyscbio/bio:v3.0.9
+FROM thyscbio/bio:v3.0.17
 
 # samtools etc
 #RUN apt-get update && apt-get install -y libssl-dev openssl
