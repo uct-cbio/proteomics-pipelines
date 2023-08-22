@@ -1,6 +1,7 @@
 #!/bin/bash
 set -a
-version=v3.0.5
+version=v3.0.16
+
 home=/home/$(who -m | awk '{print $1;}')
 config=${home}/.proteomics-pipelines_profile
 source $config
