@@ -49,7 +49,6 @@ for row in design.iterrows():
     strain_samples[strain].append(sample)
 
 exp_cols = [i for i in peptides.columns if i.startswith('Experiment')]
-#print(peptides[exp_cols])
 #peptides = peptides[:20] # DEV
 #peptide_sequences = peptides['Sequence'].tolist()
 #assert 4 == 5
@@ -69,7 +68,6 @@ for strain in config['strains']:
 
     for sample in samples:
         sample_columns.append('Experiment {}'.format(sample))
-
     strain_filt = peptides[peptides[sample_columns].sum(axis=1) >=1]
     strain_peptides = strain_filt['Sequence'].tolist()
     paths = config['strains'][strain]

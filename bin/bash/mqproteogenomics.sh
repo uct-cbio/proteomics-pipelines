@@ -31,6 +31,7 @@ if [ ! -d $outdir/strains ] ; then
     mq_genome_to_peptide.py $config $outdir || ( rm -rf $outdir/strains ; exit 1 )
 fi
 
+
 #stub_mq_consensus_blast.py $config $outdir
 
 #uniprot_peptide2db.py $config $outdir
