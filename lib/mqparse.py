@@ -614,7 +614,7 @@ class mq_txt:
                                        group_level=level)
         # Normalize proteins
         outdir = self.diff_dir + 'protein_normalization'
-        infile = self.gsea_dir +'/ipr_target_proteins.txt'
+        infile = self.gsea_dir +'/ipr_target_proteins.tsv'
         norm_prots = self.diff_dir + '/protein_normalization/msnbase/normalized.csv'
         
         if not os.path.exists(norm_prots):
@@ -1486,7 +1486,7 @@ class mq_txt:
         process.wait()
         assert process.returncode == 0
         
-        proteins.to_csv(outpath +'/ipr_target_proteins.txt',sep='\t')
+        proteins.to_csv(outpath +'/ipr_target_proteins.tsv',sep='\t')
 
 
 

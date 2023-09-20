@@ -92,7 +92,8 @@ def get_mapping(df):
     for i in ids:
         print(i)
         i = i.split('|')[1]#.split('.')[0]
-        if evalue < 0.0001:
+        #if evalue < 0.0001:
+        if evalue == 0:
             mapped = df['_alignment.entry']
             if not mapped in mp[i]:
                 mp[i].append(mapped)
