@@ -1115,6 +1115,7 @@ class pairwise_blast:
     def feature_overlap(self, gff3):  # sequtils gff3 object (must be from UniProt! Target must be a UniProt fasta record with id sp|P9WQP5|P9WQP5_MYCTU etc..
         if len(self.differences) > 0:
             features = gff3.table[gff3.table['seqid'] == self.target.id.split('|')[1]]
+            print("mapped features from tsv: ", len(features))
             overlap  = features[(features['start'] < max(self.differences))  & (features['end'] > min(self.differences))]
             
             res = []
@@ -2103,5 +2104,23 @@ def genome2aa(fasta):
         genome_list.append('X'.join(frame_list))
     genome_str = 'X'.join(genome_list)
     return genome_str
+
+def rename_design(design):
+    rename_dict={}
+    for row in design.iterrows():
+        sample=row[1]['sample']
+        if 'rename' in row[1].index:
+            rename=row[1]['rename']
+        else:
+            rename = None
+        if rename == '':
+            rename = None
+        elif rename==np.nan:
+            rename = None
+        if rename is None:
+            rename = sample
+        rename_dict[rename] = sample
+    return rename_dict
+
 
 

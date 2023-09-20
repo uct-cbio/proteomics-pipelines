@@ -99,7 +99,7 @@ for strain in config['strains']:
         
         speps.to_csv(strainpath + '/' + '{}_mapped_peptides.csv'.format(str(strain)))
         SeqIO.write(g2p.mapped_orfs, strainpath + '/' + '{}_mapped_orfs.fasta'.format(str(strain)), 'fasta')
-        SeqIO.write(g2p.mapped_trans_orfs, strainpath + '/' + '{}_mapped_transated_orfs.fasta'.format(str(strain)), 'fasta')
+        SeqIO.write(g2p.mapped_trans_orfs, strainpath + '/' + '{}_mapped_translated_orfs.fasta'.format(str(strain)), 'fasta')
         all_orfs += g2p.mapped_orfs
         all_trans_orfs += g2p.mapped_trans_orfs
         #pickle.dump( speps, open( outpath, "wb" ) )

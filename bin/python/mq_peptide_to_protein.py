@@ -60,7 +60,8 @@ for reference in config['reference']:
     #    orf_feature_mapping = json.loads(f.read())
     #orf_features.expand_table(orf_feature_mapping)
 
-    orf_features = pd.read_csv(output +'/fasta/proteins.fasta.tsv',sep='\t')
+    #orf_features = pd.read_csv(output +'/fasta/proteins.fasta.tsv',sep='\t')
+    orf_features = sequtils.gff3(output +'/fasta/proteins.fasta.tsv')
 
     design = pd.read_csv(config['design'])
 
@@ -69,12 +70,14 @@ for reference in config['reference']:
 
     if 'rename' in design.columns:
         samples =list(set(design['rename'].tolist()))
+        rename = design.set_index('rename')['sample'].to_dict()
     else:
         samples =list(set(design['sample'].tolist()))
+        design['rename'] = design['sample']
+        rename = design.set_index('rename')['sample'].to_dict()
     # Get the mapping of samples to strain
     strain_dct = design.set_index('rename')['Strain'].to_dict()
     strainGroup_dct = design.set_index('rename')['StrainCondition'].to_dict()
-
 
     try:
         shutil.rmtree(output+'/clustalw')
@@ -111,7 +114,6 @@ for reference in config['reference']:
     global_specific_paralog_peptides = set(global_specific_paralog_peptides) - set(global_non_specific_peptides)
     global_non_specific_peptides = set(global_non_specific_peptides)
 
-    print(global_specific_paralog_peptides)
 
     strain_sets_nterm_acetylated = {}
 
@@ -174,7 +176,12 @@ for reference in config['reference']:
                     pairwise_blast.append(header)
                     pairwise_blast.append(out.results)
                     pairwise_blast.append('\nIdentified polymorphism positions: {}'.format('; '.join(['{} ({})'.format(str(i), out.variants[i]) for i in out.differences])))
-                    overlap = out.feature_overlap(features)
+                    try:
+                        overlap = out.feature_overlap(features)
+                    except:
+                        # help this code please 
+                        overlap = None
+
 
                     if overlap != None: 
                         pairwise_features.append(header)
@@ -218,8 +225,8 @@ for reference in config['reference']:
 
         for sample in samples:
             if strain_dct[sample] == strain:
-                sample_peps = set(evidence[evidence['Experiment'] == sample]['Sequence'].tolist()) 
-                sample_evs = set(evidence[evidence['Experiment'] == sample]['Modified sequence'].tolist()) 
+                sample_peps = set(evidence[evidence['Experiment'] == rename[sample]]['Sequence'].tolist()) 
+                sample_evs = set(evidence[evidence['Experiment'] == rename[sample]]['Modified sequence'].tolist()) 
                 strain_peptides[strain].update(sample_peps)
                 strain_evidences[strain].update(sample_evs)
 
@@ -253,7 +260,7 @@ for reference in config['reference']:
 
     #combined= pg[:100]
 
-    #pg = pg.head(100)
+    #pg = pg.head(10)
 
     combined = pg
 
@@ -267,8 +274,6 @@ for reference in config['reference']:
         peptide_ids = row[1]['Peptide IDs'].split(';')  # Get the ids of peptides in the row
         evidence_ids = row[1]['Evidence IDs'].split(';') # Get the ids of envidence.txt entries
         row_peps = peptides[peptides['id'].apply(str).isin(peptide_ids)]
-        #print(row_peps)
-
         row_evs = evidence[evidence['id'].apply(str).isin(evidence_ids)]
 
         all_row_peptides = set(row_peps['Sequence'].tolist())
@@ -280,6 +285,7 @@ for reference in config['reference']:
         row_non_tryptic_nterm = row_specific & global_non_tryptic_nterm  
         row_non_atg_starts = row_specific & global_non_atg_starts 
         
+        #print('specific peptides : ', len(list(row_specific)))
         if len(row_paralog_peptides) > 0:
             row_paralogous = '+'
 
@@ -293,9 +299,8 @@ for reference in config['reference']:
             strain=strain_dct[sample]
             group=strainGroup_dct[sample]
             #sample_peps = list(set(row_peps[row_peps['Experiment {}'.format(sample)]>=1]['Sequence'].tolist()))
-            sample_evs = list(set(row_evs[row_evs['Experiment'] == sample]['Modified sequence'].tolist()))
-            sample_peps = list(set(row_evs[row_evs['Experiment'] == sample]['Sequence'].tolist()))
-            sample_peps
+            sample_evs = list(set(row_evs[row_evs['Experiment'] == rename[sample]]['Modified sequence'].tolist()))
+            sample_peps = list(set(row_evs[row_evs['Experiment'] == rename[sample]]['Sequence'].tolist()))
 
             sample_column = "All peptides sample {}".format(sample)
             combined.loc[row[0], sample_column] = '\n'.join(sorted(list(sample_evs)))

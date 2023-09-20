@@ -32,9 +32,10 @@ import subprocess
 import pandas as pd
 
 config = yaml.load(open(sys.argv[1]).read(), Loader=yaml.Loader)
-output = sys.argv[2]
+output = os.path.abspath(sys.argv[2])
 
-outpath = config['outdir']
+outpath = os.path.abspath(config['outdir'])
+
 
 cmd = 'rm -rf {}/jbrowse/local && jbrowse create {}/jbrowse/local'.format(outpath, outpath)
 process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
@@ -177,12 +178,16 @@ def upload_gff3(gff3, outpath, name, height, color, showLabels, reference,Label=
     cmd = 'gt gff3 -sortlines -tidy -retainids {} > {}.sorted.gff3'.format(gff3, gff3)
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     process.wait()
+    
+    gff3_zip_path='{}.sorted.gff3.gz'.format(gff3)
+    if os.path.exists(gff3_zip_path):
+        os.remove(gff3_zip_path)
 
-    cmd = 'rm {}.sorted.gff3.gz; bgzip {}.sorted.gff3'.format(gff3, gff3)
+    cmd = 'bgzip {}.sorted.gff3'.format(gff3)
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     process.wait()
 
-    cmd = 'tabix -f {}.sorted.gff3.gz'.format(gff3)
+    cmd = 'tabix -f {}'.format(gff3_zip_path)
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     process.wait()
 
@@ -194,6 +199,7 @@ def upload_gff3(gff3, outpath, name, height, color, showLabels, reference,Label=
     update_config(outpath, name, filepath, height, color, showLabels,Label)
 
 for reference in config['reference']:
+    break
     assembly_id = config['reference'][reference]['assembly_id']
     genome_path = output + '/ena/{}/{}.fasta'.format(assembly_id, assembly_id)
     genome_gff3 = output + '/ena/{}/{}.gff3'.format(assembly_id, assembly_id)
@@ -206,6 +212,7 @@ for reference in config['reference']:
     upload_gff3(genome_gff3, outpath,reference,width, color, True , reference, labels)
     
 for query in config['reference']:
+    break
     assembly_id = config['reference'][reference]['assembly_id']
     query_genome_path = output + '/ena/{}/{}.fasta'.format(assembly_id, assembly_id)
     for target in config['reference']:
@@ -224,7 +231,7 @@ for strain in config['strains']:
 
     showLabels = False
     upload_gff3(feature_gff3, outpath, strain + ' features', width, color, showLabels, strain )
-
+    continue
     for reference in config['reference']:
         assembly_id = config['reference'][reference]['assembly_id']
         peptide_gff3="{}/jbrowse/".format(outpath)+strain+"/{}_{}_peptides.gff3".format(strain, assembly_id)
@@ -239,6 +246,7 @@ for strain in config['strains']:
 
 # strain to strain syntenty
 for strain in config['strains']:
+    continue
     assembly = config['strains'][strain]['assembly']
     for tstrain in config['strains']:
         if not strain == tstrain:

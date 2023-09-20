@@ -33,7 +33,7 @@ def download(genome, output):
     c2 = 'wget https://www.ebi.ac.uk/ena/browser/api/fasta/{}?download=true -O {}.fasta'.format(genome, genome)
     requests = [c1]
     for request in requests:
-        command = "cd {} && wget {}".format(path, request)
+        command = "cd {} && {}".format(path, request)
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
         process.wait()
 

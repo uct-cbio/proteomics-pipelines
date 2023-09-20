@@ -175,6 +175,80 @@ def parse_groups(ids):
     new_ids = ';'.join(new_ids)
     return new_ids
 
+def get_orf(recid):
+
+    if '_recno_' in recid:
+        _ = recid.split('_recno_')
+        name= _[0]
+        num = _[1]
+        num = num.split('.')[0] + '.0'
+        orf = name + '_recno_' + num    
+        return orf
+    else:
+        return recid
+def mapped_orfs(ids, orf_map):
+    '''maps the search fasta sequence to the six frame sequence used for proteogenomics analysis'''
+    ids = parse_ids(ids)
+    ids = ids.split(';')
+    new_ids = []
+    for i in ids:
+        if i in orf_map:
+            for ii in orf_map[i]:
+                if not ii in new_ids:
+                    new_ids.append(ii)
+    return ';'.join(new_ids)
+
+
+def orf_set(ids):
+    ids = parse_ids(ids)
+    ids = ids.split(';')
+    new_ids = []
+    for i in ids:
+        orf=i
+        #orf = get_orf(i)
+        new_ids.append(orf)
+    new_ids = list(set(new_ids))
+    new_ids.sort()
+    return ';'.join(new_ids)
+def orf_list(ids):
+    ids = parse_ids(ids)
+    ids = ids.split(';')
+    new_ids = []
+    for i in ids:
+        orf=i
+        #orf = get_orf(i)
+        if not orf in new_ids:
+            new_ids.append(orf)
+    return ';'.join(new_ids)
+
+def orf_proteins(ids, mapfile):
+    ids = ids.split(';')
+    new = []
+    
+    for i in ids:
+        if i in mapfile:
+            mapped = mapfile[i]
+            for ii in mapped:
+                if not ii in new:
+                    new.append(ii)
+        elif i.startswith('REV') or i.startswith('CON'):
+            new.append(i)
+        else:
+            new.append(i)
+    if len(new) > 0:
+        new = ';'.join(new)
+    else:
+        new = 'unannotated'
+    return new
+
+
+def leading_orf(ids):
+    ids = parse_ids(ids)
+    ids = ids.split(';')
+    orf = get_orf(ids[0])
+    return orf
+
+
 def bp(data, names, outfile, title, overlay=False):
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -325,15 +399,27 @@ class mq_txt:
         self.config = self.update_config(self.config, self.design, exclude_samples)
         self.rename_columns = rename_columns
         self.peptides['Identifier'] = self.peptides['Sequence']
-        self.proteingroups = self.create_protein_group_identifier(pd.read_csv(self.txt_path +'/proteinGroups.txt', sep='\t'))
-        assert len(self.proteingroups) == len(list(set(self.proteingroups['Identifier'].tolist())))
-        self.proteingroups['Leading Protein'] = self.proteingroups['Protein IDs'].apply(parse_ids).apply(lambda x : x.split(';')[0])
-        self.proteingroups['Leading Species'] = self.proteingroups['Protein IDs'].apply(parse_groups).apply(lambda x : x.split(';')[0])
+        self.proteingroups = pd.read_csv(self.txt_path +'/proteinGroups.txt', sep='\t')
         
-        #if 'reference_fasta' in self.config:
-        self.reference_fasta = list(SeqIO.parse(self.config['reference_fasta'], 'fasta'))
-        #else:
-        #    assert 'reference_proteome_id' in self.config
+        if self.proteogenomics == True:
+            self.proteingroups=self.proteogenomics_proteingroups(self.proteingroups,self.config)
+            proteins_column = 'ORF Proteins' 
+            self.proteingroups['Leading Species'] = np.nan
+        else:
+            proteins_column = 'Protein IDs'
+            self.proteingroups['Leading Species'] = self.proteingroups['Protein IDs'].apply(parse_groups).apply(lambda x : x.split(';')[0])
+        
+        self.proteingroups = self.create_protein_group_identifier(self.proteingroups, column=proteins_column)
+        self.proteingroups['Leading Protein'] = self.proteingroups[proteins_column].apply(parse_ids).apply(lambda x : x.split(';')[0])
+
+        assert len(self.proteingroups) == len(list(set(self.proteingroups['Identifier'].tolist())))
+        
+        if self.proteogenomics == False:
+            self.reference_fasta = list(SeqIO.parse(self.config['reference_fasta'], 'fasta'))
+        else:
+            ref_prot_id= self.config['reference_proteome_id']
+            fasta_path=os.path.abspath(self.config['outdir']) + '/uniprot/{}/{}.fasta'.format(ref_prot_id, ref_prot_id)
+            self.reference_fasta = list(SeqIO.parse(fasta_path, 'fasta'))
 
         self.search_fasta = list(SeqIO.parse(self.config['search_fasta'],'fasta'))
         self.proteingroups = self.leading_protein_gene(self.proteingroups.copy(), self.search_fasta, self.reference_fasta)
@@ -368,7 +454,7 @@ class mq_txt:
             else:
                 r = self.proteingroups[protcol]
                 _ = len([i for i in r if not i == 0]) /  len(r)
-        
+                
         assert len(self.proteingroups) == len(set(self.proteingroups['Identifier'].tolist()))
         self.peptides.rename(columns=rename_columns, inplace=True)            
         self.proteingroups.rename(columns=rename_columns, inplace=True)
@@ -438,9 +524,22 @@ class mq_txt:
         print(exclude_columns)
         self.target_peptides = self.target_peptides[[i for i in self.target_peptides.columns if not  i in exclude_columns]]
         self.target_peptides.to_csv(self.peptide_txt, sep='\t')
-        self.protein_txt = self.protein_dir + 'target_proteins.txt'
+        self.protein_txt = self.protein_dir + 'target_proteins.tsv'
 
         self.target_proteingroups=self.target_proteingroups[[i for i in self.target_proteingroups.columns if not  i in exclude_columns]]
+        
+        #if self.proteogenomics == True:
+        #    # drop isoforms based on mean quantification value for all samples
+        #    
+        #    protcols = [i for i in self.target_proteingroups.columns if i.startswith(self.protein_quantification+' ')]
+        #    meancol = 'Mean Prot Quant'
+        #    assert not meancol in self.target_proteingroups.columns
+        #    self.target_proteingroups[meancol]=self.target_proteingroups[protcols].mean(axis=1)
+        #    
+        #    self.target_proteingroups= self.target_proteingroups.sort_values(by=meancol, ascending=False)
+        #    self.target_proteingroups = self.target_proteingroups.drop_duplicates(subset='ORF IDs Set', keep="first")
+
+
         self.target_proteingroups.to_csv(self.protein_txt, sep='\t')
 
         if os.path.exists(saved_config):
@@ -460,11 +559,17 @@ class mq_txt:
         self.save_peptide_lists()
        
         # fasta export
-        fasta_file = self.config['search_fasta']
+        if self.proteogenomics == False:
+            fasta_file = self.config['search_fasta']
+        else:
+            fasta_file=self.config['outdir'] + '/strains/all_mapped_trans_orfs.fasta'
+        
+        assert os.path.exists(fasta_file)
         prot_ids = self.protein_dir +'/protein_ids.txt'
         outfile = self.fasta_dir +'/proteins.fasta'
         mapping_file = self.fasta_dir +'/id_mapping.json'
-        self.export_pg_fasta(fasta_file, prot_ids, outfile)
+        
+        self.export_pg_fasta(fasta_file, prot_ids, outfile, self.proteogenomics)
         self.export_nr_fasta(outfile, self.fasta_dir, self.proteogenomics )
         
         # interproscan
@@ -477,8 +582,11 @@ class mq_txt:
 
         # gene sets
         infile = self.fasta_dir +'/proteins.fasta.tsv'
-        self.ips_genesets(infile, self.target_proteingroups, self.gsea_dir)
-              
+        if self.proteogenomics == False:
+            self.ips_genesets(infile, self.target_proteingroups, self.gsea_dir)
+        else:
+            self.ips_genesets(infile, self.target_proteingroups, self.gsea_dir, id_col='Leading ORF')
+
         # Create peptide paraameters
         for level in self.config['group_levels']:
             outfile=self.diff_dir + '/peptide_experimental_design_{}.R'.format(level)
@@ -666,9 +774,9 @@ class mq_txt:
                     config['samples'][rename][level] = row[1][level]
         return config
 
-    def create_protein_group_identifier(self, proteingroups):
+    def create_protein_group_identifier(self, proteingroups, column='Protein IDs'):
         proteingroups['Identifier'] = ' (Protein group ' + proteingroups['id'].apply(str)+')'
-        proteingroups['Identifier'] = proteingroups['Protein IDs'].apply(parse_ids).apply(parse_protein_ids) + proteingroups['Identifier']
+        proteingroups['Identifier'] = proteingroups[column].apply(parse_ids).apply(parse_protein_ids) + proteingroups['Identifier']
         return proteingroups
 
     def create_summary(self):
@@ -1048,12 +1156,23 @@ class mq_txt:
                 'InterProAnnotationsDescription',
                 'GoAnnotations',
                 'PathwaysAnnotations' ]
-        data = pd.read_csv(ipr, sep='\t', names = cols,  engine='python')
+        #data = pd.read_csv(ipr, sep='\t', names = cols,  engine='python', skiprows=[0])
+        data = pd.read_csv(ipr, sep='\t', engine='python')
+        del data['Unnamed: 0']
+        data.columns = cols
         lst_col = 'ProteinAccession' 
         x = data.assign(**{lst_col:data[lst_col].str.split('|')})
         data = pd.DataFrame({col:np.repeat(x[col].values, x[lst_col].str.len()) for col in x.columns.difference([lst_col])}).assign(**{lst_col:np.concatenate(x[lst_col].values)})[x.columns.tolist()]
         
-        
+
+        def clean_up(val):
+            if val == '-':
+                return np.nan
+            else:
+                return val
+        for col in cols:
+            data[col] = data[col].apply(clean_up)
+
         # GO Terms
         id2go= defaultdict(set)
         gos = set()
@@ -1385,12 +1504,15 @@ class mq_txt:
         l =pd.Series(newlst)
         l.to_csv(outfile , index = False)
 
-    def export_pg_fasta(self, fasta_file, protein_id_file, outfile):
+    def export_pg_fasta(self, fasta_file, protein_id_file, outfile, proteogenomics=False):
         fasta = SeqIO.parse(fasta_file,'fasta')
         new_fasta = []
         ids = pd.read_csv(protein_id_file, header = None)[0].tolist()
         for rec in fasta:
-            if rec.id.split('|')[1] in ids:
+            if proteogenomics == False:
+                if rec.id.split('|')[1] in ids:
+                    new_fasta.append(rec)
+            else:
                 new_fasta.append(rec)
         SeqIO.write(new_fasta, outfile, 'fasta')
 
@@ -1745,11 +1867,12 @@ class mq_txt:
 
             # LEADING SPECIES
             col = 'Leading.Species'
-            diff_dir = self.diff_dir + '/' + level + '/' + col
-            self.aggregate_quant(self.normalized_target_proteins, col, '{}.'.format(self.protein_quant_parameter), diff_dir )
-            table = diff_dir + '/' + col + '.csv'
-            self.diff(protein_exp, table, diff_dir)
-            self.summarize_diff(diff_dir , diff_dir + '/summary.txt')
+            if col in self.normalized_target_proteins.columns:
+                diff_dir = self.diff_dir + '/' + level + '/' + col
+                self.aggregate_quant(self.normalized_target_proteins, col, '{}.'.format(self.protein_quant_parameter), diff_dir )
+                table = diff_dir + '/' + col + '.csv'
+                self.diff(protein_exp, table, diff_dir)
+                self.summarize_diff(diff_dir , diff_dir + '/summary.txt')
 
     def ec2ko(self, ec):
         ko = rfunc.string2ko('[EC:{}]'.format(ec))
@@ -1779,6 +1902,35 @@ class mq_txt:
                 pass
         return proteingroups
     
+
+    def proteogenomics_proteingroups(self, proteingroups, config):
+        
+        # This 
+
+        with open(os.path.abspath(config['outdir']) + '/blast/groups2orfs/mapped_orfs_mapping.json') as f:
+            orf_map = json.loads(f.read())
+
+        
+        proteingroups['ORF IDs'] = proteingroups['Protein IDs'].apply(lambda x : mapped_orfs(x, orf_map))
+        
+        #proteingroups['_Protein IDs'] = proteingroups['Protein IDs']
+        #del proteingroups['Protein IDs'] # make sure it is not used
+        #proteingroups['ORF IDs'] = proteingroups['_Protein IDs'].apply(lambda x : orf_list(x))
+        proteingroups['ORF IDs Set'] = proteingroups['ORF IDs'].apply(lambda x : orf_set(x))
+        proteingroups['Leading ORF']=proteingroups['ORF IDs'].apply(lambda x:leading_orf(x))        
+        orf_maps = []
+        #for reference in config['reference']:
+        #proteome_id = config['reference'][reference]['proteome_id']
+        reference_proteome_id = config['reference_proteome_id']
+
+            #if proteome_id == config['reference_proteome_id']:
+        path = config['outdir'] + '/blast/orfs2proteins/{}_mapping.json'.format(reference_proteome_id)
+        with open(path) as f:
+            orf2protein=json.loads(f.read())
+        proteingroups['ORF Proteins']=proteingroups['ORF IDs'].apply(lambda x:orf_proteins(x, orf2protein))
+         
+        return proteingroups
+
     def leading_protein_gene(self, proteingroups, search_fasta, reference_fasta):
         genes = proteingroups['Leading Protein'].tolist()
         gene_dict = {}

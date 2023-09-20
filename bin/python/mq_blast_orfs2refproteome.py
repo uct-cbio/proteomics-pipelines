@@ -64,7 +64,7 @@ def _(proteome_id):
 
     data = pd.read_csv(out+'.csv')
 
-    data = data[(data['_alignment_rank']==1) & (data['_hsp_rank']==1)]
+    #data = data[(data['_alignment_rank']==1) & (data['_hsp_rank']==1)]
 
     mp = defaultdict(list)
 

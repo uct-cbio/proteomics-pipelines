@@ -44,12 +44,18 @@ else:
     scol = 'sample'
 assert scol in design.columns
 design = design[design['exclude'] != '+' ] 
+
+rename_dict = sequtils.rename_design(design)
+
 sample2strain = design.set_index(scol)['Strain'].to_dict()
 samples = list(sample2strain.keys())
 
+print(samples)
+print(rename_dict)
+
 for sample in samples:
     st = sample2strain[sample]
-    strain_samples[st].append(sample)
+    strain_samples[st].append(rename_dict[sample])
 
 peptide_sequence  = SeqIO.to_dict(list(SeqIO.parse(output + '/blast/peptides2orfs/peptides.fasta','fasta')))
 # Per strain analysis

@@ -1,4 +1,4 @@
-
+
 # MQProteogenomics
 
 MQProteogenomics is an open-source proteogenomics pipeline for multistrain genome annotation, variant and frameshift detection between strains and relative to a reference strain.
@@ -10,7 +10,7 @@ MQProteogenomics is an open-source proteogenomics pipeline for multistrain genom
 Ensure singularity is installed, and make sure at least 2 cores and 4 GB of RAM are available.
 
 ~~~
-cd proteomics-pipelines/singularity/mqproteogenomics
+cd proteomics-pipelines/singularity/mqproteogenomics
 ./create_image.sh
 ~~~
 
@@ -33,3 +33,7 @@ mqproteogenomics.sh mq_proteogeomics_test.yml
 ~~~
 
 Now adjust the config file for our own data.
+
+#### 4. Notes
+MaxQuant protein search database entries are mapped to STOP to STOP genome six frame translated sequences for each strain. Alligned ORFs with a evalue of 0 are considered mapped. ORFs are mapped to Reference proteomes using BLAST, with the top hit per proteome selected with an evalue cutoff of 0.001 used for annotation.
+

@@ -50,10 +50,23 @@ if [ ! -d $outdir/blast ] ; then
     mkdir $outdir/blast
 fi
 
+################################################ 
+# BLAST or protein group FASTA to SIX FRAME DB #
+################################################
+# speed up by using an nr database for query fasta
+# speed up by using an nr database for target fasta
+if [ ! -d $outdir/blast/groups2orfs ] ; then
+    mkdir $outdir/blast/groups2orfs
+    mq_blast_groups2orfs.py $config $outdir  || ( rm -rf $outdir/blast/groups2orfs ; exit 1 )
+fi
+
+
 if [ ! -d $outdir/blast/orfs2proteins ] ; then
     mkdir $outdir/blast/orfs2proteins
     mq_blast_orfs2refproteome.py $config $outdir  || ( rm -rf $outdir/blast/orfs2proteins ; exit 1 )
 fi
+
+
 
 if [ ! -d $outdir/blast/orfs2genome ] ; then
     mkdir $outdir/blast/orfs2genome
@@ -61,17 +74,16 @@ if [ ! -d $outdir/blast/orfs2genome ] ; then
 fi
 
 # this output is not used for now, peptides are all mapped to the same reference, to facilitate gbrowse on the same reference sequence if it is needed
-if [ ! -d $outdir/blast/peptides2genome ] ; then
-    mkdir $outdir/blast/peptides2genome
-    mq_blast_peptides2refgenome.py $config $outdir  #|| rm -rf $outdir/blast/peptides2genome
-fi
+#if [ ! -d $outdir/blast/peptides2genome ] ; then
+#    mkdir $outdir/blast/peptides2genome
+#    mq_blast_peptides2refgenome.py $config $outdir  #|| rm -rf $outdir/blast/peptides2genome
+#fi
 
 if [ ! -d $outdir/blast/peptides2orfs ] ; then
     mkdir $outdir/blast/peptides2orfs
     mq_blast_peptides2reforfs.py $config $outdir  || ( rm -rf $outdir/blast/peptides2orfs ; exit 1 )
 fi
 
-exit 0
 ##################
 # Operon Mapping #
 ##################
@@ -83,25 +95,36 @@ exit 0
 ##################
 # Combined table #
 ##################
-
-#if [ ! -f $outdir/combined.csv ] ; then
-ls $outdir/*combined.csv > /dev/null 2>&1  || mq_peptide_to_protein.py $config $outdir || ( rm -rf $outdir/*combined.csv ; exit 1 )
-
 if [ ! -f $outdir/config.yml ] ; then
     echo $outdir/config.yml
     mqmetaproteomics.py $config
 fi
+exit 0
+#if [ ! -f $outdir/combined.csv ] ; then
+ls $outdir/*combined.csv > /dev/null 2>&1  || mq_peptide_to_protein.py $config $outdir || ( rm -rf $outdir/*combined.csv ; exit 1 )
+
+#############################
+# Identification Statistics #
+#############################
+if [ ! -d $outdir/stats ] ; then
+    mq_basestats.py $config $outdir || rm -rf $outdir/stats
+fi
+
+if [ ! -d $outdir/tables ] ;  then      
+    mq_export_tables.py $config $outdir || rm -rf $outdir/tables
+fi
+
 
 if [ ! -d $outdir/jbrowse ] ; then
     mkdir $outdir/jbrowse
-    #mq_strains2ref_peptides.py $config $outdir  || ( rm -rf $outdir/jbrowse ; exit 1 )
-    mq_strains2ref.py $config $outdir      || ( rm -rf $outdir/j_ibrowse ; exit 1 )
+    # not needed  #mq_strains2ref_peptides.py $config $outdir  || ( rm -rf $outdir/jbrowse ; exit 1 )
+    mq_strains2ref.py $config $outdir      || ( rm -rf $outdir/jbrowse ; exit 1 )
     mq_peptide_features.py $config $outdir
 fi
 
-mq_jbrowse_upload_script.py $config $outdir # || ( rm -rf $outdir/jbrowse ; exit 1 )
-cd $outdir/jbrowse/local && jbrowse admin-server
-exit 0
+mq_jbrowse_upload_script.py $config $outdir || ( rm -rf $outdir/jbrowse ; exit 1 )
+
+cd $outdir/jbrowse/local && echo $hostname && jbrowse admin-server
 
 #mq_domain_features.py $config $outdir
 #mq_contig_heatmaps.py $config $outdir
@@ -111,16 +134,7 @@ exit 0
 
 
 
-#if [ ! -d $outdir/tables ] ;  then      
-#    mq_export_tables.py $config $outdir || rm -rf $outdir/tables
-#fi
 
-#############################
-# Identification Statistics #
-#############################
-#if [ ! -d $outdir/stats ] ; then
-#    mq_basestats.py $config $outdir || rm -rf $outdir/stats
-#fi
 
 
 ###################### 
