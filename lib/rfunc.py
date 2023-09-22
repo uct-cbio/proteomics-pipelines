@@ -328,6 +328,7 @@ class up2ko:
         res = mg.query(self.up)
         self.ids = []
         self.names = []
+        self.pathways=[]
         for i in res['hits']:
             if 'entrezgene' in i:
                 symbol = i['entrezgene']
@@ -335,8 +336,12 @@ class up2ko:
                 if not ko.ko is None: 
                     self.ids.append(ko.ko)
                     self.names.append(ko.name)
+                if not ko.pathways is None:
+                    self.pathways.append(ko.pathways)
         self.ko = ';'.join(set(self.ids))
         self.name = ';'.join(set(self.names))
+        self.pathways = ';'.join(set(self.pathways))
+
 
 class string2ko: # uniprot id
     def __init__(self, string):
@@ -352,7 +357,7 @@ class entrez2ko: # uniprot id
         self.entrez = entrez
         self.ko = None
         self.name = None
-
+        self.pathways=None
         c = 'library(KEGGREST)';ro.r(c)
         c = 'conv <- keggConv("genes", "ncbi-geneid:{}")'.format(self.entrez); ro.r(c) 
         try:
@@ -367,6 +372,12 @@ class entrez2ko: # uniprot id
         c = 'ko[[1]]$ORTHOLOGY'
         try:
             self.name= ';'.join(robjects.r(c))
+        except:
+            pass
+        try:
+            c = 'names(ko[[1]]$PATHWAY)'
+            res = robjects.r(c)
+            self.pathways=';'.join(res)
         except:
             pass
     # keggConv("genes", "uniprot:Q05025"))

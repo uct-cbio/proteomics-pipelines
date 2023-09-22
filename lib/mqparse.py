@@ -1948,6 +1948,7 @@ class mq_txt:
             ko = rfunc.up2ko(row[1]['Leading Protein'])
             df.loc[ ind, 'Leading Protein Kegg Orthology ID'] = ko.ko
             df.loc[ ind, 'Leading Protein Kegg Orthology Name'] = ko.name
+            df.loc[ ind, 'Leading Protein Kegg Pathways'] = ko.pathways
             if not ko.ko == '':
                 _ = ko.ko +' ' + ko.name 
             else:

@@ -16,12 +16,38 @@ import json
 import pickle
 import yaml
 import subprocess
+from collections import defaultdict
 
 config = yaml.load(open(sys.argv[1]), Loader=yaml.Loader)
 output = os.path.abspath( sys.argv[2])
 
 query_fasta  = os.path.abspath(config['search_fasta'])
 target_fasta = output + '/strains/all_mapped_trans_orfs.fasta'
+
+
+nr_targets = defaultdict(list)
+targets = list(SeqIO.parse(target_fasta, 'fasta'))
+
+for rec in targets:
+    nr_targets[str(rec.seq)].append(rec.id)
+
+export = []
+mapping = {}
+count = 1
+for seq in nr_targets:
+    id_ = 'nr_sequence_{}'.format(str(count)) 
+    ids = nr_targets[seq] 
+    mapping[id_] = ids
+    description =';'.join(ids) 
+    seq = Seq(''.join(seq.split('*'))) 
+    record = SeqRecord(id = id_, description = description, seq = seq)
+    export.append(record)   
+    count += 1
+
+new_target_path = output +'/blast/groups2orfs/nr.fasta'
+SeqIO.write(export, new_target_path, 'fasta') 
+
+
 
 txt_path = os.path.abspath(config['mq_txt'])
 pg = pd.read_csv(txt_path +'/proteinGroups.txt', sep='\t')
@@ -48,7 +74,7 @@ new_query_path = output +'/blast/groups2orfs/filtered.fasta'
 with open(new_query_path,'w') as w:
     SeqIO.write(new_queries, w, 'fasta')
 
-cmd="cp {} {} && cd {} && makeblastdb -in {} -dbtype 'prot' -out {}".format(target_fasta, newfolder, newfolder, 'all_mapped_trans_orfs.fasta', 'mapped_orfs' )
+cmd="cd {} && makeblastdb -in {} -dbtype 'prot' -out {}".format(newfolder, 'nr.fasta', 'mapped_orfs' )
 process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 process.wait()
 assert process.returncode == 0
@@ -81,7 +107,8 @@ assert process.returncode == 0
 data = pd.read_csv(out+'.csv')
 
 
-#data = data[(data['_alignment_rank']==1) & (data['_hsp_rank']==1)]
+data = data[(data['_alignment_rank']==1) & (data['_hsp_rank']==1)]
+
 
 mp = defaultdict(list)
 
@@ -90,13 +117,14 @@ def get_mapping(df):
     #ids = df['blast_record.query'].split()[0].split(';')
     evalue= df['hsp.expect']
     for i in ids:
-        print(i)
         i = i.split('|')[1]#.split('.')[0]
-        #if evalue < 0.0001:
-        if evalue == 0:
-            mapped = df['_alignment.entry']
-            if not mapped in mp[i]:
-                mp[i].append(mapped)
+        if evalue < 0.0001:
+            nr_id = df['alignment.hit_def'].split()[0]
+            mapped_ids = mapping[nr_id]
+            for mapped in mapped_ids:
+               
+                if not mapped in mp[i]:
+                    mp[i].append(mapped.split('|')[1])
 
 data.apply(get_mapping, axis=1)
 
