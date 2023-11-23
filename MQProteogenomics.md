@@ -29,6 +29,7 @@ singularity shell mqproteogenomics_v2.0.4.img
 Run the example:
 ~~~
 cd cbio-proteogenomics-tests/lib/testdata/proteogenomics_sample
+Singularity> sixframe.sh genomes/ genomes/config.yaml # create the six frame database used by the next step (genomes/sixframe/combined_prot.fasta)
 mqproteogenomics.sh mq_proteogeomics_test.yml
 ~~~
 
