@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 
+set -e
+
 input=$1
 config=$2
 
-mkdir ${input}/sixframe
+mkdir -p ${input}/sixframe 
+
+
 
 cp  ${config} ${input}/sixframe/
 

@@ -29,17 +29,19 @@ def download(genome, output):
         os.makedirs(path)
     except:
         pass
-    c1 = 'wget https://www.ebi.ac.uk/ena/browser/api/embl/{}?download=true -O {}.embl'.format(genome, genome)
-    c2 = 'wget https://www.ebi.ac.uk/ena/browser/api/fasta/{}?download=true -O {}.fasta'.format(genome, genome)
+    c1 = "wget 'https://www.ebi.ac.uk/ena/browser/api/embl/{}?download=true&gzip=true' -O {}.embl.gz && gunzip {}.embl.gz".format(genome, genome, genome)
+    c2 = "wget 'https://www.ebi.ac.uk/ena/browser/api/fasta/{}?download=true&gzip=true' -O {}.fasta.gz && gunzip {}.fasta.gz".format(genome, genome, genome)
     requests = [c1]
     for request in requests:
         command = "cd {} && {}".format(path, request)
+        print(command)
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
         process.wait()
-
+        assert process.returncode == 0
     c = 'cd {} && seqret -sformat embl -sequence {}.embl -feature -osformat fasta -supper -osname {} -offormat gff3 -ofname {}.gff3 -auto'.format(path,genome,genome,genome)
     process = subprocess.Popen(c, shell=True, stdout=subprocess.PIPE)
     process.wait()
+    assert process.returncode == 0
 
 output = output +'/ena'
 for ref in config['reference']:

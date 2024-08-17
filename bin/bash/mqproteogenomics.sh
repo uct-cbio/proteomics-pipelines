@@ -19,6 +19,7 @@ if [ ! -d $outdir/uniprot ] ; then
     mq_uniprot.py $config $outdir || ( rm -rf $outdir/uniprot ; exit 1 )
 fi
 
+
 # Proteogenomics analysis
 # check the ncrna_class tag in GFF3
 if [ ! -d $outdir/ena ] ; then
@@ -55,17 +56,18 @@ fi
 ################################################
 # speed up by using an nr database for query fasta
 # speed up by using an nr database for target fasta
+
+# map the search sequence to the stop-to-stop orf sequence, uses the top match per orf
 if [ ! -d $outdir/blast/groups2orfs ] ; then
     mkdir $outdir/blast/groups2orfs
     mq_blast_groups2orfs.py $config $outdir  || ( rm -rf $outdir/blast/groups2orfs ; exit 1 )
 fi
 
-
+# map the orfs to the proteomes, top match per orf exported
 if [ ! -d $outdir/blast/orfs2proteins ] ; then
     mkdir $outdir/blast/orfs2proteins
     mq_blast_orfs2refproteome.py $config $outdir  || ( rm -rf $outdir/blast/orfs2proteins ; exit 1 )
 fi
-
 
 
 if [ ! -d $outdir/blast/orfs2genome ] ; then
@@ -99,34 +101,42 @@ if [ ! -f $outdir/config.yml ] ; then
     echo $outdir/config.yml
     mqmetaproteomics.py $config
 fi
-exit 0
 #if [ ! -f $outdir/combined.csv ] ; then
-ls $outdir/*combined.csv > /dev/null 2>&1  || mq_peptide_to_protein.py $config $outdir || ( rm -rf $outdir/*combined.csv ; exit 1 )
+#ls $outdir/*combined.csv > /dev/null 2>&1  || mq_peptide_to_protein.py $config $outdir || ( rm -rf $outdir/*combined.csv ; exit 1 )
 
 #############################
 # Identification Statistics #
 #############################
 if [ ! -d $outdir/stats ] ; then
     mq_basestats.py $config $outdir || rm -rf $outdir/stats
+    mq_annotations.py $config $outdir || rm -rf $outdir/stats
 fi
+#mq_annotations_ko.py $config $outdir
 
-if [ ! -d $outdir/tables ] ;  then      
-    mq_export_tables.py $config $outdir || rm -rf $outdir/tables
-fi
+mq_annotations_pathview.R --config $config --outdir $outdir
 
+echo "Annotations exported"
+exit 0
+
+#if [ ! -d $outdir/tables2 ] ;  then      
+#    mq_export_tables.py $config $outdir || rm -rf $outdir/tables
+#fi
+
+#exit 0
 
 if [ ! -d $outdir/jbrowse ] ; then
     mkdir $outdir/jbrowse
-    # not needed  #mq_strains2ref_peptides.py $config $outdir  || ( rm -rf $outdir/jbrowse ; exit 1 )
     mq_strains2ref.py $config $outdir      || ( rm -rf $outdir/jbrowse ; exit 1 )
-    mq_peptide_features.py $config $outdir
+    # not needed  #mq_strains2ref_peptides.py $config $outdir  || ( rm -rf $outdir/jbrowse ; exit 1 )
 fi
 
-mq_jbrowse_upload_script.py $config $outdir || ( rm -rf $outdir/jbrowse ; exit 1 )
+mq_peptide_features.py $config $outdir
+#jbrowse_iprscan.py $config $outdir
+
+mq_jbrowse_upload_script.py $config $outdir || ( rm -rf $outdir/jbrowse_ ; exit 1 )
 
 cd $outdir/jbrowse/local && echo $hostname && jbrowse admin-server
 
-#mq_domain_features.py $config $outdir
 #mq_contig_heatmaps.py $config $outdir
 #mq_wiggle_features.py $config $outdir
 

@@ -109,7 +109,7 @@ orig_data$"GeneID" <- GI
 orig_data$'iBAQMean' <- rowMeans( data[,cols] )
 
 print('Removing isoform pg based on combined orf ids')
-orig_data <- orig_data[order(-orig_data$iBAQMean),] # Order by mean ibaq, ascending
+orig_data <- orig_data[order(-orig_data$iBAQMean),] # Order by mean ibaq, descending
 
 orig_data <- orig_data[!duplicated(orig_data$"ORF.ids...all.strains" ), ]
 

@@ -11,7 +11,7 @@ infile  = sys.argv[1]
 
 assembly_name = sys.argv[2]
 
-config = yaml.load(open(sys.argv[3]).read())
+config = yaml.load(open(sys.argv[3]).read(), Loader=yaml.Loader)
 
 outfile = sys.argv[4]
 

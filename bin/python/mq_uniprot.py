@@ -91,7 +91,7 @@ def download(proteome, taxid, output):
 def download2(proteome_id, output):
     #url='https://www.uniprot.org/uniprot/?query=proteome:{}&format=fasta&include=yes&force=true'.format(proteome_id)
     url='https://rest.uniprot.org/uniprotkb/stream?compressed=true&download=true&format=fasta&includeIsoform=true&query=%28{}%29'.format(proteome_id)
-
+    print(url)
     path = output +'/{}'.format(proteome_id)
     try:
         os.makedirs(path)
@@ -103,6 +103,7 @@ def download2(proteome_id, output):
     
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
     process.wait()
+    assert process.returncode == 0
 
     #url='https://www.uniprot.org/uniprot/?query=proteome:{}&format=gff&include=yes&force=true'.format(proteome_id)
     url='https://rest.uniprot.org/uniprotkb/stream?compressed=true&download=true&format=gff&includeIsorform=true&query=%28{}%29'.format(proteome_id)
@@ -111,6 +112,7 @@ def download2(proteome_id, output):
     
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
     process.wait()
+    assert process.returncode == 0
     
     #url='https://www.uniprot.org/uniprot/?query=proteome:UP000236349&include=yes&format=tab&force=true&columns=id,entry%20name,reviewed,protein%20names,genes,organism,length,database(KEGG),comment(PATHWAY),genes(OLN),genes(ORF),database(GeneID)'
     url='https://rest.uniprot.org/uniprotkb/stream?compressed=true&includeIsoform=true&fields=accession%2Creviewed%2Cid%2Cprotein_name%2Cgene_names%2Corganism_name%2Clength%2Ccc_alternative_products%2Ccc_mass_spectrometry%2Cgene_orf%2Cgene_oln%2Cgene_primary%2Corganism_id%2Cxref_kegg%2Ccc_pathway&format=tsv&query=%28{}%29+AND+%28reviewed%3Afalse%29'.format(proteome_id)
@@ -118,6 +120,7 @@ def download2(proteome_id, output):
     
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
     process.wait()
+    assert process.returncode == 0
     return
     
 output = output +'/uniprot'

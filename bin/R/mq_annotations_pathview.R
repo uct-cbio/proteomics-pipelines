@@ -1,0 +1,229 @@
+#!/usr/bin/env Rscript
+library("biomaRt")
+library("optparse")
+library(optparse)
+library(yaml)
+library(readr)
+library(pathview)
+library(xml2)
+#install.packages("magick")
+library(png)
+
+# Define the command-line options
+option_list <- list(
+		      make_option(c("-c", "--config"), type = "character", default = NULL,
+				                help = "Path to the config file", metavar = "character"),
+		      
+		      make_option(c("-o", "--outdir"), type = "character", default = ".",
+				                help = "Output directory [default = %default]", metavar = "character")
+		      )
+
+# Parse the options
+opt_parser <- OptionParser(option_list = option_list)
+opt <- parse_args(opt_parser)
+
+# Check if the config argument was provided
+if (is.null(opt$config)) {
+	  print_help(opt_parser)
+  stop("Error: The config file must be specified using the -c or --config option.", call. = FALSE)
+}
+
+# Print out the options for debugging purposes
+print(opt)
+
+# Now you can use `opt$config` and `opt$outdir` in your script
+config_path <- opt$config
+output_directory <- opt$outdir
+
+# Example: Print the paths
+cat("Config file path:", config_path, "\n")
+cat("Output directory:", output_directory, "\n")
+
+
+#Read the config.yaml file
+config <- yaml.load_file(config_path)
+
+# Extract the output directory and reference list
+references <- names(config$reference)
+
+annotated_xml <- function(pathway_id, species, gene_data,  kegg.dir) { 
+	xml_file_path= paste(kegg.dir, '/', 'ko', pathway_id, '.xml', sep='')
+	png_file_path= paste(kegg.dir, '/', species, pathway_id, '.png', sep='')
+	png_file_path_copy= paste(kegg.dir, '/', species, pathway_id, '.copy.png', sep='')
+	ko_id <- gene_data[["Kegg Orthology ID"]]
+	ko_id_unique <- unique(ko_id)
+
+	print(xml_file_path)
+	  if (!file.exists(png_file_path_copy)) {
+		download.kegg(pathway.id = pathway_id, species = species, kegg.dir = kegg.dir,
+		      file.type=c("xml", "png"))
+		file_copied <- file.copy(from = png_file_path, to = png_file_path_copy, overwrite = TRUE)
+		download.kegg(pathway.id = pathway_id, species = 'ko', kegg.dir = kegg.dir,
+		      file.type=c("xml", "png"))
+
+	  } else {
+		message("xml already exists: ", xml_file_path)
+	        file_copied <- file.copy(from = png_file_path_copy, to = png_file_path, overwrite = TRUE)
+	  }
+	print(gene_data)
+	doc <- read_xml(xml_file_path,as_html = TRUE)
+	img <- readPNG(png_file_path)
+	img_width <- ncol(img)
+	img_height <- nrow(img)
+	# Set the resolution and dimensions
+	output_width <- img_width  # or adjust as needed
+	output_height <- img_height  # or adjust as needed
+	output_res <- 300  # Set to 300 DPI or higher for better quality
+	
+	png(png_file_path, width = output_width, height = output_height, res = output_res)
+	# Ensure the plotting area is large enough
+	par(mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0))  # No margins and no outer margins
+
+	# Display the image
+	plot(1:2, type = "n", xlim = c(0, img_width), ylim = c(0, img_height), xlab = "", ylab = "", asp = 1, axes = FALSE, ann = FALSE, xaxs = "i", yaxs = "i")
+	
+	rasterImage(img, 0, 0, ncol(img), nrow(img))
+
+	# Example: Extract all nodes (e.g., genes, compounds)
+	nodes <- xml_find_all(doc, "//entry")
+	# Extract node attributes (e.g., name, type, coordinates)
+	for (node in nodes) {
+		node_id <- xml_attr(node, "id")
+	  	node_name <- xml_attr(node, "name")
+		
+		# Step 1: Extract KEGG IDs from the string
+		kegg_ids <- unlist(strsplit(node_name, " "))
+
+		# Step 2: Remove the "ko:" prefix from each ID
+		kegg_ids_clean <- sub("^ko:", "", kegg_ids)
+		
+		# Step 3: Check if any of the cleaned KEGG IDs occur in the other list
+		matching_ids <- kegg_ids_clean[kegg_ids_clean %in% ko_id_unique]
+		# If you want to just check if there's any match (TRUE/FALSE)
+		any_match <- any(kegg_ids_clean %in% ko_id_unique)
+		if (!any_match == TRUE) { 
+			next
+	        }
+
+
+		node_type <- xml_attr(node, "type")
+	   	# Skip nodes of type "compound"
+	        if (node_type == "compound") {
+		        next
+		 }	   
+	    	# Extract coordinates (graphics element contains position and size)
+	   	 graphics <- xml_find_first(node, "graphics")
+	      	x <- as.numeric(xml_attr(graphics, "x"))
+	      	y <- as.numeric(xml_attr(graphics, "y"))
+	      	graphics_type <- xml_attr(graphics, "type")
+	        if (graphics_type != "line"  ) {
+		        next
+		 }	   
+
+	        width <- as.numeric(xml_attr(graphics, "width"))
+	        height <- as.numeric(xml_attr(graphics, "height"))
+	        fgcolor <- xml_attr(graphics, "fgcolor")
+	        coords_str <- xml_attr(graphics, "coords")
+		# Split the string into individual numbers
+		coords <- as.numeric(unlist(strsplit(coords_str, ",")))
+		
+		# Convert to a matrix or data frame for easy access to pairs
+		coords_matrix <- matrix(coords, ncol = 2, byrow = TRUE)
+
+		# Print the coordinates as pairs
+		#print(coords_matrix)
+		
+		# Adjust the y-coordinates because the origin (0,0) is at the top-left in images
+		
+		
+		coords_matrix[, 2] <- img_height - coords_matrix[, 2]
+		
+		# Save the plot with annotations as a PNG
+		#dev.off()		
+		# Draw the points on the image
+		lw=1.0
+		#points(coords_matrix, col = "red", pch = 19, cex=lw/2)
+		# Optionally, draw lines between the points
+		# Extract the first point
+		first_point <- coords_matrix[1, ]
+		#print(first_point)
+		#print(coords_matrix)
+		color='red'
+		# Extract the last point
+		last_point <- coords_matrix[nrow(coords_matrix), ]
+		#points(first_point, col = "red", pch = 19, cex=lw * 2)
+		# Add the points
+
+
+		for (i in 1:(nrow(coords_matrix) - 1)) {
+			  segments(coords_matrix[i, 1], coords_matrix[i, 2], coords_matrix[i + 1, 1], coords_matrix[i + 1, 2], col = color, lwd = lw)
+		}
+		color <- fgcolor
+		points(coords_matrix[1, 1], coords_matrix[1, 2], col = color, pch = 19, cex=lw/2)
+		points(coords_matrix[nrow(coords_matrix), 1], coords_matrix[nrow(coords_matrix), 2], col = color, pch = 19, cex=lw/2)
+	
+	}
+     	dev.off()		
+}
+
+# Iterate through each reference
+for (reference in references) {
+  print(reference)
+  # Construct the path to the CSV file
+  #csv_path <- file.path(output_directory, "proteingroups.ko.csv")
+  csv_path <- file.path(output_directory, "annotations/export", reference, "protein2kegg.csv")
+  print(csv_path)
+  # Check if the file exists before trying to read it
+  if (file.exists(csv_path)) {
+	      # Read the CSV file
+	      data <- read_csv(csv_path)
+      
+      # Print a message indicating which file is being processed
+      cat("Processing file:", csv_path, "\n")
+          
+          # Display the first few rows of the data (for example)
+          data_cleaned <- data[!is.na(data$"KO Entrez"), ]
+          data_cleaned <- data_cleaned[!duplicated(data_cleaned$"KO Entrez"), ]
+	  gene_data <- data_cleaned$"KO Entrez" 
+          # Correctly formatted gene expression data using Entrez Gene IDs
+	  #gene_data <- c("885328" , "885367" , "885243" ,"885041" ,"885305" )  # INHA
+  	  #rownames(data_cleaned) <- gene_data
+	  #data_cleaned$val <- 1
+	  gene_vals <- rep(1, length(gene_data))
+	  gene_vals2 <- gene_data 
+	  # Remove any NA values in gene_data
+
+	  names(gene_vals2) <- gene_data 
+	  csv_path <- file.path(output_directory, "annotations/export", reference, "protein2kegg.csv")
+	  kegg.dir <- paste(output_directory, "/annotations/custom_kegg/", reference, sep='')
+	  # Create the directory if it does not exist
+	  if (!file.exists(kegg.dir)) {
+		    dir.create(kegg.dir, recursive = TRUE)
+	    message("Directory created: ", kegg.dir)
+	  } else {
+		    message("Directory already exists: ", kegg.dir)
+	  }
+	  if (length(gene_vals) == 0){
+	    next
+	  }
+	  print(gene_vals2)
+	  
+	  annotated_xml("01100", 'mtu', data_cleaned,  kegg.dir) 
+	  pathview(gene.data = gene_vals2, 
+		   pathway.id = "01100",
+		   species = "mtu",
+		   plot.col.key=F,
+		   discrete=list(gene=TRUE,
+				 cpd=TRUE),
+		   kegg.dir = kegg.dir,
+		   gene.idtype="entrez",
+		   same.layer=FALSE, 
+		   map.null = FALSE,    # Ensures that only mapped nodes (genes) are displayed 
+		   kegg.native = T,
+	  low = "blue", mid = "grey", high = "red") 
+        } else {
+		    cat("File not found:", csv_path, "\n")
+	  }
+}
+
+

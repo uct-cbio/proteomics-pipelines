@@ -23,6 +23,8 @@ import uniprot
 import pickle
 import yaml
 
+# to do : blast orfs between strains to identify ICDS's without protein evidence
+# check if there are orfs on either side of a fs , that dont have peptides - inactivating fs relative to other strain
 
 config = yaml.load(open(sys.argv[1]), Loader=yaml.Loader)
 output = sys.argv[2]
@@ -36,7 +38,13 @@ evidence=pd.read_csv(config['mq_txt'] +'/evidence.txt',sep='\t')
 
 evidence=evidence[(evidence['Potential contaminant'].isnull()) & (evidence['Reverse'].isnull())]
 
+
+
 for reference in config['reference']:
+    var_fasta = defaultdict(list)
+    trie_fasta = defaultdict(list)
+    peptide_annotations = defaultdict(list)
+    
     proteome_id = config['reference'][reference]['proteome_id']
     with open(output +'/mapping/{}_peptides.json'.format(proteome_id)) as f:
         reference_peptides = json.loads(f.read())
@@ -62,7 +70,7 @@ for reference in config['reference']:
 
     #orf_features = pd.read_csv(output +'/fasta/proteins.fasta.tsv',sep='\t')
     orf_features = sequtils.gff3(output +'/fasta/proteins.fasta.tsv')
-
+    
     design = pd.read_csv(config['design'])
 
 
@@ -128,8 +136,6 @@ for reference in config['reference']:
         if config['strains'][strain]['assembly'] != None:
             peptide_map = strain_map[strain]
             st = peptide_map.mapping
-            #print(strain)
-            #print(st['Peptide_tryptic_nterm'])
             strain_non_tryptic_nterm = set(st[st['Peptide_tryptic_nterm'].apply(str) == 'False' ]['Peptide_sequence'])
             strain_non_tryptic_cterm = set(st[st['Peptide_tryptic_cterm'].apply(str) == 'False' ]['Peptide_sequence'])
             strain_non_atg_starts    = peptide_map.non_atg_m()
@@ -176,11 +182,11 @@ for reference in config['reference']:
                     pairwise_blast.append(header)
                     pairwise_blast.append(out.results)
                     pairwise_blast.append('\nIdentified polymorphism positions: {}'.format('; '.join(['{} ({})'.format(str(i), out.variants[i]) for i in out.differences])))
-                    try:
-                        overlap = out.feature_overlap(features)
-                    except:
-                        # help this code please 
-                        overlap = None
+                    #try:
+                    overlap = out.feature_overlap(features)
+                    #except:
+                    #    # help this code please 
+                    #    overlap = None
 
 
                     if overlap != None: 
@@ -198,14 +204,14 @@ for reference in config['reference']:
         return feature_dict, blast_dict
 
 
+    #pg = pg[pg['id']==349] #mutant
     #pg = pg[pg['id']==934] #mutant
     #pg = pg[(pg['id']==1528) | (pg['id']==934)] #mutants
     #pg = pg[pg['id'] ==  410]  two frames in 5527
 
-    #pg = pg[pg['id'] == 410]
-    #pg = pg[pg['id'] == 2357]
-
-    #pg = pg[pg['id'] == 2116]
+    #pg = pg[pg['id'] == 934]
+    #pg = pg[pg['id'] == 2362]
+    #pg = pg[pg['id'] ==246]
 
     #pg = pg[pg['id'] == 35]
 
@@ -245,8 +251,12 @@ for reference in config['reference']:
         scols.append("Translated orfs strain {}".format(strain))
         scols.append('Variant orfs strain {}'.format(strain))
         scols.append('Annotation type strain {}'.format(strain))
-        scols.append('Frameshift validated strain {}'.format(strain))
-        scols.append('Frameshift evidence strain {}'.format(strain))
+        
+        scols.append('Strain ICDS intrastrain evidence {}'.format(strain))
+        scols.append('Strain ICDS interstrain exclusive evidence {}'.format(strain))
+        scols.append('Strain ICDS intrastrain peptide validation {}'.format(strain))
+        scols.append('Strain ICDS interstrain exclusive peptide validation {}'.format(strain))
+
         scols.append("Best orf-reference blast evalue strain {}".format(strain))
         scols.append("Best orf-reference blast match {}".format(strain))
         scols.append("Reference BLAST strain {}".format(strain))
@@ -263,12 +273,10 @@ for reference in config['reference']:
     #pg = pg.head(10)
 
     combined = pg
-
-
+    
+    
     for row in combined.iterrows():
-        print(row[0]) 
         combined_blasted = set()
-
         row_paralogous = '-'
 
         peptide_ids = row[1]['Peptide IDs'].split(';')  # Get the ids of peptides in the row
@@ -289,7 +297,7 @@ for reference in config['reference']:
         if len(row_paralog_peptides) > 0:
             row_paralogous = '+'
 
-        row_ref_strain_peps = set()
+        #row_ref_strain_peps = set()
 
         strain_peps=defaultdict(list)
         
@@ -301,7 +309,6 @@ for reference in config['reference']:
             #sample_peps = list(set(row_peps[row_peps['Experiment {}'.format(sample)]>=1]['Sequence'].tolist()))
             sample_evs = list(set(row_evs[row_evs['Experiment'] == rename[sample]]['Modified sequence'].tolist()))
             sample_peps = list(set(row_evs[row_evs['Experiment'] == rename[sample]]['Sequence'].tolist()))
-
             sample_column = "All peptides sample {}".format(sample)
             combined.loc[row[0], sample_column] = '\n'.join(sorted(list(sample_evs)))
             
@@ -312,7 +319,7 @@ for reference in config['reference']:
             #if strain in config['reference_strains']:
             #    row_ref_strain_peps.update(sample_peps)
         
-        row_ref_strain_peps = row_ref_strain_peps & row_specific
+        #row_ref_strain_peps = row_ref_strain_peps & row_specific
         
         for group in group_evs:
             combined.loc[row[0],"All peptides group {}".format(group)]='\n'.join(sorted(list(set(group_evs[group]))))
@@ -323,6 +330,7 @@ for reference in config['reference']:
         all_orfs_fasta=[]
         all_prot_fasta=[]
         fasta_holder = {}
+        peptide_holder = {}
         id_holder={}
         frameshifts =[]
         
@@ -388,14 +396,17 @@ for reference in config['reference']:
 
             orfs_peps = set(strain_map[strain].get_peptides(orf_ids)) & strain_peptides[strain]  # Combined all identified peptides for the orf and strain
             
-            st_peps = orfs_peps
-            
+            #st_peps = orfs_peps
+            st_peps = set(strain_peps[strain]) | orfs_peps # add other peptides for the identified ORFs to the same row. Some of the identified specific peptides may not belong to mapped ORFs (if predicted by ORFs of other strains but identified in the sample - these are termed genome exclusive
             specific_strain_peps = st_peps & global_specific_peptides
             
             # Dict to hold the specific peptides per strain
             
             row_specific_strain_peps[strain] = specific_strain_peps
             genome_unmapped = specific_strain_peps - strain_sets[strain]
+            other_unmapped = row_specific - specific_strain_peps   # remove peptides identified in the same strain
+            other_unmapped = other_unmapped - strain_sets[strain]  # remove peptides identified in other strains that can be mapped to the genome
+
             strain_exclusive_novel = specific_strain_peps & strain_sets_exclusive[strain]
             
             strain_n_term_acetylated= specific_strain_peps & strain_sets_nterm_acetylated[strain]
@@ -407,16 +418,31 @@ for reference in config['reference']:
             
             annotation_trie = []
             annotation_type = []
-            #orf_start_codons[strain][_.id][ refp.id] = pgomics.start_codons_found
-            for refp in refps:
-            #if len(refps) > 0:
-                for _ in x:
+            
+
+            for _ in x:
+                # compare the ORF to itself, get TSS positions if no other annotation is available
+                pgomics = sequtils.proteogenomics(specific_strain_peps, _, None, n_term_acetylated=strain_n_term_acetylated) # all peptides for the strain.
+                #orf_start_codons[strain][_.id][ _.id] = pgomics.start_codons_found
+                var_fasta[strain] += pgomics.variant_sequences
+                trie_fasta[strain] += pgomics.variant_sequences_trie
+                peptide_annotations[strain] += pgomics.get_peptide_info()
+                
+                for refp in refps:
+                    #if len(refps) > 0:
                     pgomics = sequtils.proteogenomics(specific_strain_peps, _, refp, n_term_acetylated=strain_n_term_acetylated) # all peptides for the strain.
                     #orf_start_codons[strain][_.id][ refp.id] = pgomics.start_codons_found
                     annotation_trie += pgomics.variant_sequences_trie
                     annotation_type += pgomics.annotation_type
+                    
+                    peptide_annotations[strain] += pgomics.get_peptide_info()
+                    var_fasta[strain] += pgomics.variant_sequences
+                    trie_fasta[strain] += pgomics.variant_sequences_trie
+
             fasta_holder['{}_prots'.format(strain)] = y
             fasta_holder['{}_nucs'.format(strain)] = x
+            peptide_holder['{}_genome_unmapped_same'.format(strain)]=genome_unmapped
+            peptide_holder['{}_genome_unmapped_other'.format(strain)]=other_unmapped
             id_holder[strain] =[rec.id for rec in y]
             
             mapped_orfs += y
@@ -449,15 +475,10 @@ for reference in config['reference']:
             #combined.loc[row[0], "Exclusive peptides reference BLAST strain {}".format(strain)]='\n'.join(blasted) 
             #combined.loc[row[0], "Exclusive peptides polymorphism reference feature overlap strain {}".format(strain)]='\n'.join(features) 
             combined.loc[row[0], "Non-genomic peptides strain {}".format(strain)]='\n'.join(genome_unmapped) 
-            combined.loc[row[0], "Translated orfs strain {}".format(strain)] = '\n'.join(trie)
-            combined.loc[row[0], 'Variant orfs strain {}'.format(strain)] = '\n'.join(list(set(annotation_trie)))
+            combined.loc[row[0], "Translated orfs strain {}".format(strain)] = '\n'.join( [i.format('fasta') for i in trie])
+            combined.loc[row[0], 'Variant orfs strain {}'.format(strain)] = '\n'.join(list(set([i.format('fasta') for i in annotation_trie])))
             combined.loc[row[0], 'Annotation type strain {}'.format(strain)] = '\n'.join(list(set(annotation_type)))
             
-            fs_st = sequtils.frameshift_peptides(y, genome_unmapped, output)
-            
-            if len(fs_st.frameshift_peptides) > 0:
-                combined.loc[row[0], 'Frameshift validated strain {}'.format(strain)] = '+' 
-                combined.loc[row[0], 'Frameshift evidence strain {}'.format(strain)] = fs_st.frameshift_report 
             
             ref_blast = sequtils.reference_mapping_blast(y, refps, output)
             
@@ -468,12 +489,36 @@ for reference in config['reference']:
             combined.loc[row[0], "Best orf-reference blast evalue strain {}".format(strain)] = ref_blast[0]
             combined.loc[row[0], "Best orf-reference blast match {}".format(strain)] = ref_blast[1]
 
-        for key in id_holder:
-            ids = id_holder[key]
+        for strain in id_holder:
+            y = fasta_holder['{}_prots'.format(strain)]
+            genome_unmapped = peptide_holder['{}_genome_unmapped_same'.format(strain)]
+            other_unmapped =  peptide_holder['{}_genome_unmapped_other'.format(strain)]
+
+            ids = id_holder[strain]
             if len(ids) > 1:
-                frameshifts.append(key) 
-        
-        combined.loc[row[0], "All ORF IDs"] = ';'.join(sorted(all_orf_ids))
+                reference_orfs = [i for i in mapped_orfs if not i.id in ids]
+                fs_st = sequtils.frameshift_peptides(y, reference_orfs, genome_unmapped, output)
+                fs_other = sequtils.frameshift_peptides(y, reference_orfs, other_unmapped, output)
+            
+                if len(fs_st.icds_pairs) or len(fs_other.icds_pairs) > 0:
+                    combined.loc[row[0], 'Strain ICDS intrastrain evidence {}'.format(strain)] = fs_st.frameshift_report 
+                    combined.loc[row[0], 'Strain ICDS interstrain exclusive evidence {}'.format(strain)] = fs_other.frameshift_report 
+                    
+                    intrastrain_evidence = '-'
+                    interstrain_evidence = '-'
+                    if len(fs_st.frameshift_peptides) > 0:
+                        intrastrain_evidence = '+'
+                    if len(fs_other.frameshift_peptides) > 0:
+                        interstrain_evidence = '+'
+
+                    combined.loc[row[0], 'Strain ICDS intrastrain peptide validation {}'.format(strain)] = intrastrain_evidence
+                    combined.loc[row[0], 'Strain ICDS interstrain exclusive peptide validation {}'.format(strain)] = interstrain_evidence
+
+                    frameshifts.append(strain) 
+                    
+                    
+
+        #combined.loc[row[0], "All ORF IDs"] = ';'.join(sorted(all_orf_ids))
 
         #####################
         # STRAIN VARIANTS   #
@@ -499,7 +544,7 @@ for reference in config['reference']:
             
             combined.loc[row[0], "Variant peptide BLAST strain {}".format(strain)]='\n'.join(strain_variant_blast_orfs_list) 
             combined.loc[row[0], "Variant peptide feature overlap strain {}".format(strain)]='\n'.join(strain_variant_features_orfs_list) 
-            combined.loc[row[0], "Variant peptide strains strain {} ".format(strain)]='\n'.join(strain_variants) 
+            combined.loc[row[0], "Variant peptide strains strain {}".format(strain)]='\n'.join(strain_variants) 
             
 
         ####################### 
@@ -523,14 +568,14 @@ for reference in config['reference']:
         
         #combined.loc[row[0], "Specific peptide variants"]='\n'.join(blasted) 
         #combined.loc[row[0], "Identified polymorphisms feature overlap"]='\n'.join(features) 
-        combined.loc[row[0], "Frameshift"] = '\n'.join(list(frameshifts))
+        combined.loc[row[0], "ICDS"] = '\n'.join(list(frameshifts))
         combined.loc[row[0], "Exclusive peptide strains"] = '\n'.join(list(strains_exclusive))
         combined.loc[row[0], "Specific peptides - all strains"] ='\n'.join(list(row_specific))
         combined.loc[row[0], "Specific annotated peptides - all strains"] ='\n'.join(row_annotated)
         combined.loc[row[0], "Specific novel peptides - all strains"] ='\n'.join(row_novel)
         combined.loc[row[0], "ORF ids - all strains"] = '\n'.join(rec.id for rec in mapped_orfs)
-        combined.loc[row[0], "Reference proteins mapped - all strains"]= '\n'.join(reftrie)
-        combined.loc[row[0], "Reference proteins mapped count - al strains"] = len(mapped_reference)
+        combined.loc[row[0], "Reference proteins mapped - all strains"]= '\n'.join([i.format('fasta') for i in reftrie])
+        combined.loc[row[0], "Reference proteins mapped count - all strains"]=len(mapped_reference)
         combined.loc[row[0], "Reference entries mapped - all strains"] = ';'.join([i.split('|')[1] for i in mapped_reference])
         combined.loc[row[0], "Variant peptides reference blast - all strains"]='\n'.join(row_variant_blast_ref_list)
         combined.loc[row[0], "Variant peptides reference features - all strains"]='\n'.join(row_variant_features_ref_list)
@@ -540,13 +585,11 @@ for reference in config['reference']:
         combined.loc[row[0], "Reference BLAST - all strains"] = '\n'.join(combined_blasted)
         
         if len(mapped_reference) > 0:
-            icds = sequtils.icds_blast(refps, output)
-            if len(icds) > 0: 
-                combined.loc[row[0],'Non-alligned mapped reference proteins'] = '\n'.join(icds)
-                fs_ref = sequtils.frameshift_peptides(refps, row_novel, output)
-                if len(set(fs_ref.frameshift_peptides) & row_ref_strain_peps) > 0:
-                    combined.loc[row[0], 'Reference frameshift validated'] = '+' 
-                    combined.loc[row[0], 'Reference frameshift evidence'] = fs_ref.frameshift_report
+            fs_ref = sequtils.frameshift_peptides(refps, mapped_orfs,  row_novel, output)
+            if len(fs_ref.icds_pairs) > 0: 
+                combined.loc[row[0], 'Reference ICDS evidence'] = fs_ref.frameshift_report
+                if len(set(fs_ref.frameshift_peptides)) > 0:
+                    combined.loc[row[0], 'Reference ICDS peptide validation'] = '+' 
 
         ##########################
         # Mapping of protein ids #
@@ -587,6 +630,7 @@ for reference in config['reference']:
         identifier = rowGene_OrderedLocusName.copy()
         identifier.append('(protein group {})'.format(str(row[0])))
         combined.loc[row[0], 'Identifier'] = ' '.join(identifier)
+        
         combined.loc[row[0], 'Gene_OrderedLocusName'] = ';'.join(rowGene_OrderedLocusName)
         combined.loc[row[0], 'GI'] = ';'.join(rowGI)
         combined.loc[row[0], 'GeneID'] = ';'.join(rowGeneID)
@@ -638,13 +682,27 @@ for reference in config['reference']:
     #    sdf.to_csv(output +'/strains/{}/{}.csv'.format(strain, strain))
     #    #break
 
-    combined = combined.sort_values('iBAQ', ascending=False).drop_duplicates('All ORF IDs', keep='first')
+    #combined = combined.sort_values('iBAQ', ascending=False).drop_duplicates('All ORF IDs', keep='first')
+    
     combined.to_csv(output+'/{}_combined.csv'.format(reference), sep='\t')
-
+    
+    #break
     # Save the start codons found
     #orf_start_codons = json.dumps(orf_start_codons)
+    annotation_path = output + '/annotations/'
+    if not os.path.exists(annotation_path):
+        #shutil.rmtree(annotation_path)
+        os.mkdir(annotation_path)
+
+    for strain in peptide_annotations:
+        annotations = pd.DataFrame(peptide_annotations[strain])
+        annotations.to_csv(annotation_path +'/{}_{}_peptide_annotations.csv'.format(reference,strain))
+        strain_var_fasta = var_fasta[strain]
+        SeqIO.write(strain_var_fasta, annotation_path+'/{}_{}_variants.fasta'.format(reference,strain),'fasta')
+        strain_trie_fasta = trie_fasta[strain]
+        SeqIO.write(strain_trie_fasta, annotation_path+'/{}_{}_variants_trie.fasta'.format(reference,strain),'fasta')
+
     #with open(output +'/{}_start_codons_found.json'.format(reference),'w') as w:
     #    w.write(orf_start_codons)
-
-
+    
 

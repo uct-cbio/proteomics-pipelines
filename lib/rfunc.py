@@ -12,6 +12,7 @@ pandas2ri.activate()
 import string
 import rpy2
 from rpy2 import robjects
+import time
 
 
 functions = '''read.peptides <- function(dat, cha){
@@ -324,24 +325,40 @@ def KW_DUNN(dataframe, dep_var, dep_fac, outpath):   # pandas df, col to do anov
 class up2ko:
     def __init__(self, up):
         self.up = up
-        mg = mygene.MyGeneInfo()
-        res = mg.query(self.up)
         self.ids = []
         self.names = []
         self.pathways=[]
-        for i in res['hits']:
-            if 'entrezgene' in i:
-                symbol = i['entrezgene']
-                ko = entrez2ko(symbol)
-                if not ko.ko is None: 
-                    self.ids.append(ko.ko)
-                    self.names.append(ko.name)
-                if not ko.pathways is None:
-                    self.pathways.append(ko.pathways)
+        self.ko_pathways= []
+        self.entrez = [] 
+        if not str(up) == 'nan':
+            print("Querying mygene: {}".format(up))
+            tries = 0
+            success = False
+            while success == False:
+                try:
+                    mg = mygene.MyGeneInfo()
+                    res = mg.query(self.up)
+                    success = True
+                    for i in res['hits']:
+                        if 'entrezgene' in i:
+                            symbol = i['entrezgene']
+                            ko = entrez2ko(symbol)
+                            if not ko.ko is None: 
+                                self.ids.append(ko.ko)
+                                self.names.append(ko.name)
+                            if not ko.pathways is None:
+                                self.pathways.append(ko.pathways)
+                                self.ko_pathways.append(ko.ko_pathways)
+                                self.entrez.append(symbol)
+                except:
+                    time.sleep(1)
+                    print("retrying!")
+
         self.ko = ';'.join(set(self.ids))
         self.name = ';'.join(set(self.names))
         self.pathways = ';'.join(set(self.pathways))
-
+        self.ko_pathways = ';'.join(set(self.ko_pathways))
+        self.entrez = ';'.join(set(self.entrez))
 
 class string2ko: # uniprot id
     def __init__(self, string):
@@ -358,15 +375,32 @@ class entrez2ko: # uniprot id
         self.ko = None
         self.name = None
         self.pathways=None
+        self.ko_pathways=None
         c = 'library(KEGGREST)';ro.r(c)
         c = 'conv <- keggConv("genes", "ncbi-geneid:{}")'.format(self.entrez); ro.r(c) 
-        try:
-            c = 'ko <- keggGet(conv)'; ro.r(c)
-        except:
-            return
+        
+        keggsuccess = False
+        while True:
+            try:
+                print(entrez)
+                c = 'ko <- keggGet(conv)'; ro.r(c)
+                print("KO Succes!", entrez)
+                break
+            except rpy2.rinterface_lib.embedded.RRuntimeError as e:
+                print('*', entrez, str(e))
+                if "HTTP 400" in str(e):
+                    print("skipping ", entrez, 'HTTP 400')
+                    return
+                else:
+                    print("SLEEPING!")
+                    time.sleep(1)
+        #print("Success!!", entrez)
+        c = 'print(ko)'
+        #print(robjects.r(c))
         c = 'names(ko[[1]]$ORTHOLOGY)'
         try:
             self.ko = ';'.join(robjects.r(c))
+            #print(self.ko)
         except:
             pass
         c = 'ko[[1]]$ORTHOLOGY'
@@ -374,12 +408,25 @@ class entrez2ko: # uniprot id
             self.name= ';'.join(robjects.r(c))
         except:
             pass
+        print(self.name)
         try:
+            c = 'names(ko[[1]]$ORGANISM)'
+            self.org = ';'.join(robjects.r(c))
+            assert len(self.org) > 0
             c = 'names(ko[[1]]$PATHWAY)'
-            res = robjects.r(c)
-            self.pathways=';'.join(res)
-        except:
-            pass
+            pathways = robjects.r(c)
+            ko_pathways = []
+            for _ in pathways:
+                assert self.org in _
+                ko_pathway = 'ko' + _.split(self.org)[1]
+                ko_pathways.append(ko_pathway)
+            
+            self.pathways=';'.join(pathways)
+            
+            self.ko_pathways=';'.join(ko_pathways)
+
+        except Exception as e:
+            print(e)
     # keggConv("genes", "uniprot:Q05025"))
     # q <- keggGet("cjo:107318960")
     # q[[1]]$ORTHOLOGY   

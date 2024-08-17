@@ -458,6 +458,8 @@ class mq_txt:
         assert len(self.proteingroups) == len(set(self.proteingroups['Identifier'].tolist()))
         self.peptides.rename(columns=rename_columns, inplace=True)            
         self.proteingroups.rename(columns=rename_columns, inplace=True)
+        
+        
         self.proteingroups = self.host_proteins(self.proteingroups, self.reference_fasta)
         assert len(self.proteingroups) == len(set(self.proteingroups['Identifier'].tolist()))
         
@@ -535,8 +537,8 @@ class mq_txt:
         #    meancol = 'Mean Prot Quant'
         #    assert not meancol in self.target_proteingroups.columns
         #    self.target_proteingroups[meancol]=self.target_proteingroups[protcols].mean(axis=1)
-        #    
-        #    self.target_proteingroups= self.target_proteingroups.sort_values(by=meancol, ascending=False)
+            
+        ##    self.target_proteingroups= self.target_proteingroups.sort_values(by=meancol, ascending=False)
         #    self.target_proteingroups = self.target_proteingroups.drop_duplicates(subset='ORF IDs Set', keep="first")
 
 
@@ -581,11 +583,13 @@ class mq_txt:
             self.export_ips_tsv( infile + '.tsv', mapping_file,  outfile + '.tsv')
 
         # gene sets
+        self.custom_genesets(self.config, self.target_proteingroups, self.gsea_dir, self.proteogenomics)
         infile = self.fasta_dir +'/proteins.fasta.tsv'
         if self.proteogenomics == False:
             self.ips_genesets(infile, self.target_proteingroups, self.gsea_dir)
         else:
             self.ips_genesets(infile, self.target_proteingroups, self.gsea_dir, id_col='Leading ORF')
+
 
         # Create peptide paraameters
         for level in self.config['group_levels']:
@@ -1119,6 +1123,7 @@ class mq_txt:
         
         cmd = 'gage.R --indir {} --outdir {} --keggid {} --design {} --table {} --genecol {} --kocol {} --pval {}'.format(indir, outpath, keggid, design, group_table, genecol, kocol,  pval)
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        print(cmd)
         out, err = process.communicate()
         if not out is None:
             out = out.decode('utf-8')
@@ -1163,7 +1168,7 @@ class mq_txt:
         lst_col = 'ProteinAccession' 
         x = data.assign(**{lst_col:data[lst_col].str.split('|')})
         data = pd.DataFrame({col:np.repeat(x[col].values, x[lst_col].str.len()) for col in x.columns.difference([lst_col])}).assign(**{lst_col:np.concatenate(x[lst_col].values)})[x.columns.tolist()]
-        
+       
 
         def clean_up(val):
             if val == '-':
@@ -1181,6 +1186,7 @@ class mq_txt:
             id = df['ProteinAccession']
             try:
                 go=go.split('|')
+                go = [_.split('(')[0] for  _ in go]
                 id2go[id].update(go)
                 for goterm in go:
                     gos.add(goterm)
@@ -1224,42 +1230,42 @@ class mq_txt:
 
 
         # KEGG
-        id2kegg= defaultdict(set)
-        keggs = set()
-        def kegg(df):
-            id = df['ProteinAccession']
-            pathways = df['PathwaysAnnotations']
-            try:
-                kegg = [i for i in pathways.split('|') if i.startswith('KEGG: ')]
-                kegg = [i.split('KEGG: ')[1].split('+')[0] for i in kegg]
-                id2kegg[id].update(kegg)
-                for keggterm in kegg:
-                    keggs.add(keggterm)
-            except:
-                pass
-        data.apply(kegg, axis=1)
-        with open( outpath +'/accession2kegg.p', 'wb') as f:
-            pickle.dump( id2kegg, f)
-        kegg_df = pd.DataFrame()
-        kegg_vals = list(keggs)
-        kegg_df['KEGG_ID'] = pd.Series(kegg_vals)
-        kegg_df.to_csv(outpath +'/kegg_terms.csv')
+        #id2kegg= defaultdict(set)
+        #keggs = set()
+        #def kegg(df):
+        #    id = df['ProteinAccession']
+        #    pathways = df['PathwaysAnnotations']
+        #    try:
+        #        kegg = [i for i in pathways.split('|') if i.startswith('KEGG: ')]
+        #        kegg = [i.split('KEGG: ')[1].split('+')[0] for i in kegg]
+        #        id2kegg[id].update(kegg)
+        #        for keggterm in kegg:
+        #            keggs.add(keggterm)
+        #    except:
+        #        pass
+        #data.apply(kegg, axis=1)
+        #with open( outpath +'/accession2kegg.p', 'wb') as f:
+        #    pickle.dump( id2kegg, f)
+        #kegg_df = pd.DataFrame()
+        #kegg_vals = list(keggs)
+        #kegg_df['KEGG_ID'] = pd.Series(kegg_vals)
+        #kegg_df.to_csv(outpath +'/kegg_terms.csv')
         
-        def keggintersect(val):
-            vals = val.split(';')
-            setlist = []
-            for val in vals:
-                vset = id2kegg[val]
-                setlist.append(vset)
-            union = set.union(*setlist)
-            if len(union) > 0 :
-                return ';'.join(union)
-        proteins['_kegg.term.union']   = proteins[id_col].apply(parse_ids).apply(keggintersect)
+        #def keggintersect(val):
+        #    vals = val.split(';')
+        #    setlist = []
+        #    for val in vals:
+        #        vset = id2kegg[val]
+        #        setlist.append(vset)
+        #    union = set.union(*setlist)
+        #    if len(union) > 0 :
+        #        return ';'.join(union)
+        #proteins['_kegg.term.union']   = proteins[id_col].apply(parse_ids).apply(keggintersect)
 
         kegg2pg = defaultdict(set)
         
         def kegg2gene(df):
-            kegg_terms = df['_kegg.term.union']
+            kegg_terms = df['Leading Protein Kegg Pathways']
             pg = df['Identifier']
             try:
                 kegg_terms = kegg_terms.split(';')
@@ -1267,14 +1273,52 @@ class mq_txt:
                     kegg2pg[_].add(pg)
             except:
                 pass
-        if len(list(kegg2pg.keys())) > 0:
-            proteins.apply(kegg2gene,axis=1)
-            kegg_df = pd.DataFrame()
-            kegg_df['KEGG_ID'] = pd.Series(list(kegg2pg.keys()))
-            kegg_df['KEGG_ID'] = kegg_df['KEGG_ID'].apply(str)
-            kegg_df['GENES'] = pd.Series(list(kegg2pg.values())).apply( lambda x  : '|'.join(x))
-            kegg_df.to_csv(outpath +'/kegg2proteingroups.csv')
+        #if len(list(kegg2pg.keys())) > 0:
+        proteins.apply(kegg2gene,axis=1)
+        kegg_df = pd.DataFrame()
+        kegg_df['KEGG_ID'] = pd.Series(list(kegg2pg.keys()))
+        kegg_df['KEGG_ID'] = kegg_df['KEGG_ID'].apply(str)
+        kegg_df['GENES'] = pd.Series(list(kegg2pg.values())).apply( lambda x  : '|'.join(x))
+        kegg_df.to_csv(outpath +'/kegg2proteingroups.csv')
+        
+        kopathway2pg = defaultdict(set)
+       
+        # KO Pathway
+        def kopathway2gene(df):
+            kegg_terms = df['Leading Protein KO Pathways']
+            pg = df['Identifier']
+            try:
+                kegg_terms = kegg_terms.split(';')
+                for _ in kegg_terms:
+                    kopathway2pg[_].add(pg)
+            except:
+                pass
+        proteins.apply(kopathway2gene,axis=1)
+        if len(list(kopathway2pg.keys())) > 0:
+            kopathway_df = pd.DataFrame()
+            kopathway_df['KEGG_ID'] = pd.Series(list(kopathway2pg.keys()))
+            kopathway_df['KEGG_ID'] = kopathway_df['KEGG_ID'].apply(str)
+            kopathway_df['GENES']=pd.Series(list(kopathway2pg.values())).apply(lambda x:'|'.join(x))
+            kopathway_df.to_csv(outpath +'/kopathway2proteingroups.csv')
 
+        # KO terms
+        koterm2pg = defaultdict(set)
+        def koterm2gene(df):
+            ko_terms = df['Leading Protein Kegg Orthology']
+            pg = df['Identifier']
+            try:
+                ko_terms = ko_terms.split(';')
+                for _ in ko_terms:
+                    koterm2pg[_].add(pg)
+            except:
+                pass
+        proteins.apply(koterm2gene,axis=1)
+        if len(list(koterm2pg.keys())) > 0:
+            ko_df = pd.DataFrame()
+            ko_df['KO'] = pd.Series(list(koterm2pg.keys()))
+            ko_df['KO'] = ko_df['KO'].apply(str)
+            ko_df['GENES']=pd.Series(list(koterm2pg.values())).apply(lambda x:'|'.join(x))
+            ko_df.to_csv(outpath +'/koterm2proteingroups.csv')
 
         # EC
         id2ec= defaultdict(set)
@@ -1335,8 +1379,8 @@ class mq_txt:
             id = df['ProteinAccession']
             pathways = df['PathwaysAnnotations']
             try:
-                reactome = [i for i in pathways.split('|') if i.startswith('Reactome: ')]
-                reactome = [i.split('Reactome: ')[1] for i in reactome]
+                reactome = [i for i in pathways.split('|') if i.startswith('Reactome:')]
+                reactome = [i.split('Reactome:')[1] for i in reactome]
                 id2reactome[id].update(reactome)
                 for reactometerm in reactome:
                     reactomes.add(reactometerm)
@@ -1387,8 +1431,8 @@ class mq_txt:
             id = df['ProteinAccession']
             pathways = df['PathwaysAnnotations']
             try:
-                metacyc = [i for i in pathways.split('|') if i.startswith('MetaCyc: ')]
-                metacyc = [i.split('MetaCyc: ')[1] for i in metacyc]
+                metacyc = [i for i in pathways.split('|') if i.startswith('MetaCyc:')]
+                metacyc = [i.split('MetaCyc:')[1] for i in metacyc]
                 id2metacyc[id].update(metacyc)
                 for metacycterm in metacyc:
                     metacycs.add(metacycterm)
@@ -1479,15 +1523,108 @@ class mq_txt:
         ipr_df['IPR_ID'] = ipr_df['IPR_ID'].apply(str)
         ipr_df['GENES'] = pd.Series(list(ipr2pg.values())).apply( lambda x  : '|'.join(x))
         ipr_df.to_csv(outpath +'/ipr2proteingroups.csv')
-        
+    
 
         cmd = 'mq_genesets.R --outdir {} --keggid {}'.format(outpath, keggid)
+        print(cmd)
         process = subprocess.Popen(cmd, shell=True)
         process.wait()
         assert process.returncode == 0
         
         proteins.to_csv(outpath +'/ipr_target_proteins.tsv',sep='\t')
 
+
+    def custom_genesets(self, config, proteins, outpath, proteogenomics, mq_genesets=False):
+        
+        if not os.path.exists(outpath +'/custom'):
+            os.mkdir(outpath + '/custom')
+
+        
+        def entry2geneset(df):
+            entry=df[from_col]
+            geneset=df[target_col]
+            try:
+                entry_list = entry.split(';')
+                for _ in entry_list:
+                    for target in geneset.split(';'):
+                        gsdict[_].add(target)
+            except:
+                pass
+            
+
+        
+        if not 'gsea' in config:
+            return
+        else:
+            print("custom geneset creation")
+            for key in config['gsea']:
+                mapfile=pd.read_csv(config['gsea'][key]['path'], sep=None, engine='python')
+                
+                
+                entry2pg= defaultdict(set)
+                
+                
+                def entry2proteingroup_orf(df):
+                    leading_orf = df['Leading ORF']
+                    
+                    pg = df['Identifier']
+                    if leading_orf in strain_blast_dict:
+                        entry = strain_blast_dict[leading_orf][0]
+                        entry2pg[entry].add(pg)
+                def entry2proteingroup_protein(df):
+                    leading_protein = df['Leading Protein']
+                    pg = df['Identifier']
+                    entry2pg[leading_protein].add(pg)
+                
+                if proteogenomics == True:
+                    if 'proteome_id' in config['gsea'][key]:
+                        up = config['gsea'][key]['proteome_id']
+                        blastfolder = config['outdir'] + '/blast/orfs2proteins/'
+                        strain_blast = '{}/{}_mapping.json'.format(blastfolder, up)
+                        with open(strain_blast) as f:
+                            strain_blast_dict = json.loads(f.read())
+                        proteins.apply(entry2proteingroup_orf, axis=1)
+                    else:
+                        proteins.apply(entry2proteingroup_protein, axis=1)
+                        assert False
+                        # needs to be tested
+                else:
+                    proteins.apply(entry2proteingroup_protein, axis=1)
+                    assert False
+                    # this code needs to be testsed , just coding quickly now
+
+                def geneset2proteingroups(df):
+                    entry=df[from_col]
+                    try:
+                        entry_list = entry.split(';')
+                        for entry_val in entry_list:
+                            pgs = entry2pg[entry_val]
+                            gsets = gsdict[entry_val]
+                            for pg in pgs:
+                                for gset in gsets:
+                                    genesetdict[gset].add(pg)
+                    except:
+                        pass
+
+                from_col=config['gsea'][key]['from']
+                for column in config['gsea'][key]['columns']:
+                    target_col=column
+                    gsdict= defaultdict(set)
+                    mapfile.apply(entry2geneset, axis=1)
+                    genesetdict=defaultdict(set)
+                    mapfile.apply(geneset2proteingroups, axis=1)
+                    custom_df = pd.DataFrame()
+                    custom_df['ID'] = pd.Series(genesetdict.keys())
+                    custom_df['GENES'] = pd.Series(genesetdict.values())
+                    custom_df['GENES'] = custom_df['GENES'].apply ( lambda x : '|'.join(x))
+
+                    setp='{}/custom/{}_{}2proteingroups.csv'.format(outpath, key, column)
+                    custom_df.to_csv(setp)
+        if mq_genesets == True:
+            cmd = 'mq_genesets.R --outdir {}'.format(outpath)
+            process = subprocess.Popen(cmd, shell=True)
+            process.wait()
+            assert process.returncode == 0
 
 
     def ips_fasta(self, infile, outpath):
@@ -1942,13 +2079,15 @@ class mq_txt:
         proteingroups['Leading.gene'] = proteingroups['Leading Protein'].map(gene_dict)
         return proteingroups
 
-    def leading_protein_ko(self, df):
+    def leading_protein_ko(self, df, protcol='Leading Protein'):
         for row in df.iterrows():
             ind = row[0]
-            ko = rfunc.up2ko(row[1]['Leading Protein'])
+            ko = rfunc.up2ko(row[1][protcol])
             df.loc[ ind, 'Leading Protein Kegg Orthology ID'] = ko.ko
             df.loc[ ind, 'Leading Protein Kegg Orthology Name'] = ko.name
             df.loc[ ind, 'Leading Protein Kegg Pathways'] = ko.pathways
+            df.loc[ ind, 'Leading Protein KO Pathways'] = ko.ko_pathways
+            df.loc[ ind, 'Leading Protein KO Entrez'] = ko.entrez
             if not ko.ko == '':
                 _ = ko.ko +' ' + ko.name 
             else:

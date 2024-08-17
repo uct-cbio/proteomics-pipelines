@@ -24,16 +24,13 @@ from io import StringIO
 import uniprot
 import pickle
 from io import StringIO
+import yaml
 
-loader = importlib.machinery.SourceFileLoader('config', sys.argv[1])
-config = loader.load_module()
+config = yaml.load(open(sys.argv[1]).read(), Loader=yaml.Loader)  
 output = sys.argv[2]
 
-idmapping = pickle.load(open(output+'/fasta/id_mapping.p','rb'))
-gff3 = sequtils.gff3(output +'/fasta/nr_translated_pg_orfs.fasta.gff3')
-gff3.expand_table(idmapping)
-print(gff3.table['attributes'].values)
-gff3.table['strain'] = gff3.table['_mapped.id'].apply( lambda x : x.split('_')[0])
+gff3 = sequtils.gff3(output +'/fasta/proteins.fasta.tsv')
+print(gff3.table.head(1).stack())
 
 def gff3_domain_export(df):
     global gdict
@@ -150,12 +147,12 @@ def gff3_contig_export(recs):
         contig_columns.append(row)
 
 
-for strain in config.strains:
+for strain in config['strains']:
     contig_columns = []
     domain_columns = []
     
     table = gff3.table
-    table = table[table['strain'] == strain]
+    table = table[table['ProteinAccession'].apply(lambda x : x.startswith(strain))]
 
     genome = list(SeqIO.parse(config.strains[strain]['sf_genome'],'fasta'))
     gff3_contig_export(genome)

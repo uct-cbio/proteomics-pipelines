@@ -37,16 +37,19 @@ output = os.path.abspath(sys.argv[2])
 outpath = os.path.abspath(config['outdir'])
 
 
-cmd = 'rm -rf {}/jbrowse/local && jbrowse create {}/jbrowse/local'.format(outpath, outpath)
+cmd = 'rm -rf {}/jbrowse/local && jbrowse create {}/jbrowse/local '.format(outpath, outpath)
 process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 process.wait()
 
+
 def upload_reference_genome(ref_path, name, outpath):
     cmd = "samtools faidx {}".format(ref_path)
+    print(cmd)
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     process.wait()
 
-    cmd = 'jbrowse add-assembly {} --out {}/jbrowse/local --load copy --force'.format(ref_path, outpath)
+    cmd = 'jbrowse add-assembly {} -n {} --out {}/jbrowse/local --load copy --force'.format(ref_path, name,  outpath)
+    print(cmd)
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     process.wait()
     
@@ -125,6 +128,16 @@ def upload_reference_gff3(ref_path,name,outpath):
 def update_config(outpath, name, filepath, height, color, showLabels,Label=None):
     with open('{}/jbrowse/local/config.json'.format(outpath)) as f:
         js = json.loads(f.read())
+        js['adminKey'] = config['JBROWSEadminKey']
+        defaultSession={
+              "name": "New Session",
+              "view": {
+                      "id": "synteny-view",
+                      "type": "SyntenyView",
+                      "tracks": []
+                    }
+        }
+        js["defaultSession"] = defaultSession
         displays = [
         {
           "type": "LinearBasicDisplay",
@@ -133,7 +146,7 @@ def update_config(outpath, name, filepath, height, color, showLabels,Label=None)
             "type": "SvgFeatureRenderer",
             "color1": "rgba(32,218,166,1)",
             "height": 5,
-            "showLabels": False
+            "showLabels": True
 
           }
         },
@@ -159,17 +172,20 @@ def update_config(outpath, name, filepath, height, color, showLabels,Label=None)
                             base= "get(feature, '{}')".format(l) + ' || ' + base
                         renderer['labels'] =  {"name": "jexl:{}".format(base)}
                     renderer["showLabels"] = showLabels
-
+        meta = {'type' : track['type'], "configuration":track['trackId']}
+        js["defaultSession"]['view']['tracks'].append(meta)
     with open('{}/jbrowse/local/config.json'.format(outpath), 'w') as w:
         w.write(json.dumps(js))
                 
 
 def minimap2(ref,query, ref_name, query_name, outpath):
     cmd='minimap2 -cx asm5 {} {} > {}_vs_{}.paf'.format(ref,query,query_name,ref_name)
+    print(cmd)
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     process.wait()
     
-    cmd='jbrowse add-track {}_vs_{}.paf --assemblyNames {},{} --out {}/jbrowse/local --load copy --force'.format(query_name, ref_name, query_name, ref_name, outpath)
+    cmd='jbrowse add-track {}_vs_{}.paf --assemblyNames {},{} --out {}/jbrowse/local --load copy'.format(query_name, ref_name, query_name, ref_name,  outpath)
+    print(cmd)
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     process.wait()
 
@@ -198,8 +214,8 @@ def upload_gff3(gff3, outpath, name, height, color, showLabels, reference,Label=
     filepath = filepath.split('/')[-1]
     update_config(outpath, name, filepath, height, color, showLabels,Label)
 
+
 for reference in config['reference']:
-    break
     assembly_id = config['reference'][reference]['assembly_id']
     genome_path = output + '/ena/{}/{}.fasta'.format(assembly_id, assembly_id)
     genome_gff3 = output + '/ena/{}/{}.gff3'.format(assembly_id, assembly_id)
@@ -212,7 +228,6 @@ for reference in config['reference']:
     upload_gff3(genome_gff3, outpath,reference,width, color, True , reference, labels)
     
 for query in config['reference']:
-    break
     assembly_id = config['reference'][reference]['assembly_id']
     query_genome_path = output + '/ena/{}/{}.fasta'.format(assembly_id, assembly_id)
     for target in config['reference']:
@@ -226,27 +241,33 @@ for strain in config['strains']:
     assembly = config['strains'][strain]['assembly']
     upload_reference_genome(assembly, strain , outpath)
     feature_gff3="{}/jbrowse/".format(outpath)+strain+"/{}_features.gff3".format(strain)
-    color = "jexl:cast({open_reading_frame:'green',polypeptide:'purple'})[get(feature,'type')]"
-    width = "jexl:cast({open_reading_frame:10,polypeptide:5})[get(feature,'type')]"
+    color = "jexl:cast({open_reading_frame:'green',polypeptide:'purple',domain:'blue'})[get(feature,'type')]"
+    width = "jexl:cast({open_reading_frame:10,polypeptide:5,domain:4})[get(feature,'type')]"
 
     showLabels = False
     upload_gff3(feature_gff3, outpath, strain + ' features', width, color, showLabels, strain )
-    continue
+    
+    feature_gff3="{}/jbrowse/".format(outpath)+strain+"/{}_domains.gff3".format(strain)
+    color = "jexl:cast({open_reading_frame:'green',polypeptide:'purple',domain:'blue'})[get(feature,'type')]"
+    width = "jexl:cast({open_reading_frame:10,polypeptide:5,domain:4})[get(feature,'type')]"
+    showLabels = True
+    upload_gff3(feature_gff3, outpath, strain + ' domains', width, color, showLabels, strain )
+
     for reference in config['reference']:
         assembly_id = config['reference'][reference]['assembly_id']
         peptide_gff3="{}/jbrowse/".format(outpath)+strain+"/{}_{}_peptides.gff3".format(strain, assembly_id)
-        upload_gff3(peptide_gff3, outpath, strain + ' peptides', 5, "rgba(32,218,166,1)", False , reference)
+        upload_gff3(peptide_gff3, outpath, strain + ' peptides', 5, "rgba(32,218,166,1)", True , reference)
         
         orf_gff3="{}/jbrowse/".format(outpath)+strain+"/{}_{}_orfs.gff3".format(strain,assembly_id)
-        upload_gff3(orf_gff3, outpath, strain + ' ORFs', 10, "goldenrod", False, reference )
+        upload_gff3(orf_gff3, outpath, strain + ' ORFs', 10, "goldenrod", True, reference )
         
         assembly_id = config['reference'][reference]['assembly_id']
         ref_fasta = outpath + '/ena/{}/{}.fasta'.format(assembly_id, assembly_id)
+        
         minimap2(ref_fasta, assembly, reference, strain, outpath)
 
 # strain to strain syntenty
 for strain in config['strains']:
-    continue
     assembly = config['strains'][strain]['assembly']
     for tstrain in config['strains']:
         if not strain == tstrain:

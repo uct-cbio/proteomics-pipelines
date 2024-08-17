@@ -26,7 +26,7 @@ from io import StringIO
 import yaml
 import collections
 import urllib
-import uuid
+
 config = yaml.load(open(sys.argv[1]).read(), Loader=yaml.Loader)
 output = sys.argv[2]
 
@@ -93,11 +93,12 @@ def gff3_peptide_export(df):
     mapped_ref= 'None'
 
     #attributes1 = 'ID=peptide-{};Name={};Note=ORF id {},%0APeptide sequence {}'.format(ORF_id, ORF_id, ORF_id, Peptide_sequence)
-    note='{}'.format(Peptide_sequence)
+    note='ORF id: {},\nPeptide sequence: {}'.format(ORF_id, Peptide_sequence)
     note =urllib.parse.quote(note)
     attributes1 = 'ID={};Name={};Note={}'.format(Peptide_id, Peptide_sequence, note)
     #attributes1 = 'ID={};Name={};Note=ORF id {},%0APeptide sequence {},%0ATryptic N-terminal {},%0ATryptic C-terminal {},%0APrevious codon {},%0AFirst codon {},%0AAmino acid before {},%0AFirst amino acid {},%0ALast amino acid {},%0AAmino acid after {},%0ASpecific {},%0APeptide ORF count {},%0AIdentified in strain {},%0AMapped reference proteins {}'.format(Peptide_id, Peptide_sequence, ORF_id, Peptide_sequence, Peptide_tryptic_nterm, Peptide_tryptic_cterm, Peptide_previous_codon, Peptide_first_codon, Peptide_amino_acid_before, Peptide_amino_acid_first, Peptide_amino_acid_last, Peptide_amino_acid_after, Peptide_inferred_translated_sequence_specific, Peptide_genome_ORF_count, Strain_identified, mapped_ref)
     #attributes1 =urllib.parse.quote(attributes1)
+    attributes2 = 'Parent={};Name={}'.format(ORF_id, Peptide_id)
 
     #attributes2 =urllib.parse.quote(attributes2)
     #attributes2 = 'Parent={};Name={};Note=ORF id {},%0APeptide sequence {},%0ATryptic N-terminal {},%0ATryptic C-terminal {},%0APrevious codon {},%0AFirst codon {},%0AAmino acid before {},%0AFirst amino acid {},%0ALast amino acid {},%0AAmino acid after {},%0ASpecific {},%0APeptide ORF count {},%0AIdentified in strain {},%0AMapped reference proteins {}'.format(ORF_id, Peptide_sequence, ORF_id, Peptide_sequence, Peptide_tryptic_nterm, Peptide_tryptic_cterm, Peptide_previous_codon, Peptide_first_codon, Peptide_amino_acid_before, Peptide_amino_acid_first, Peptide_amino_acid_last, Peptide_amino_acid_after, Peptide_inferred_translated_sequence_specific, Peptide_genome_ORF_count, Strain_identified, mapped_ref)
@@ -187,87 +188,20 @@ def gff3_contig_export(recs):
 
         contig_columns.append(seq_reg)
         #contig_columns.append(row)
-def gff3_domain_export(df):
-    global gdict
-    global domain_columns
-    global strain
 
-    reference_sequence = reference(df['ProteinAccession'])
-    contig = gdict[reference_sequence]
-
-    source = df['Analysis']
-    type = 'domain'
-    feature_start = (int(df['Start'])-1) * 3
-    feature_end = int(df['Stop']) * 3
-    ORF_id = df['ProteinAccession'].split('|')[1]
-
-    strand = df['ProteinAccession'].split('|')[-1].split(')')[0].split('(')[1]
-    start = int(df['ProteinAccession'].split('|')[-1].split(')')[1].split(':')[0])
-    end = int(df['ProteinAccession'].split('|')[-1].split(')')[1].split(':')[1])
-
-    phase = '.'
-    score='.'
-    try:
-        Ontology_term =  df['GoAnnotations']
-    except:
-        Ontology_term = 'None'
-    try:
-        dbxref =  df['InterProAnnotationsAccession']
-    except:
-        dbxref = 'None'
-    try:
-        ipr =  df['InterProAnnotationsDescription']
-    except:
-        ipr = 'None'
-    try:
-        pathways =  df['PathwaysAnnotations']
-    except:
-        pathways = 'None'
-    try:
-        sigdesc =  df['SignatureDescription']
-    except:
-        sigdesc = 'None'
-    try:
-        name =  df['SignatureAccession']
-    except:
-        name = 'None'
-    
-    if type == 'polypeptide':
-        name=ORF_id
-    ID=ORF_id + '_'  + uuid.uuid4().hex 
-    #attributes1 = 'ID=domain-{};Name={};Note={};Ontology_term={};dbxref={}'.format(ORF_id, name, sigdesc, Ontology_term, dbxref)
-
-    attributes2 ='ID={};Name={};Note={};go={};dbxref={};pathways={}'.format(ID, urllib.parse.quote(sigdesc), urllib.parse.quote(name), urllib.parse.quote(Ontology_term), dbxref, urllib.parse.quote(pathways))
-    #attributes2 = 'ID={};Name={};Note={}'.format(ID, ID, ID)
-    if strand == '+':
-        gstart = start + feature_start
-        gend   = start + feature_end - 1 
-        nucs = str(contig.seq)[gstart-1:gend]
-        assert len(str(nucs)) % 3 == 0
-    
-    if strand == '-':
-        gend = end - feature_start
-        gstart = end - feature_end + 1
-        nucs = Seq(str(contig.seq)[gstart-1:gend]).reverse_complement()
-        assert len(str(nucs)) % 3 == 0
-
-    #row = reference_sequence +'\t' + 'match' +'\t' + type + '\t' + str(gstart) + '\t' + str(gend) + '\t' + score + '\t' + strand + '\t' + phase + '\t' + attributes1
-    #domain_columns.append(row)
-    
-    row = reference_sequence +'\t' + source +'\t' + type + '\t' + str(gstart) + '\t' + str(gend) + '\t' + score + '\t' + strand + '\t' + phase + '\t' + attributes2
-    domain_columns.append(row)
-domains = sequtils.gff3(output +'/fasta/proteins.fasta.tsv').table 
-#print(domains.columns)
-#domains = domains[domains['InterProAnnotationsAccession'].notnull()]
-##domains = domains.drop_duplicates(['ProteinAccession','Start','Stop'])
+ipr = pd.read_csv(output + '/fasta/proteins.fasta.tsv', sep='\t')
+print(ipr.head())
 for strain in config['strains']:
+    print("STRAIN: ", strain)
+    strain_ipr = ipr[ipr['0'].apply(lambda x : x.startswith(strain+ '_'))] 
+    print(strain_ipr['0'].values[0])
+    print(strain_ipr.head(1).stack())
+    
+    continue
     contig_columns = []
     orf_columns = []
     peptide_columns = []
-    domain_columns = []
-
-
-    strain_domains = domains[domains['ProteinAccession'].apply(lambda x : x.startswith(strain))]
+    
     peptides = pd.read_csv(output+ '/strains/' + strain + '/{}_mapped_peptides.csv'.format(strain))
     strain_identified = peptides[(peptides['Strain_identified']=='+') ]
     genome = list(SeqIO.parse(config['strains'][strain]['assembly'],'fasta'))
@@ -278,8 +212,6 @@ for strain in config['strains']:
     for rec in genome:
         gdict[rec.id] = rec
     
-    #print(strain_domains.head(3).stack())
-    strain_domains.apply(gff3_domain_export,axis=1)
     #strain_identified = strain_identified.head()
     orfs_identified = strain_identified.drop_duplicates('ORF_id')
     orfs_identified.apply(gff3_orf_export,axis=1)
@@ -289,13 +221,10 @@ for strain in config['strains']:
     gff3_list += contig_columns
     gff3_list += orf_columns
     gff3_list  += peptide_columns
-    #gff3_list  += domain_columns
     
     gff3 = '\n'.join(gff3_list)
     ##if strain in config['reference_strains']:
     #    gff3 = gff3 +'\n' + ref_gff3
-    
-
 
     if not os.path.exists(output + '/jbrowse/' + strain):
         os.mkdir(output + '/jbrowse/' + strain) 
@@ -304,22 +233,4 @@ for strain in config['strains']:
     w.close()
 
 
-    gff3_list = ['##gff-version 3']
-    
-    gff3_list += contig_columns
-    #gff3_list += orf_columns
-    #gff3_list  += peptide_columns
-    gff3_list  += domain_columns
-    
-    gff3 = '\n'.join(gff3_list)
-    ##if strain in config['reference_strains']:
-    #    gff3 = gff3 +'\n' + ref_gff3
-    
-
-
-    if not os.path.exists(output + '/jbrowse/' + strain):
-        os.mkdir(output + '/jbrowse/' + strain) 
-    w =open(output+ '/jbrowse/' + strain + '/{}_domains.gff3'.format(strain), 'w')
-    w.write(gff3)
-    w.close()
     
