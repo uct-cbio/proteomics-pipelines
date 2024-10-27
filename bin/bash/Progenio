@@ -110,30 +110,33 @@ fi
 if [ ! -d $outdir/stats ] ; then
     mq_basestats.py $config $outdir || rm -rf $outdir/stats
     mq_annotations.py $config $outdir || rm -rf $outdir/stats
+    mq_annotations_ko.py $config $outdir
+    mq_annotations_pathview.R --config $config --outdir $outdir
+    echo "Annotations exported"
 fi
-#mq_annotations_ko.py $config $outdir
 
-mq_annotations_pathview.R --config $config --outdir $outdir
-
-echo "Annotations exported"
-exit 0
 
 #if [ ! -d $outdir/tables2 ] ;  then      
 #    mq_export_tables.py $config $outdir || rm -rf $outdir/tables
 #fi
 
-#exit 0
 
 if [ ! -d $outdir/jbrowse ] ; then
     mkdir $outdir/jbrowse
-    mq_strains2ref.py $config $outdir      || ( rm -rf $outdir/jbrowse ; exit 1 )
     # not needed  #mq_strains2ref_peptides.py $config $outdir  || ( rm -rf $outdir/jbrowse ; exit 1 )
+    mq_strains2ref.py $config $outdir      || ( rm -rf $outdir/jbrowse ; exit 1 )	
+    mq_reference_features.py $config $outdir
 fi
 
 mq_peptide_features.py $config $outdir
-#jbrowse_iprscan.py $config $outdir
-
 mq_jbrowse_upload_script.py $config $outdir || ( rm -rf $outdir/jbrowse_ ; exit 1 )
+
+
+#exit 0
+###### old jbrowse_iprscan.py $config $outdir
+
+
+#exit 0
 
 cd $outdir/jbrowse/local && echo $hostname && jbrowse admin-server
 

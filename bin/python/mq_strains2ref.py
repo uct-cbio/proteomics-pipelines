@@ -61,11 +61,22 @@ peptide_sequence  = SeqIO.to_dict(list(SeqIO.parse(output + '/blast/peptides2orf
 # Per strain analysis
 peptides = pd.read_csv(config['mq_txt'] + '/peptides.txt', sep='\t',engine='python')
 peptides = peptides[(peptides['Potential contaminant'].isnull()) & (peptides['Reverse'].isnull())]
+
 all_peptides = peptides['Sequence'].tolist()
 exp_cols = [i for i in peptides.columns if i.startswith('Experiment')]
 
+# dynamic programming approach to limit the data set for dev
 
+
+#peptide_annotations =pd.read_csv(output +'/annotations/H37Rv_S5527_peptide_annotations_groups.csv')
+#print(peptide_annotations.head(1).stack())
+#print(list(query_fasta)[0].format('fasta'))
+#quit()
 for ref in config['reference']:
+
     assembly_id = config['reference'][ref]['assembly_id']
+    print("reading peptides")
     gff3.peptide_blast_gff3(assembly_id, output, peptide_sequence, config, strain_samples, peptides)
+    print("reading orfs")
     gff3.orf_blast_gff3(config, assembly_id, query_fasta , output)
+

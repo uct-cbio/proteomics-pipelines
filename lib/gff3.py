@@ -27,7 +27,7 @@ import yaml
 import blast
 from Bio.Blast import NCBIXML
 import gff3
- 
+import time 
 
 def gff3_contig_export(recs):
     contig_columns = []
@@ -55,6 +55,8 @@ def orfblastp2gff3(blast_records, query_fasta, orf_fasta,  eval_cutoff, subject_
     subject_count = {}
 
     recdict = defaultdict(list)
+    print("orfblastp2gff3")
+    ts = time.time()
     for blast_record in blast_records:
         top_eval=None
         aln_count = 1
@@ -62,18 +64,37 @@ def orfblastp2gff3(blast_records, query_fasta, orf_fasta,  eval_cutoff, subject_
         qid = query_fasta[blast_record.query.split()[0]].id
         qseq = str(query_fasta[blast_record.query.split()[0]].seq)
         qlen = len(qseq)
-        blast_record.alignments.sort(key=lambda align: max(hsp.score for hsp in align.hsps), reverse=True)
+        t1 = time.time()
+    
+        #blast_record.alignments.sort(key=lambda align: max(hsp.score for hsp in align.hsps), reverse=True)
+        #print('sorting blast_record', time.time() - t1)
+
         rec_count = 1
+        eval_excl = False
         for alignment in blast_record.alignments:
-            alignment.hsps.sort(key=lambda hsp :  hsp.score , reverse=True)
             if not qseq in mapdict:
                 mapdict[qseq] = None
                 subject_count[qseq] = 0
-            for hsp in alignment.hsps:
+
+            if subject_count[qseq] > subject_cutoff:
+                break
+            if eval_excl == True:
+                break
+            t1 = time.time()
+
+            #alignment.hsps.sort(key=lambda hsp :  hsp.score , reverse=True)
+            #print('sorting hsps', time.time() - t1)
+            for hsp in alignment.hsps:    
+                if hsp.expect > eval_cutoff:
+                    eval_excl = True
+                    break
                 if mapdict[qseq] != hsp.sbjct:
                     mapdict[qseq] = hsp.sbjct
                     subject_count[qseq] += 1
-                if (subject_count[qseq] <= subject_cutoff) and (hsp.expect <= eval_cutoff):
+                
+                if subject_count[qseq] > subject_cutoff:
+                    break 
+                elif (subject_count[qseq] <= subject_cutoff) and (hsp.expect <= eval_cutoff):
                     orf_rec = orf_fasta[alignment.hit_def.split()[0]]
                     orf_seq = str(orf_rec.seq)
                     orf_coords = orf_rec.id.split('|')[-1]
@@ -82,7 +103,9 @@ def orfblastp2gff3(blast_records, query_fasta, orf_fasta,  eval_cutoff, subject_
                     orf_strand = orf_coords.split('(')[1].split(')')[0]
                     hitseq = hsp.sbjct.replace('-','')
                     amino_offset = orf_seq.find(hitseq)  
+                    #print("*")
                     b2g = blast.blast2genome(fasta_id = qid, query_seq = hsp.query, match_seq=hsp.match, hit_seq = orf_seq, hit_from=orf_start, hit_to=orf_end, hit_strand=orf_strand, amino_offset=amino_offset)  
+                    #print("**")
                     contig = orf_rec.id.split('|')[0]
                     if '_ENA_' in contig:
                         contig = 'ENA_' + contig.split('_ENA_')[1]
@@ -101,18 +124,22 @@ def orfblastp2gff3(blast_records, query_fasta, orf_fasta,  eval_cutoff, subject_
                     strand = orf_strand
                     row = contig +'\t' + source +'\t' + type + '\t' + str(start) + '\t' + str(end) + '\t' + str(score) + '\t' + strand + '\t' + phase + '\t' + attributes
                     
+                    #print("***")
                     recdict[qseq].append(row)
                     
                     for rec in b2g.records:
+                        segment = rec[0]
                         start = rec[1]
                         end = rec[2]
                         strand = rec[3]
                         score = hsp.expect
                         phase= '.'
-                        attributes="Parent=match{}-{};Name={}".format(rec_count, qseq, qseq)
+                        attributes="Parent=match{}-{};Name={}".format(rec_count, qseq, segment) # was seq but I think it should be segment
                         row = contig +'\t' + source +'\t' + type + '\t' + str(start) + '\t' + str(end) + '\t' + str(score) + '\t' + strand + '\t' + phase + '\t' + attributes
                         recdict[qseq].append(row)
+                    #print("****")
                     rec_count += 1
+    print("Time taken to calulate peptide positions: ", time.time()-ts)
     return recdict
 
 
@@ -178,6 +205,7 @@ def tblastn2gff3(blast_records, query_fasta, eval_cutoff, subject_cutoff):
                         attributes="ID=match{}-{};Name={}".format(rec_count, newid, newid)
                         row = contig +'\t' + source +'\t' + type + '\t' + str(start) + '\t' + str(end) + '\t' + str(score) + '\t' + strand + '\t' + phase + '\t' + attributes
                         recdict[newid].append(row)
+                    segment_count = 1
                     for rec in b2g.records:
                         contig = alignment.hit_def.split()[0]
                         if 'ENA' in contig:
@@ -185,16 +213,19 @@ def tblastn2gff3(blast_records, query_fasta, eval_cutoff, subject_cutoff):
                             contig = contig.split('|')[1]
                         source = "BLASTP"
                         type="polypeptide"
+                        segment = rec[0]
                         start = rec[1]
                         end = rec[2]
                         strand = rec[3]
                         score = hsp.expect
                         phase= '.'
                         for newid in newids:
-                            attributes="Parent=match{}-{};Name={}".format(rec_count, newid, newid)
+                            attributes="Parent=match{}-{};Name={} (match segment {});segment={}".format(rec_count, newid, newid, segment_count, segment)
                             row = contig +'\t' + source +'\t' + type + '\t' + str(start) + '\t' + str(end) + '\t' + str(score) + '\t' + strand + '\t' + phase + '\t' + attributes
                             recdict[newid].append(row)
+                        segment_count += 1
                     rec_count += 1
+                    
     return recdict
 
 def peptide_blast_gff3(blast_name, output, peptide_sequence, config, strain_samples, peptides):
@@ -206,7 +237,7 @@ def peptide_blast_gff3(blast_name, output, peptide_sequence, config, strain_samp
     mapdict = {}
     recdict = defaultdict(list)
     recdict = gff3.orfblastp2gff3(blast_records=blast_records, query_fasta=peptide_sequence, orf_fasta=orf_sequence,  eval_cutoff=200000, subject_cutoff=1)
-
+    print("Peptides loaded")
     ref_genome =list(SeqIO.parse(output + '/ena/{}/{}.fasta'.format(blast_name, blast_name),'fasta'))
     contigs = gff3.gff3_contig_export(ref_genome)
 
@@ -243,8 +274,9 @@ def orf_blast_gff3(config, blast_name, query_fasta, output):
     result_handle = open(blast_results)
 
     blast_records = NCBIXML.parse(result_handle)
-
+    print("reading blast records")
     recdict = gff3.tblastn2gff3(blast_records=blast_records, query_fasta=query_fasta, eval_cutoff=200000, subject_cutoff=1)
+    print("read blast records")
 
     strains = defaultdict(list)
 

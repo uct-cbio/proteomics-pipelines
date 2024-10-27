@@ -32,8 +32,8 @@ if not os.path.exists(output_folder):
 for reference in config['reference']:
     fpath = annotation_folder + '/export/{}/Combined_Annotated_ORFs.csv'.format(reference)
     tpath = annotation_folder + '/export/{}/protein2kegg.csv'.format(reference)
-    #if os.path.exists(tpath):
-    #    continue
+    if os.path.exists(tpath):
+        continue
     d = pd.read_csv(fpath)
     proteins = d.drop_duplicates(['BLASTP'], keep='first')
     del proteins['ORF_id']
