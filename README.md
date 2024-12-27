@@ -4,4 +4,4 @@ A repo with computational pipelines for pathogen virulence and metaproteome anal
 ## Pipelines
 [MetaNovo](MetaNovo.md)
 
-[MQProteogenomics](MQProteogenomics.md)
+[Progenio](MQProteogenomics.md)
