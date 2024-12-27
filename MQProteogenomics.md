@@ -1,12 +1,12 @@
 
-# MQProteogenomics
+# Progenio
 
-MQProteogenomics is an open-source proteogenomics pipeline for multistrain genome annotation, variant and frameshift detection between strains and relative to a reference strain.
+Progenio is an open-source proteogenomics pipeline for multistrain genome annotation, variant and Interupted Coding Sequence (ICDS) detection between strains and relative to one or more reference strains.
 
 ### 1. Clone the repository
 `git clone https://github.com/uct-cbio/proteomics-pipelines.git`
 
-#### 2. MQProteogenomics with Singularity (Recommended)
+#### 2. Progenio with Singularity (Recommended)
 Ensure singularity is installed, and make sure at least 2 cores and 4 GB of RAM are available.
 
 ~~~
@@ -22,8 +22,8 @@ git clone https://thys_potgieter@bitbucket.org/thys_potgieter/cbio-proteogenomic
 
 Create an interactive singularity session:
 ~~~
-cd proteomics-pipelines/singularity/mqproteogenomics
-singularity shell mqproteogenomics_v2.0.4.img 
+cd proteomics-pipelines/singularity/progenio
+singularity shell progenio_v1.0.0.img 
 ~~~
 
 Run the example:
