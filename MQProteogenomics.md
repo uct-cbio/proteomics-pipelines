@@ -3,7 +3,7 @@
 
 Progenio is an open-source proteogenomics pipeline for multistrain genome annotation, variant and Interupted Coding Sequence (ICDS) detection between strains and relative to one or more reference strains.
 
-### 1. Clone the repository
+#### 1. Clone the repository
 `git clone https://github.com/uct-cbio/proteomics-pipelines.git`
 
 #### 2. Progenio with Singularity (Recommended)
