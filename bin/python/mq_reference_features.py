@@ -85,6 +85,10 @@ def load_gff3(file):
 
 
 for ref in config['reference']:
+    proteome_id = config['reference'][ref]['proteome_id']
+    with open(output + '/blast/orfs2proteins/{}_mapping.json'.format(proteome_id), 'r') as f:
+        orf2protein = json.load(f)
+
     assembly_id = config['reference'][ref]['assembly_id']
     for strain in config['strains']:
           
@@ -142,23 +146,28 @@ for ref in config['reference']:
         rows = ['##gff-version 3']
         feature_rows = ['##gff-version 3']
         seen = []
-
-        for orf, group in peptide_annotations.groupby('ORF_id'):
-           #orf = group['ORF_id'].values[0]
-           
+        
+        
+        #for orf, group in peptide_annotations.groupby('ORF_id'):
+        for orf_id in list(set(ref_orfs['ORF_id'].tolist())):
+        
+           group = peptide_annotations[peptide_annotations['ORF_id'].apply(lambda x:x.split('|')[1] == orf_id)]
+           assert len(group['ORF_id'].unique()) <= 1 
            #var_start = group['PeptidePosition'].min()
            
            #var_peps = peptide_annotations[peptide_annotations['ORF_id'] == orf]
            #var_pe
 
            
-           blastp_list  = group['BLASTP'].values
-           assert len(set(blastp_list)) == 1
-           blastp = blastp_list[0]
+           try:
+               blastp = orf2protein[orf_id][0]
+           except:
+               blastp = 'None'
+           #orf_id = orf.split('|')[1]
 
-           orf_id = orf.split('|')[1]
            #print(group) 
            orf_filt = ref_orfs[ref_orfs['ORF_id'] == orf_id]
+           
            if len(orf_filt) == 0:
                continue
            feat_id = orf_filt['ID'].values[0]
@@ -194,6 +203,7 @@ for ref in config['reference']:
                orf_peptides = [] 
                # iterate through the proteoform peptides
                for row in group.iterrows():
+                   orf = row[1]['ORF_id']
                    var_id = row[1]['VarId']
                      
                    if isinstance(var_id, str):

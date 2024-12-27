@@ -272,7 +272,7 @@ for reference in config['reference']:
 
     #pg = pg.head(10)
 
-    combined = pg
+    combined = pg.copy()
     
     
     for row in combined.iterrows():
