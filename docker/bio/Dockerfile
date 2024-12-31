@@ -6,7 +6,7 @@ RUN apt-get update && apt-get -y install software-properties-common default-jdk 
 
 RUN apt-get update && apt-get install -y libssl-dev openssl
 RUN apt-get update && apt-get install -y curl libssl-dev libxml2-dev libcurl4-openssl-dev libssh2-1-dev openssl curl openssl
-RUN apt-get update && apt-get install -f -y libglvnd-dev libglx-dev  libgl-dev  libgl1-mesa-dev octave liboctave-dev
+RUN apt-get update && apt-get install -f -y libglvnd-dev libglx-dev  libgl-dev  libgl1-mesa-dev octave #liboctave-dev
 RUN apt-get update && apt-get install -y mesa-common-dev libglu1-mesa-dev freeglut3-dev bwidget libfreetype6-dev
 RUN apt-get update && apt-get install -y libnetcdf-dev  libboost-all-dev
 RUN apt-get update && apt-get install -y gcc gfortran libnetcdf-dev libnetcdff-dev libhdf5-serial-dev
@@ -132,7 +132,7 @@ RUN git clone https://github.com/bmbolstad/preprocessCore.git && cd preprocessCo
 RUN conda update conda && conda install -c bioconda bcftools minimap2  
 RUN conda config --add channels bioconda && conda config --add channels conda-forge 
 RUN conda install samtools  
-RUN conda install tabix  
+#RUN conda install bioconda/label/cf201901::tabix  -  should be included in samtools
 RUN conda install jbrowse2  
 RUN conda install emboss  
 RUN yes | conda update --all  

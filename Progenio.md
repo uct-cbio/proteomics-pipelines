@@ -10,7 +10,7 @@ Progenio is an open-source proteogenomics pipeline for multistrain genome annota
 Ensure singularity is installed, and make sure at least 2 cores and 4 GB of RAM are available.
 
 ~~~
-cd proteomics-pipelines/singularity/mqproteogenomics
+cd proteomics-pipelines/singularity/progenio
 ./create_image.sh
 ~~~
 
@@ -30,7 +30,7 @@ Run the example:
 ~~~
 cd cbio-proteogenomics-tests/lib/testdata/proteogenomics_sample
 sixframe.sh genomes/ genomes/config.yaml # create the six frame database used by the next step (genomes/sixframe/combined_prot.fasta)
-mqproteogenomics.sh mq_proteogeomics_test.yml # analyze the data using the six frame translated database
+Progenio.sh progenio_test.yml # analyze the data using the six frame translated database
 ~~~
 
 Now adjust the config file for our own data.

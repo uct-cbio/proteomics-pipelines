@@ -2,8 +2,8 @@
 set -e
 
 # Change build context to the root of the directory
-version=v3.0.19
-name=mqproteogenomics
+version=v1.0.0
+name=progenix
 
 docker pull thyscbio/${name}:${version} && echo "version exists" && exit 1 || echo "Gonna build."
 cd ../..

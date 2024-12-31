@@ -18,7 +18,8 @@ FROM thyscbio/bio:v3.0.19
 #RUN npm install npm@latest -g && \
 #    npm install n -g && \
 #    n latest
-#RUN npm install -g @jbrowse/cli
+RUN npm install -g @jbrowse/cli
+RUN jbrowse --version
 #RUN npm install -g serve
 #RUN jbrowse create jbrowse_folder
 COPY lib /home/bio/lib 
